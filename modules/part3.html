@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 3 (2-hour session): Admissibility, privacy, operational security and de-anonymization. When digital evidence is admissible, chain-of-custody mechanics, building tracing tools that respect privacy, protecting your own footprint, and how 'anonymous' data is re-identified.">
+    <title>Part 3 — Admissibility, Privacy, Security &amp; De-anonymization | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-3">
+    <div class="language-switcher">
+        <a href="part3_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <span>Part 3 — Privacy &amp; Admissibility</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 3</div>
+        <h1>Admissibility, Privacy, Security &amp; De-anonymization</h1>
+        <p class="module-lede">
+            Part&nbsp;2 showed you could reach the data. This part is about the lines you must not cross to use it.
+            Evidence is worthless if a court rejects it, and a tracing tool is a liability if it violates the privacy
+            policies you agreed to. Meanwhile the services you use to analyse data are themselves collecting data on
+            you. And the central technical lesson: "anonymous" data is routinely <em>de-anonymised</em> &mdash; which
+            is both a threat you must defend against and a power you must wield responsibly.
+        </p>
+    </header>
+
+    <main>
+        <div class="session-agenda">
+            <h4>What we'll cover</h4>
+            <ol>
+                <li><span class="agenda-topic"><strong>Framing</strong> — capability is not permission; the four lines this session draws</span></li>
+                <li><span class="agenda-topic"><strong>Admissibility</strong> — the test, reliability factors, and when evidence gets excluded</span></li>
+                <li><span class="agenda-topic"><strong>Chain-of-custody mechanics</strong> — hashing, write-blockers, contemporaneous notes (Activity&nbsp;1)</span></li>
+                <li><span class="agenda-topic"><strong>Privacy obligations &amp; opsec</strong> — data-protection principles and a cloud-AI threat model</span></li>
+                <li><span class="agenda-topic"><strong>De-identification</strong> — Safe Harbor's 18 categories, quasi-identifiers, bits (Activity&nbsp;2)</span></li>
+                <li><span class="agenda-topic"><strong>De-anonymization</strong> — the Sweeney linkage attack step by step, the case studies (Activity&nbsp;3)</span></li>
+                <li><span class="agenda-topic"><strong>Defences &amp; recap</strong> — k-anonymity to differential privacy; bridge to Part&nbsp;4</span></li>
+            </ol>
+        </div>
+
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#admissibility">When evidence is admissible</a></li>
+                <li><a href="#reliability">Reliability factors &amp; exclusion</a></li>
+                <li><a href="#custody">Chain-of-custody mechanics</a></li>
+                <li><a href="#privacy-policies">Tracing tools that respect privacy</a></li>
+                <li><a href="#opsec">Securing your own footprint</a></li>
+                <li><a href="#deid">De-identification &amp; quasi-identifiers</a></li>
+                <li><a href="#deanon">De-anonymization: the linkage attack</a></li>
+                <li><a href="#defences">Defences that actually work</a></li>
+                <li><a href="#recap">Recap &amp; further practice</a></li>
+            </ol>
+        </nav>
+
+        <section id="admissibility" class="module-section">
+            <h2>When evidence is admissible</h2>
+            <p>
+                <span class="term">Admissibility</span> is whether a court will accept your evidence at all. The
+                capability to extract data and the right to rely on it are different questions, and the second is the
+                one that decides a case. You can pull a perfect, complete image of a phone and still watch the whole
+                thing thrown out because of how you got there. Broadly, digital evidence is admissible when it is:
+            </p>
+            <div class="compare">
+                <div>
+                    <h4>Admissible when…</h4>
+                    <p>It was obtained <strong>lawfully</strong> (proper authority/warrant); its <strong>integrity</strong>
+                    is provable (hashes, write-blockers); the <strong>chain of custody</strong> is unbroken and
+                    documented; the method is <strong>reliable and reproducible</strong>; and the analyst is
+                    competent to explain it.</p>
+                </div>
+                <div>
+                    <h4>Rejected when…</h4>
+                    <p>It was obtained <strong>unlawfully</strong> or beyond the scope of the warrant; it was
+                    <strong>altered</strong> or its integrity cannot be shown; custody has <strong>gaps</strong>; the
+                    technique is a <strong>black box</strong> nobody can explain; or it cannot be reproduced.</p>
+                </div>
+            </div>
+            <p>
+                Read the two columns as mirror images. Almost every reason evidence is rejected is the absence of
+                something on the left. That is good news for you as a practitioner: admissibility is mostly a set of
+                habits you can build into your workflow before any dispute arises, rather than an argument you win in
+                the courtroom afterwards.
+            </p>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>This constrains your AI choices directly.</strong> A model that cannot explain <em>why</em>
+                    it flagged a file, or that required uploading the evidence to an opaque third-party service, may
+                    produce a result you cannot defend. Explainability and custody are not nice-to-haves &mdash; they
+                    are admissibility requirements. This is a major reason Part&nbsp;4 favours in-house, inspectable
+                    tools.
+                </p>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Suppose an AI triage tool is 99% accurate at flagging illicit images but its vendor will not
+                    explain how it scores them, and the only way to run it is to upload your evidence to the vendor's
+                    cloud. Is the output admissible? Would you use it at all? Notice the accuracy number is almost
+                    beside the point &mdash; the problem is the two things you <em>cannot</em> show a court.
+                </p>
+            </div>
+        </section>
+
+        <section id="reliability" class="module-section">
+            <h2>Reliability factors &amp; exclusion</h2>
+            <p>
+                "Reliable and reproducible" sounds vague, so courts have given it structure. The most widely cited
+                framing comes from the U.S. <em>Daubert</em> standard, but the underlying questions are common sense
+                and travel well across jurisdictions. When a method's reliability is challenged, ask whether it has
+                been:
+            </p>
+            <ul>
+                <li><strong>Tested.</strong> Has the technique actually been tried against known answers, or is it
+                    asserted to work? A tool with a documented validation suite beats one with a confident sales
+                    brochure.</li>
+                <li><strong>Peer-reviewed and published.</strong> Has the method been exposed to outside scrutiny by
+                    people with no stake in selling it?</li>
+                <li><strong>Characterised by a known error rate.</strong> Does the method come with measured rates of
+                    false positives and false negatives? "We don't know how often it's wrong" is itself a finding.</li>
+                <li><strong>Generally accepted.</strong> Do practitioners in the relevant field actually use and trust
+                    it, or is it a one-off?</li>
+            </ul>
+            <p>
+                Notice how badly an opaque, proprietary AI model scores against these four factors: its error rate may
+                be undisclosed, its internals unpublished, and its acceptance asserted rather than earned. The same
+                four questions are exactly why Part&nbsp;4's transparent tools have a courtroom advantage that has
+                nothing to do with raw accuracy.
+            </p>
+            <div class="callout callout-story">
+                <p>
+                    Evidence gets excluded for ordinary, avoidable reasons. A search runs <em>beyond the scope</em> of
+                    the warrant &mdash; the warrant covered financial records, the analyst also pulled the family
+                    photos &mdash; and the extra material is suppressed. Or the working copy's hash <em>does not match</em>
+                    the original taken at seizure, so the integrity of the whole exhibit collapses. Or there is a
+                    <em>three-day gap</em> in the custody log where nobody can say where the drive was, and the defence
+                    has its reasonable doubt. None of these is exotic; each is a missing habit.
+                </p>
+            </div>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    Keep the legal framing light for a broad audience &mdash; the four factors are the take-away, not
+                    the case law. If the room is legal, name <em>Daubert</em> and <em>Frye</em> and let them debate
+                    which standard their jurisdiction uses. If the room is technical, pivot fast to "which of these
+                    four can your favourite tool actually satisfy?" and watch the proprietary models lose points.
+                </p>
+            </div>
+        </section>
+
+        <section id="custody" class="module-section">
+            <h2>Chain-of-custody mechanics</h2>
+            <p>
+                Chain of custody is the documented answer to one question a court will always ask: <em>can you prove
+                this exhibit is the same data you seized, unaltered, and that you can account for it at every moment in
+                between?</em> Three mechanisms do almost all of the work, and they are concrete enough to inspect.
+            </p>
+            <h3>Cryptographic hashing — proving integrity</h3>
+            <p>
+                A <span class="term">cryptographic hash</span> such as <strong>SHA-256</strong> reduces any amount of
+                data to a fixed 256-bit fingerprint. Change a single bit anywhere in the image &mdash; flip one pixel,
+                touch one timestamp &mdash; and the hash changes completely and unpredictably. The workflow is simple
+                and devastatingly effective: hash the evidence at seizure, hash every working copy, and hash again
+                before presentation. If the values match, the data is provably identical; if they differ, you have
+                <em>caught</em> the alteration rather than missed it. The hash is the mathematical spine of the whole
+                "integrity is provable" requirement from the admissibility test.
+            </p>
+            <h3>Write-blockers — preventing alteration</h3>
+            <p>
+                A <span class="term">write-blocker</span> sits between your analysis machine and the original media and
+                physically (or in software) permits reads while denying writes. The reason matters: merely
+                <em>plugging in</em> a drive can let an operating system update access timestamps or replay a journal,
+                silently altering the original before you have even opened a file. A write-blocker guarantees the
+                source stays read-only, so the hash you take afterwards still matches the one taken at seizure. You
+                acquire from the blocked original and then do all your work on copies.
+            </p>
+            <h3>Contemporaneous documentation — accounting for time</h3>
+            <p>
+                The third mechanism is the least technical and the most often fumbled: write it down <em>as it
+                happens</em>. A contemporaneous custody log records who handled the exhibit, when, why, and what they
+                did, with the hash recorded at each transfer. "Contemporaneous" is the load-bearing word &mdash; notes
+                reconstructed from memory weeks later carry far less weight, and a single unexplained gap is enough for
+                a defence to argue the evidence could have been tampered with.
+            </p>
+            <div class="callout callout-activity">
+                <h4>Activity 1 — Break the hash (in pairs)</h4>
+                <p>
+                    On any machine, compute the SHA-256 of a short text file (for example <code>sha256sum
+                    evidence.txt</code>, or the equivalent in your OS). Record the value. Now change <em>one
+                    character</em> in the file, save, and hash it again. Compare the two fingerprints.
+                </p>
+                <ol>
+                    <li>How many characters of the hash changed? (You'll find it's not "one for one"—the whole value
+                        scrambles.)</li>
+                    <li>If you only had the second hash, could you tell <em>what</em> was changed? Why is that
+                        one-way property exactly what custody needs?</li>
+                    <li>Where in your own workflow would you record this value so it is genuinely contemporaneous?</li>
+                </ol>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    A colleague says, "I didn't use a write-blocker, but I hashed the drive right after I plugged it
+                    in, so the hash proves integrity." What is wrong with this reasoning? (Hint: what does the hash
+                    actually certify, and <em>when</em> did the first opportunity to alter the data occur?)
+                </p>
+            </div>
+        </section>
+
+        <section id="privacy-policies" class="module-section">
+            <h2>Tracing tools that respect privacy</h2>
+            <p>
+                Suppose you build a tool that traces an actor across systems &mdash; correlating logins, IP addresses,
+                device fingerprints. The moment it touches services run by other parties, you are bound by the
+                <strong>privacy policies and terms you agreed to</strong> with those providers, and by the law that
+                protects the people in the data. Building the tool does not exempt you from the rules; it makes you
+                responsible for them.
+            </p>
+            <p>
+                Underneath the specific rules sit a handful of <strong>data-protection principles</strong> that recur
+                in almost every modern regime (GDPR is the best-known articulation, but the ideas are widely shared).
+                They are worth memorising because they tell you, before you write a line of code, what a defensible
+                tracing tool must do:
+            </p>
+            <ul>
+                <li><strong>Lawful basis.</strong> You need a specific, recorded reason you are allowed to process
+                    each piece of data &mdash; a warrant, a contract, consent, or a legitimate interest. "It was
+                    available" is not a lawful basis.</li>
+                <li><strong>Purpose limitation.</strong> Data collected for one purpose may not be quietly repurposed
+                    for another. Evidence gathered to investigate fraud is not yours to mine for unrelated leads.</li>
+                <li><strong>Data minimisation.</strong> Collect the narrowest set of data that answers the question,
+                    and no more. Every extra field is extra liability and extra re-identification risk.</li>
+                <li><strong>Retention limits.</strong> Keep the data only as long as the purpose requires, then dispose
+                    of it. Indefinite retention is both a legal failure and a breach waiting to happen.</li>
+            </ul>
+            <p>
+                These map almost one-to-one onto the practical habits a tracing tool needs:
+            </p>
+            <ul>
+                <li><strong>Stay within authorised scope.</strong> Collect only what your warrant, contract, or the
+                    subject's consent actually covers. Capability is not permission.</li>
+                <li><strong>Honour the providers' terms.</strong> Scraping or correlating data in ways a platform's
+                    policy forbids can taint the evidence and expose you to liability.</li>
+                <li><strong>Minimise by design.</strong> Collect the narrowest data that answers the question, retain
+                    it for the shortest time, and segregate anything about uninvolved third parties.</li>
+                <li><strong>Log lawful basis.</strong> For each data source the tool touches, record the authority that
+                    permits it &mdash; the same discipline as chain of custody, applied to privacy.</li>
+            </ul>
+        </section>
+
+        <section id="opsec" class="module-section">
+            <h2>Securing your own footprint</h2>
+            <p>
+                Here is the uncomfortable symmetry: while you investigate, the tools <em>you</em> use are
+                investigating you. A cloud AI service that processes your evidence sees that evidence; a "free"
+                analysis app monetises telemetry; an extension reads what it touches. When the material is
+                evidence-grade, leaking it is both a security breach and a custody failure.
+            </p>
+            <div class="callout callout-story">
+                <p>
+                    Imagine pasting a victim's chat export into a public chatbot to "summarise it". That export has now
+                    left your custody, been transmitted across a border, and possibly been retained for model
+                    training. You may have breached the victim's privacy, the provider's terms, and the admissibility
+                    of the evidence &mdash; in one paste.
+                </p>
+            </div>
+            <p>
+                The defensible mindset is a short <strong>threat model</strong> you apply before any evidence touches
+                any external service. The default assumption is adversarial, and it is liberating once you accept it:
+            </p>
+            <ul>
+                <li><strong>Assume every external service is a collector.</strong> Treat any cloud AI, API, or "free"
+                    app as a party that retains, inspects, and may train on whatever you send it &mdash; until you have
+                    read and verified otherwise in writing. Read what it retains, where, and for how long, before any
+                    evidence touches it.</li>
+                <li><strong>Keep evidence local.</strong> Prefer tools that run on infrastructure you control, so the
+                    evidence never crosses a boundary you cannot account for &mdash; the through-line to Part&nbsp;4.</li>
+                <li><strong>Encrypt at rest and in transit.</strong> Full-disk or volume encryption on your working
+                    copies, TLS for anything that does move, and the keys held by you &mdash; not by the service.</li>
+                <li><strong>Control access and audit it.</strong> Least-privilege accounts, and an audit log of who
+                    opened the working copies, so your own custody story is as tight as the evidence's.</li>
+            </ul>
+            <figure class="diagram">
+                <img src="../images/diagrams/data_privacy_guide.svg" alt="Data-classification guide showing which kinds of information are safe to share with external services and which must never leave controlled custody." loading="lazy">
+                <figcaption>A working classification of what is safe to paste into an external service versus what must stay in custody — the line an investigator checks before any evidence touches a cloud tool.</figcaption>
+            </figure>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Walk through one cloud AI tool you (or your organisation) actually use. For evidence-grade data:
+                    where would the data physically go, who could read it, how long is it kept, and could you prove any
+                    of that to a court? If you cannot answer all four from documentation, the tool fails the threat
+                    model &mdash; what would you do instead?
+                </p>
+            </div>
+        </section>
+
+        <section id="deid" class="module-section">
+            <h2>De-identification &amp; quasi-identifiers</h2>
+            <p>
+                <span class="term">De-identification</span> is removing the information that links data to a person.
+                The naïve version &mdash; delete the name and ID &mdash; fails, because identity hides in combinations
+                of "harmless" fields. A standard like <strong>HIPAA Safe Harbor</strong> codifies this by requiring
+                removal of <strong>18 categories</strong> of identifiers, not just names: dates (birth, admission,
+                discharge), ZIP codes, phone and fax numbers, email addresses, device identifiers, IP addresses,
+                biometric data, full-face photos, and more. The point of the list is precisely that "remove the name"
+                is nowhere near enough &mdash; identity leaks through dozens of fields nobody thinks of as a name.
+            </p>
+            <p>
+                The fields that are not obviously identifying but become so in combination are
+                <span class="term">quasi-identifiers</span>: attributes like ZIP code, date of birth, sex, job title,
+                or admission date that are not unique on their own but narrow the population sharply when combined.
+                Latanya Sweeney's finding is the canonical warning:
+            </p>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>87% of the U.S. population</strong> can be uniquely identified by just three fields:
+                    <strong>ZIP code + date of birth + sex</strong>. None of those is a "name", yet together they are a
+                    fingerprint. "Quasi-identifiers that seem harmless in isolation become identifying when combined."
+                </p>
+            </div>
+            <figure class="diagram">
+                <img src="../images/diagrams/privacy_reidentification.svg" alt="Diagram showing how supposedly anonymous records, stripped of names, are re-identified when quasi-identifiers such as ZIP code, date of birth, and sex narrow the population down to a single person." loading="lazy">
+                <figcaption>How "anonymous" data reveals identity: each quasi-identifier the investigator stacks shrinks the candidate pool until one record points unambiguously at one person.</figcaption>
+            </figure>
+            <p>
+                There is a precise way to talk about "how identifying" a field is: <strong>bits of identifying
+                information</strong>, in the sense of Shannon entropy. Each bit roughly halves the population still
+                consistent with the data. Splitting the world by sex gives about 1 bit; a five-digit ZIP code can give
+                many bits; a full date of birth gives more still. Stack enough bits and you cross the threshold where
+                only one person remains. That is exactly why three "harmless" quasi-identifiers can re-identify most of
+                a country &mdash; together they simply carry enough bits.
+            </p>
+            <div class="callout callout-activity">
+                <h4>Activity 2 — Count the bits</h4>
+                <p>
+                    Open the <a href="../demos/entropy_calculator_demo.html">Shannon entropy demo</a> and run it on a
+                    few fields one at a time: sex, then ZIP code, then full date of birth, then a combination of all
+                    three.
+                </p>
+                <ol>
+                    <li>Record the bits of identifying information each field contributes on its own.</li>
+                    <li>Do the bits roughly add up when you combine fields? At what total does the population shrink to
+                        a single person?</li>
+                    <li>Find a field you assumed was "anonymous" that turns out to carry surprisingly many bits.
+                        That intuition gap is the whole lesson.</li>
+                </ol>
+            </div>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    Don't let "18 categories" become a memorisation drill &mdash; the number matters only as a shock
+                    that "remove the name" is naïve. The durable concept is <em>quasi-identifier</em> plus the
+                    <em>bits</em> framing; if learners leave able to say "this field carries a lot of identifying bits
+                    even though it isn't a name," the section worked.
+                </p>
+            </div>
+        </section>
+
+        <section id="deanon" class="module-section">
+            <h2>De-anonymization: the linkage attack</h2>
+            <p>
+                <span class="term">De-anonymization</span> (re-identification) reverses de-identification by
+                <em>linking</em> an "anonymous" dataset to an external one they share quasi-identifiers with. Sweeney
+                famously re-identified a state governor's medical record by linking an "anonymous" hospital discharge
+                set to public voter rolls on ZIP&nbsp;+&nbsp;birth&nbsp;date&nbsp;+&nbsp;sex. This is not a theoretical
+                risk; it is a repeatable method, and it is how investigators (and adversaries) go <em>beyond</em> the
+                data that was formally collected.
+            </p>
+            <p>
+                It is worth walking the Sweeney <strong>linkage attack</strong> step by step, because once you see the
+                shape you will recognise it everywhere:
+            </p>
+            <ol>
+                <li><strong>Start with the "anonymous" set.</strong> A state agency releases hospital discharge
+                    records with names and explicit IDs stripped &mdash; but each record still carries the patient's
+                    ZIP code, date of birth, sex, and diagnosis. It was considered safe to publish.</li>
+                <li><strong>Obtain a public set that overlaps.</strong> Voter registration rolls are public and, for a
+                    small fee, purchasable. They contain each voter's <em>name and address</em> alongside their ZIP
+                    code, date of birth, and sex &mdash; the very same quasi-identifiers.</li>
+                <li><strong>Join on the shared quasi-identifiers.</strong> Match the two tables where ZIP + date of
+                    birth + sex agree. Because that triple is nearly unique (the 87% result), most rows match exactly
+                    one voter.</li>
+                <li><strong>Read off the identity.</strong> The voter roll supplies the name; the discharge record
+                    supplied the diagnosis. The "anonymous" medical record now has a name attached &mdash; including
+                    the governor's, whose record Sweeney mailed to his own office to prove the point.</li>
+            </ol>
+            <p>
+                In database terms it is a single join: <em>anonymous medical set ⋈ public voter roll on
+                (ZIP, DOB, sex)</em>. Nothing was hacked. Two lawfully obtained datasets, linked on fields nobody
+                thought were identifying, dissolved the anonymity of both. The same pattern recurs across the most
+                famous re-identification cases:
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/five_dollar_attack.svg" alt="Diagram of a low-cost linkage attack: an anonymous dataset is joined to a cheaply purchased public dataset on shared quasi-identifiers, re-identifying individuals for roughly the price of a coffee." loading="lazy">
+                <figcaption>The "$20 attack": re-identification needs no hacking budget — an investigator buys a public list, joins it to the anonymous set on shared fields, and reads off the names.</figcaption>
+            </figure>
+            <table>
+                <thead>
+                    <tr><th>Case</th><th>Year</th><th>Data</th><th>Attack</th><th>Result</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Netflix Prize</td><td>2006</td><td>Movie ratings (IDs replaced)</td><td>Cross-reference with public IMDb reviews</td><td>99% identified from 8 ratings</td></tr>
+                    <tr><td>AOL search leak</td><td>2006</td><td>"Anonymised" search logs</td><td>Read the queries themselves</td><td>Users named from their own searches</td></tr>
+                    <tr><td>Sweeney / GIC</td><td>1997</td><td>Hospital discharge records</td><td>Link to voter rolls (ZIP+DOB+sex)</td><td>Governor's record re-identified; 87% of US at risk</td></tr>
+                    <tr><td>Location traces</td><td>2013</td><td>Mobile GPS points</td><td>Pattern analysis of movement</td><td>95% unique from just 4 points</td></tr>
+                    <tr><td>Cambridge Analytica</td><td>2018</td><td>Social-graph profiles</td><td>Inference from "likes" + linkage</td><td>~87M profiles exploited</td></tr>
+                </tbody>
+            </table>
+            <p>
+                One sentence each, so the pattern is unmistakable:
+            </p>
+            <ul>
+                <li><strong>Netflix Prize (2006)</strong> — researchers matched the "anonymous" rating timestamps and
+                    scores to public IMDb reviews and re-identified individual subscribers, 99% from as few as 8
+                    ratings.</li>
+                <li><strong>AOL search leak (2006)</strong> — the "anonymised" logs replaced names with numbers, but
+                    people's own searches (their address, their family, their ailments) named them outright.</li>
+                <li><strong>Sweeney / GIC (1997)</strong> — the linkage attack above re-identified the governor's
+                    discharge record and showed 87% of the U.S. population was exposed by ZIP + DOB + sex.</li>
+                <li><strong>Location traces (2013)</strong> — human movement is so distinctive that just four
+                    approximate time-and-place points made 95% of people uniquely identifiable in a mobility dataset.</li>
+                <li><strong>Cambridge Analytica (2018)</strong> — profiles built from Facebook "likes" were linked and
+                    inferred against to exploit roughly 87 million people's data for political targeting.</li>
+            </ul>
+            <div class="callout callout-activity">
+                <h4>Activity 3 — Run the attack</h4>
+                <p>
+                    Open the <a href="../demos/deanonymization_demo.html">linkage-attack demo</a>, which animates the
+                    exact Sweeney attack &mdash; an "anonymous" medical table matched against a public voter list on
+                    the three quasi-identifiers.
+                </p>
+                <ol>
+                    <li>Step through the join and <strong>record which patients get re-identified</strong> and which
+                        survive. Why do some rows resist?</li>
+                    <li>What is the smallest set of quasi-identifiers that still cracks most of the table?</li>
+                    <li>Then open the <a href="../demos/family_inference_demo.html">family-inference demo</a>: how does
+                        deducing a never-recorded fact differ from linkage, and why is it harder to defend against?</li>
+                </ol>
+            </div>
+            <figure class="diagram">
+                <img src="../images/diagrams/student_sibling_inference.svg" alt="Diagram showing how an attribute that was never recorded for one individual is inferred from related records, such as deducing a fact about a student from a sibling's data." loading="lazy">
+                <figcaption>Inference beyond linkage: a fact a subject never disclosed can be reconstructed from related records, so an investigator can learn what the data was never meant to hold.</figcaption>
+            </figure>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Every case above used data that was lawfully obtained and "anonymised" in good faith. If no rule
+                    was broken to collect it, where exactly does the wrong occur &mdash; at release, at linkage, or at
+                    use? And how does that shape what <em>you</em> may do with a re-identification you could perform?
+                </p>
+            </div>
+        </section>
+
+        <section id="defences" class="module-section">
+            <h2>Defences that actually work</h2>
+            <p>
+                Because deleting names is not enough, real protection works on the quasi-identifiers and on the
+                <em>output</em> of any analysis. The standard ladder, each with a one-line example:
+            </p>
+            <ul>
+                <li><strong>k-anonymity</strong> &mdash; generalise/suppress fields so every record is
+                    indistinguishable from at least <em>k−1</em> others.
+                    <em>Example:</em> replace exact birth dates with birth years and ZIPs with their first three
+                    digits until at least 5 people share every combination (k=5). (Finding the optimal generalisation
+                    is <strong>NP-hard</strong> &mdash; a recurring theme: privacy and computation are entangled.)</li>
+                <li><strong>l-diversity</strong> &mdash; strengthen k-anonymity so each indistinguishable group also
+                    contains at least <em>l</em> different sensitive values.
+                    <em>Example:</em> if all 5 people in a group share the diagnosis "HIV+", k-anonymity hid <em>who</em>
+                    but not <em>what</em> &mdash; l-diversity forces the group to hold varied diagnoses.</li>
+                <li><strong>t-closeness</strong> &mdash; go further so each group's distribution of sensitive values is
+                    close (within <em>t</em>) to the distribution in the whole dataset.
+                    <em>Example:</em> a group that is 80% cancer when the population is 5% cancer still leaks &mdash;
+                    t-closeness rules that out.</li>
+                <li><strong>Differential privacy</strong> &mdash; add calibrated noise so that any one person's
+                    presence barely changes the result, with a measurable <em>privacy budget</em> (ε) you spend down
+                    with each query.
+                    <em>Example:</em> answer "how many patients have diabetes?" with the true count plus a little
+                    random noise, so adding or removing one patient can't be detected from the answer.</li>
+            </ul>
+            <div class="callout callout-activity">
+                <h4>Activity 4 — Spend the budget</h4>
+                <p>
+                    Open the <a href="../demos/privacy_budget_tracker.html">privacy-budget tracker</a> and ask the
+                    dataset a series of questions, watching the differential-privacy budget (ε) deplete with each one.
+                </p>
+                <ol>
+                    <li>How many queries can you ask before the remaining budget forces you to stop?</li>
+                    <li>What happens to the noise (and your confidence in answers) as the budget runs low?</li>
+                    <li>Connect it back: why is "just keep querying the anonymous dataset" a guaranteed path to
+                        re-identification, and how does a finite ε formally prevent it?</li>
+                </ol>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Each rung of the ladder costs something &mdash; generalising fields, adding noise &mdash; in the
+                    accuracy or usefulness of the data. For a forensic dataset you must share with co-investigators or
+                    disclose to a defence team, how far up the ladder is "enough"? Who decides, and against what
+                    standard?
+                </p>
+            </div>
+        </section>
+
+        <section id="recap" class="module-section">
+            <h2>Recap &amp; further practice</h2>
+            <ul>
+                <li><strong>Admissibility</strong> &mdash; lawful acquisition, provable integrity, unbroken custody, reproducible method &mdash; decides whether evidence counts, and constrains which AI you may use; reliability turns on whether a method is tested, peer-reviewed, error-rated, and accepted.</li>
+                <li><strong>Chain of custody</strong> runs on three mechanics: SHA-256 hashing to prove integrity, write-blockers to prevent alteration, and contemporaneous documentation to account for time.</li>
+                <li>Building a tracing tool does not exempt you from the <strong>privacy principles and law</strong> &mdash; lawful basis, purpose limitation, data minimisation, retention limits &mdash; governing the data it touches.</li>
+                <li>Every external service is a <strong>data collector</strong>: assume it collects, keep evidence local, encrypt at rest and in transit.</li>
+                <li>Identity hides in <strong>quasi-identifiers</strong> (Safe Harbor strips 18 categories, not just names): ZIP+DOB+sex re-identifies 87% of people, measurable in <em>bits</em>.</li>
+                <li><strong>De-anonymization by linkage</strong> is a repeatable join; defend with k-anonymity, l-diversity, t-closeness, and differential privacy &mdash; and remember optimal k-anonymity is NP-hard.</li>
+            </ul>
+            <div class="callout callout-note">
+                <h4>Instructor note — running the 2 hours</h4>
+                <p>
+                    The four activities and three discussion prompts are the pacing backbone. If you are short on time,
+                    keep Activity&nbsp;1 (hashing) and Activity&nbsp;3 (the linkage attack) &mdash; those two carry the
+                    session's twin lessons of integrity and re-identification. The deliberate take-away you want in the
+                    room is the pairing of <em>capability and permission</em>: just because you <em>can</em> reach or
+                    re-identify the data does not mean you <em>may</em>. Test it with the closing de-anonymization
+                    discussion and listen for whether people locate the wrong at use, not just at access.
+                </p>
+            </div>
+            <p><strong>Further practice before Part 4:</strong> take one dataset you could plausibly handle in your own
+            work and list its quasi-identifiers, estimate (even roughly) how many bits of identifying information they
+            carry together, and decide which rung of the defences ladder you would apply before sharing it. Part&nbsp;4
+            then builds the in-house, inspectable tools that let you do all of this without ever surrendering custody.</p>
+        </section>
+
+        <nav class="module-nav" aria-label="Part navigation">
+            <a href="part2.html" class="prev">
+                <span class="nav-label">← Previous</span>
+                <span class="nav-title">Part 2 — The Data</span>
+            </a>
+            <a href="part4.html" class="next">
+                <span class="nav-label">Next →</span>
+                <span class="nav-title">Part 4 — In-House AI Tools</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this part</h3>
+                <p>Part 3 of <a href="../index.html">Digital Forensics Data &amp; AI</a>. Privacy case studies adapted from the open de-identification materials, CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html"><strong>Part 3 — Privacy &amp; Admissibility</strong></a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+    <script src="../js/drawing-tool.js"></script>
+    <script src="../js/drawing-tool-init.js"></script>
+</body>
+</html>

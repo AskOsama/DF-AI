@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 500" width="700" height="500">
+  <defs>
+    <style>
+      .neuron { fill: #2c5a82; stroke: #14202e; stroke-width: 2; }
+      .input-neuron { fill: #2c6a5b; }
+      .output-neuron { fill: #b15c26; }
+      .connection { stroke: #95a5a6; stroke-width: 1; opacity: 0.5; }
+      .text-title { fill: #14202e; font-family:inherit; font-size: 26px; font-weight: bold; text-anchor: middle; }
+      .text-label { fill: #14202e; font-family:inherit; font-size: 16px; font-weight: bold; text-anchor: middle; }
+      .text-desc { fill: #666; font-family:inherit; font-size: 12px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="350" y="30" class="text-title">الشبكة العصبية الاصطناعية</text>
+  <text x="350" y="50" class="text-desc">(Simplified Deep Learning Architecture)</text>
+
+  <!-- Layer labels -->
+  <text x="100" y="90" class="text-label">Input Layer</text>
+  <text x="350" y="90" class="text-label">Hidden Layers</text>
+  <text x="600" y="90" class="text-label">Output Layer</text>
+
+  <!-- Input Layer (3 neurons) -->
+  <circle cx="100" cy="150" r="20" class="neuron input-neuron"/>
+  <circle cx="100" cy="230" r="20" class="neuron input-neuron"/>
+  <circle cx="100" cy="310" r="20" class="neuron input-neuron"/>
+
+  <!-- Hidden Layer 1 (4 neurons) -->
+  <circle cx="250" cy="130" r="20" class="neuron"/>
+  <circle cx="250" cy="200" r="20" class="neuron"/>
+  <circle cx="250" cy="270" r="20" class="neuron"/>
+  <circle cx="250" cy="340" r="20" class="neuron"/>
+
+  <!-- Hidden Layer 2 (4 neurons) -->
+  <circle cx="400" cy="130" r="20" class="neuron"/>
+  <circle cx="400" cy="200" r="20" class="neuron"/>
+  <circle cx="400" cy="270" r="20" class="neuron"/>
+  <circle cx="400" cy="340" r="20" class="neuron"/>
+
+  <!-- Hidden Layer 3 (3 neurons) -->
+  <circle cx="500" cy="150" r="20" class="neuron"/>
+  <circle cx="500" cy="230" r="20" class="neuron"/>
+  <circle cx="500" cy="310" r="20" class="neuron"/>
+
+  <!-- Output Layer (2 neurons) -->
+  <circle cx="600" cy="190" r="20" class="neuron output-neuron"/>
+  <circle cx="600" cy="270" r="20" class="neuron output-neuron"/>
+
+  <!-- Connections from Input to Hidden Layer 1 -->
+  <line x1="120" y1="150" x2="230" y2="130" class="connection"/>
+  <line x1="120" y1="150" x2="230" y2="200" class="connection"/>
+  <line x1="120" y1="150" x2="230" y2="270" class="connection"/>
+  <line x1="120" y1="150" x2="230" y2="340" class="connection"/>
+
+  <line x1="120" y1="230" x2="230" y2="130" class="connection"/>
+  <line x1="120" y1="230" x2="230" y2="200" class="connection"/>
+  <line x1="120" y1="230" x2="230" y2="270" class="connection"/>
+  <line x1="120" y1="230" x2="230" y2="340" class="connection"/>
+
+  <line x1="120" y1="310" x2="230" y2="130" class="connection"/>
+  <line x1="120" y1="310" x2="230" y2="200" class="connection"/>
+  <line x1="120" y1="310" x2="230" y2="270" class="connection"/>
+  <line x1="120" y1="310" x2="230" y2="340" class="connection"/>
+
+  <!-- Connections from Hidden Layer 1 to Hidden Layer 2 -->
+  <line x1="270" y1="130" x2="380" y2="130" class="connection"/>
+  <line x1="270" y1="130" x2="380" y2="200" class="connection"/>
+  <line x1="270" y1="130" x2="380" y2="270" class="connection"/>
+  <line x1="270" y1="130" x2="380" y2="340" class="connection"/>
+
+  <line x1="270" y1="200" x2="380" y2="130" class="connection"/>
+  <line x1="270" y1="200" x2="380" y2="200" class="connection"/>
+  <line x1="270" y1="200" x2="380" y2="270" class="connection"/>
+  <line x1="270" y1="200" x2="380" y2="340" class="connection"/>
+
+  <line x1="270" y1="270" x2="380" y2="130" class="connection"/>
+  <line x1="270" y1="270" x2="380" y2="200" class="connection"/>
+  <line x1="270" y1="270" x2="380" y2="270" class="connection"/>
+  <line x1="270" y1="270" x2="380" y2="340" class="connection"/>
+
+  <line x1="270" y1="340" x2="380" y2="130" class="connection"/>
+  <line x1="270" y1="340" x2="380" y2="200" class="connection"/>
+  <line x1="270" y1="340" x2="380" y2="270" class="connection"/>
+  <line x1="270" y1="340" x2="380" y2="340" class="connection"/>
+
+  <!-- Connections from Hidden Layer 2 to Hidden Layer 3 -->
+  <line x1="420" y1="130" x2="480" y2="150" class="connection"/>
+  <line x1="420" y1="130" x2="480" y2="230" class="connection"/>
+  <line x1="420" y1="130" x2="480" y2="310" class="connection"/>
+
+  <line x1="420" y1="200" x2="480" y2="150" class="connection"/>
+  <line x1="420" y1="200" x2="480" y2="230" class="connection"/>
+  <line x1="420" y1="200" x2="480" y2="310" class="connection"/>
+
+  <line x1="420" y1="270" x2="480" y2="150" class="connection"/>
+  <line x1="420" y1="270" x2="480" y2="230" class="connection"/>
+  <line x1="420" y1="270" x2="480" y2="310" class="connection"/>
+
+  <line x1="420" y1="340" x2="480" y2="150" class="connection"/>
+  <line x1="420" y1="340" x2="480" y2="230" class="connection"/>
+  <line x1="420" y1="340" x2="480" y2="310" class="connection"/>
+
+  <!-- Connections from Hidden Layer 3 to Output -->
+  <line x1="520" y1="150" x2="580" y2="190" class="connection"/>
+  <line x1="520" y1="150" x2="580" y2="270" class="connection"/>
+
+  <line x1="520" y1="230" x2="580" y2="190" class="connection"/>
+  <line x1="520" y1="230" x2="580" y2="270" class="connection"/>
+
+  <line x1="520" y1="310" x2="580" y2="190" class="connection"/>
+  <line x1="520" y1="310" x2="580" y2="270" class="connection"/>
+
+  <!-- Redraw neurons on top of connections -->
+  <circle cx="100" cy="150" r="20" class="neuron input-neuron"/>
+  <circle cx="100" cy="230" r="20" class="neuron input-neuron"/>
+  <circle cx="100" cy="310" r="20" class="neuron input-neuron"/>
+
+  <circle cx="250" cy="130" r="20" class="neuron"/>
+  <circle cx="250" cy="200" r="20" class="neuron"/>
+  <circle cx="250" cy="270" r="20" class="neuron"/>
+  <circle cx="250" cy="340" r="20" class="neuron"/>
+
+  <circle cx="400" cy="130" r="20" class="neuron"/>
+  <circle cx="400" cy="200" r="20" class="neuron"/>
+  <circle cx="400" cy="270" r="20" class="neuron"/>
+  <circle cx="400" cy="340" r="20" class="neuron"/>
+
+  <circle cx="500" cy="150" r="20" class="neuron"/>
+  <circle cx="500" cy="230" r="20" class="neuron"/>
+  <circle cx="500" cy="310" r="20" class="neuron"/>
+
+  <circle cx="600" cy="190" r="20" class="neuron output-neuron"/>
+  <circle cx="600" cy="270" r="20" class="neuron output-neuron"/>
+
+  <!-- Input labels -->
+  <text x="50" y="155" class="text-desc">Feature 1</text>
+  <text x="50" y="235" class="text-desc">Feature 2</text>
+  <text x="50" y="315" class="text-desc">Feature 3</text>
+
+  <!-- Output labels -->
+  <text x="650" y="195" class="text-desc">Output 1</text>
+  <text x="650" y="275" class="text-desc">Output 2</text>
+
+  <!-- Bottom explanation -->
+  <rect x="50" y="400" width="600" height="90" fill="#f8f9fa" stroke="#14202e" stroke-width="2" rx="5"/>
+  <text x="350" y="425" style="fill: #14202e; font-family:inherit; font-size: 14px; font-weight: bold; text-anchor: middle;">How Neural Networks Work:</text>
+  <text x="350" y="445" style="fill: #14202e; font-family:inherit; font-size: 12px; text-anchor: middle;">Each connection has a "weight" that determines its importance</text>
+  <text x="350" y="463" style="fill: #14202e; font-family:inherit; font-size: 12px; text-anchor: middle;">The network learns by adjusting these weights based on examples</text>
+  <text x="350" y="481" style="fill: #14202e; font-family:inherit; font-size: 12px; text-anchor: middle;">"Deep" learning means using many hidden layers to learn complex patterns</text>
+</svg>

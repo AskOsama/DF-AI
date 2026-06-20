@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض هجوم إزالة إخفاء الهوية | DS-AI Course</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* RTL Adjustments */
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Keep data tables LTR */
+        .preview-table table,
+        .quasi-id-table,
+        .cards-grid,
+        .attack-log {
+            direction: ltr;
+            text-align: left;
+        }
+
+        /* Key concept border on right for RTL */
+        .key-concept {
+            border-left: none;
+            border-right: 4px solid #ffc107;
+        }
+        /* De-anonymization Demo Specific Styles */
+        .demo-header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+
+        .demo-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .warning-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .warning-banner strong {
+            color: #856404;
+        }
+
+        /* Data Preview Section */
+        .data-preview {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-preview h3 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .data-preview > p {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-tables {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .preview-table h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: #34495e;
+        }
+
+        .preview-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        .preview-table th, .preview-table td {
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background: #34495e;
+            color: white;
+        }
+
+        .preview-table .quasi {
+            background: #fff3cd;
+            font-weight: 600;
+        }
+
+        .preview-table .sensitive {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: 600;
+        }
+
+        .preview-explanation {
+            margin-top: 1rem;
+            text-align: center;
+            padding: 0.8rem;
+            background: #e8f4f8;
+            border-radius: 8px;
+        }
+
+        .preview-explanation .highlight {
+            background: #fff3cd;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .data-link {
+            display: block;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .data-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .preview-tables {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Attack Controls */
+        .attack-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .attack-controls label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .attack-controls select,
+        .attack-controls input[type="range"] {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .attack-controls button {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-attack {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-attack:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-step {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* Two-Panel Layout */
+        .decks-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .decks-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .deck {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .deck-header {
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .public-deck .deck-header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .medical-deck .deck-header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Card Styles */
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            padding: 0.3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover:not(.matched):not(.flipped) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .card.selected {
+            border: 3px solid #f1c40f;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+        }
+
+        .card.flipped {
+            background: white;
+            color: #2c3e50;
+            border: 2px solid #3498db;
+        }
+
+        .card.matched {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            cursor: default;
+            animation: matchPulse 0.6s ease;
+        }
+
+        .public-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        .medical-card {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .card .card-name {
+            font-weight: 600;
+            font-size: 0.75rem;
+            word-break: break-word;
+        }
+
+        .card .card-patient-id {
+            font-weight: 600;
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: #555;
+        }
+
+        .card .card-diagnosis-reveal {
+            font-weight: 700;
+            font-size: 0.65rem;
+            color: #c0392b;
+            background: #f8d7da;
+            padding: 0.2rem 0.3rem;
+            border-radius: 3px;
+            margin-bottom: 0.2rem;
+        }
+
+        .card .quasi-ids {
+            font-size: 0.55rem;
+            margin-top: 0.2rem;
+            opacity: 0.85;
+        }
+
+        .card .quasi-ids div {
+            margin: 1px 0;
+        }
+
+        @keyframes matchPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-panel h3 {
+            margin: 0 0 1rem 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-item.highlight {
+            background: rgba(231, 76, 60, 0.3);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Attack Log */
+        .attack-log {
+            background: #1a1a2e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .attack-log .log-entry {
+            margin: 0.3rem 0;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid rgba(0,255,0,0.1);
+        }
+
+        .attack-log .log-entry.success {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .attack-log .log-entry.reveal {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+
+        .attack-log .log-entry.info {
+            color: #3498db;
+        }
+
+        /* Reveal Modal */
+        .reveal-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reveal-modal.active {
+            display: flex;
+        }
+
+        .reveal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            text-align: center;
+            animation: revealPop 0.5s ease;
+        }
+
+        @keyframes revealPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .reveal-content h2 {
+            color: #e74c3c;
+            margin: 0 0 1rem 0;
+        }
+
+        .reveal-content .identity {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .reveal-content .medical-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .reveal-content .medical-info div {
+            margin: 0.5rem 0;
+        }
+
+        .reveal-content button {
+            margin-top: 1rem;
+            padding: 0.8rem 2rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* Educational Section */
+        .educational-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .educational-section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .educational-section h3:first-child {
+            margin-top: 0;
+        }
+
+        .quasi-id-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .quasi-id-table th,
+        .quasi-id-table td {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .quasi-id-table th {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .quasi-id-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .key-concept {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        footer a {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <header class="demo-header">
+        <h1>عرض هجوم إزالة إخفاء الهوية</h1>
+        <p>"لماذا إزالة الأسماء ليست كافية لحماية الخصوصية"</p>
+    </header>
+
+    <main>
+        <div class="game-container">
+            <!-- لافتة التحذير -->
+            <div class="warning-banner">
+                <strong>عرض تعليمي:</strong> يوضح هذا العرض كيف يمكن إعادة تحديد هوية البيانات "المجهولة" باستخدام المعلومات المتاحة للعامة. جميع البيانات المعروضة اصطناعية/وهمية.
+            </div>
+
+            <!-- قسم معاينة البيانات -->
+            <div class="data-preview">
+                <h3>البيانات التي نعمل عليها</h3>
+                <p>لدينا مجموعتان من البيانات. هدفنا: <strong>مطابقة شبه المعرفات</strong> للكشف عن من لديه أي حالة طبية!</p>
+
+                <div class="preview-tables">
+                    <div class="preview-table">
+                        <h4>السجل العام (بيانات الناخبين)</h4>
+                        <table>
+                            <tr><th>Name</th><th>ZIP</th><th>Birth Date</th><th>Gender</th></tr>
+                            <tr><td class="sensitive">Nancy Taylor</td><td class="quasi">98102</td><td class="quasi">1987-12-18</td><td class="quasi">M</td></tr>
+                            <tr><td class="sensitive">Gregory Wright</td><td class="quasi">02136</td><td class="quasi">1952-06-23</td><td class="quasi">M</td></tr>
+                            <tr><td class="sensitive">Thomas Williams</td><td class="quasi">02135</td><td class="quasi">1982-09-18</td><td class="quasi">M</td></tr>
+                        </table>
+                        <a href="../index.html" target="_blank" class="data-link">عرض مجموعة البيانات الكاملة (100 سجل)</a>
+                    </div>
+
+                    <div class="preview-table">
+                        <h4>السجلات الطبية "المجهولة"</h4>
+                        <table>
+                            <tr><th>Patient ID</th><th>ZIP</th><th>Birth Date</th><th>Gender</th><th>Diagnosis</th></tr>
+                            <tr><td>PAT-1014</td><td class="quasi">98102</td><td class="quasi">1987-12-18</td><td class="quasi">M</td><td class="sensitive">???</td></tr>
+                            <tr><td>PAT-1034</td><td class="quasi">02136</td><td class="quasi">1952-06-23</td><td class="quasi">M</td><td class="sensitive">???</td></tr>
+                            <tr><td>PAT-1030</td><td class="quasi">02135</td><td class="quasi">1982-09-18</td><td class="quasi">M</td><td class="sensitive">???</td></tr>
+                        </table>
+                        <a href="../index.html" target="_blank" class="data-link">عرض مجموعة البيانات الكاملة (100 سجل)</a>
+                    </div>
+                </div>
+
+                <div class="preview-explanation">
+                    <strong>الهجوم:</strong> مطابقة <span class="highlight">الرمز البريدي + تاريخ الميلاد + الجنس</span> لربط السجلات والكشف: Nancy Taylor = PAT-1014!
+                </div>
+            </div>
+
+            <!-- Attack Controls -->
+            <div class="attack-controls">
+                <label>Attack Strategy:</label>
+                <select id="attackStrategy">
+                    <option value="greedy">Greedy (Memory-based)</option>
+                    <option value="random">Random</option>
+                    <option value="brute-force">Brute Force</option>
+                </select>
+
+                <label>Speed:</label>
+                <input type="range" id="attackSpeed" min="100" max="2000" value="500" step="100">
+                <span id="speedValue">500ms</span>
+
+                <button class="btn-attack" id="btnAttack" onclick="toggleAttack()">Start Attack</button>
+                <button class="btn-step" onclick="stepAttack()">Step</button>
+                <button class="btn-reset" onclick="resetDemo()">Reset</button>
+            </div>
+
+            <!-- Two Decks -->
+            <div class="decks-container">
+                <!-- السجل العام -->
+                <div class="deck public-deck">
+                    <div class="deck-header">
+                        السجل العام (بيانات الناخبين) - 100 سجل
+                    </div>
+                    <div class="cards-grid" id="publicGrid">
+                        <!-- Cards generated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- السجلات الطبية -->
+                <div class="deck medical-deck">
+                    <div class="deck-header">
+                        السجلات الطبية "المجهولة" - 100 سجل
+                    </div>
+                    <div class="cards-grid" id="medicalGrid">
+                        <!-- Cards generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- لوحة الإحصائيات -->
+            <div class="stats-panel">
+                <h3>إحصائيات الهجوم</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">السجلات العامة</div>
+                        <div class="stat-value" id="statPublic">100</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">السجلات الطبية</div>
+                        <div class="stat-value" id="statMedical">100</div>
+                    </div>
+                    <div class="stat-item highlight">
+                        <div class="stat-label">الهويات المكشوفة</div>
+                        <div class="stat-value" id="statRevealed">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">المحاولات</div>
+                        <div class="stat-value" id="statAttempts">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">نسبة النجاح</div>
+                        <div class="stat-value" id="statSuccessRate">0%</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attack Log -->
+            <div class="attack-log" id="attackLog">
+                <div class="log-entry info">> Attack system initialized. Ready to demonstrate re-identification attack.</div>
+                <div class="log-entry">> Strategy: Match on quasi-identifiers (ZIP + Birth Date + Gender)</div>
+            </div>
+
+            <!-- نافذة الكشف -->
+            <div class="reveal-modal" id="revealModal">
+                <div class="reveal-content">
+                    <h2>تم كشف الهوية!</h2>
+                    <div class="identity" id="revealIdentity"></div>
+                    <div class="medical-info" id="revealMedical"></div>
+                    <button onclick="closeReveal()">متابعة الهجوم</button>
+                </div>
+            </div>
+
+            <!-- القسم التعليمي -->
+            <section class="educational-section">
+                <h3>ما هو هجوم الربط؟</h3>
+                <p><strong>هجوم الربط</strong> (أو هجوم إعادة التعريف) يربط البيانات "المجهولة" بالهويات الحقيقية عن طريق المطابقة على <strong>شبه المعرفات</strong> - السمات التي ليست فريدة بمفردها ولكنها تصبح معرِّفة عند دمجها.</p>
+
+                <h3>شبه المعرفات في هذا العرض</h3>
+                <table class="quasi-id-table">
+                    <thead>
+                        <tr>
+                            <th>السمة</th>
+                            <th>في السجل العام</th>
+                            <th>في السجلات الطبية</th>
+                            <th>التفرد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>الرمز البريدي</td>
+                            <td>متوفر</td>
+                            <td>متوفر</td>
+                            <td>~30,000 قيمة في أمريكا</td>
+                        </tr>
+                        <tr>
+                            <td>تاريخ الميلاد</td>
+                            <td>متوفر</td>
+                            <td>متوفر</td>
+                            <td>~365 × 80 = 29,200 قيمة</td>
+                        </tr>
+                        <tr>
+                            <td>الجنس</td>
+                            <td>متوفر</td>
+                            <td>متوفر</td>
+                            <td>2-3 قيم</td>
+                        </tr>
+                        <tr>
+                            <td><strong>مجتمعة</strong></td>
+                            <td colspan="2"><strong>87% من سكان أمريكا يمكن تحديدهم بشكل فريد!</strong></td>
+                            <td>~مليارات التركيبات</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>مثال واقعي: لاتانيا سويني</h3>
+                <div class="key-concept">
+                    <p>في عام 1997، أثبتت الباحثة <strong>لاتانيا سويني</strong> هذا الهجوم بربط السجلات الصحية في ماساتشوستس (التي كانت تعتبر "مجهولة") مع بيانات تسجيل الناخبين لتحديد السجلات الطبية لحاكم الولاية، ويليام ويلد.</p>
+                    <p>طابقت فقط على <strong>الرمز البريدي وتاريخ الميلاد والجنس</strong> - نفس شبه المعرفات التي نستخدمها في هذا العرض!</p>
+                </div>
+
+                <h3>لماذا هذا مهم</h3>
+                <ul>
+                    <li><strong>امتثال HIPAA</strong> يتطلب أكثر من مجرد إزالة الأسماء من البيانات الصحية</li>
+                    <li><strong>k-Anonymity</strong> يضمن أن كل سجل لا يمكن تمييزه عن k-1 سجلات أخرى على الأقل</li>
+                    <li><strong>الخصوصية التفاضلية</strong> تضيف ضوضاء لمنع تحديد الهوية الفردية</li>
+                    <li><strong>تقليل البيانات</strong> - جمع/مشاركة السمات الضرورية فقط</li>
+                </ul>
+
+                <h3>كيف يعمل الهجوم</h3>
+                <ol>
+                    <li>يحصل المهاجم على بيانات طبية "مجهولة" (معرفات المرضى، وليس الأسماء)</li>
+                    <li>يحصل المهاجم على بيانات تسجيل الناخبين العامة (تتضمن الأسماء + شبه المعرفات)</li>
+                    <li>مطابقة السجلات حيث الرمز البريدي + تاريخ الميلاد + الجنس متطابقة</li>
+                    <li>تم الكشف عن الهوية! الآن المهاجم يعرف الحالات الطبية للشخص</li>
+                </ol>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="../index.html">العودة إلى الأسبوع 4 الجلسة 1</a> |
+            <a href="heuristic_demo.html">عرض الاستدلال</a> |
+            <a href="../index.html">الصفحة الرئيسية للدورة</a>
+        </p>
+        <p>&copy; 2025 مقدمة في علم البيانات والذكاء الاصطناعي</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // DATA ARRAYS (Generated from CSV files)
+        // ============================================================
+
+        const PUBLIC_REGISTRY = [
+          {"name": "Samantha Davis", "zip": "10001", "birth": "1974-09-04", "gender": "M"},
+          {"name": "Patricia Garcia", "zip": "90211", "birth": "1970-11-15", "gender": "M"},
+          {"name": "Christopher Hall", "zip": "60602", "birth": "1980-07-11", "gender": "F"},
+          {"name": "Brian Hill", "zip": "02134", "birth": "1953-11-24", "gender": "F"},
+          {"name": "Matthew Rivera", "zip": "10003", "birth": "1954-02-10", "gender": "M"},
+          {"name": "Samantha White", "zip": "90210", "birth": "1983-03-19", "gender": "F"},
+          {"name": "Cynthia Harris", "zip": "02134", "birth": "1999-12-20", "gender": "M"},
+          {"name": "William Wilson", "zip": "19102", "birth": "2000-11-19", "gender": "F"},
+          {"name": "Ashley Mitchell", "zip": "30301", "birth": "1998-05-10", "gender": "F"},
+          {"name": "Elizabeth Carter", "zip": "10002", "birth": "1959-11-02", "gender": "M"},
+          {"name": "Steven Scott", "zip": "75202", "birth": "1951-01-12", "gender": "M"},
+          {"name": "Patrick Campbell", "zip": "02134", "birth": "1994-11-29", "gender": "M"},
+          {"name": "Anna Roberts", "zip": "19102", "birth": "1997-07-31", "gender": "M"},
+          {"name": "Donald Torres", "zip": "19103", "birth": "1957-01-24", "gender": "M"},
+          {"name": "Nancy Taylor", "zip": "98102", "birth": "1987-12-18", "gender": "M"},
+          {"name": "Ashley Anderson", "zip": "10003", "birth": "1980-05-01", "gender": "M"},
+          {"name": "William Williams", "zip": "75202", "birth": "1979-08-24", "gender": "M"},
+          {"name": "Jacob Clark", "zip": "90211", "birth": "1958-06-18", "gender": "M"},
+          {"name": "Stephanie Campbell", "zip": "02136", "birth": "1959-10-21", "gender": "M"},
+          {"name": "Cynthia Thomas", "zip": "75202", "birth": "1956-10-06", "gender": "F"},
+          {"name": "Timothy Young", "zip": "98101", "birth": "1969-03-06", "gender": "F"},
+          {"name": "Jason Hall", "zip": "19103", "birth": "1999-11-11", "gender": "F"},
+          {"name": "Linda Brown", "zip": "30302", "birth": "1992-10-10", "gender": "M"},
+          {"name": "Stephanie Davis", "zip": "19103", "birth": "1972-02-02", "gender": "M"},
+          {"name": "Christine Rivera", "zip": "02136", "birth": "1971-06-01", "gender": "F"},
+          {"name": "Helen Torres", "zip": "10004", "birth": "1956-07-28", "gender": "M"},
+          {"name": "Christopher Lewis", "zip": "75201", "birth": "1998-09-26", "gender": "F"},
+          {"name": "Susan Mitchell", "zip": "30301", "birth": "1963-12-12", "gender": "F"},
+          {"name": "Gary Taylor", "zip": "19101", "birth": "1954-07-23", "gender": "M"},
+          {"name": "Jack Lewis", "zip": "30301", "birth": "1988-05-15", "gender": "M"},
+          {"name": "Thomas Williams", "zip": "02135", "birth": "1982-09-18", "gender": "M"},
+          {"name": "Catherine Martinez", "zip": "19102", "birth": "1971-03-29", "gender": "M"},
+          {"name": "Christopher Hall", "zip": "10004", "birth": "1984-04-27", "gender": "M"},
+          {"name": "Mark Johnson", "zip": "85001", "birth": "1967-04-30", "gender": "F"},
+          {"name": "Gregory Wright", "zip": "02136", "birth": "1952-06-23", "gender": "M"},
+          {"name": "Janet Lee", "zip": "60602", "birth": "1995-11-19", "gender": "M"},
+          {"name": "Eric Wright", "zip": "85001", "birth": "1967-09-05", "gender": "F"},
+          {"name": "Nicholas Martin", "zip": "85001", "birth": "1986-08-22", "gender": "F"},
+          {"name": "Brandon Torres", "zip": "02135", "birth": "1986-06-07", "gender": "M"},
+          {"name": "Jeffrey Lewis", "zip": "85001", "birth": "1969-03-04", "gender": "F"},
+          {"name": "Donald Baker", "zip": "02135", "birth": "1970-02-26", "gender": "M"},
+          {"name": "Rebecca Green", "zip": "30302", "birth": "1967-06-12", "gender": "F"},
+          {"name": "Daniel Hall", "zip": "98102", "birth": "1991-09-05", "gender": "M"},
+          {"name": "Brandon Campbell", "zip": "19101", "birth": "1995-04-15", "gender": "F"},
+          {"name": "Gary Green", "zip": "90212", "birth": "1974-08-21", "gender": "F"},
+          {"name": "Karen Anderson", "zip": "60601", "birth": "1963-09-17", "gender": "M"},
+          {"name": "Anthony Clark", "zip": "60601", "birth": "1951-10-03", "gender": "F"},
+          {"name": "Mark Moore", "zip": "60602", "birth": "1993-07-27", "gender": "M"},
+          {"name": "Jonathan Johnson", "zip": "19102", "birth": "1985-05-08", "gender": "M"},
+          {"name": "Edward Lee", "zip": "90211", "birth": "1990-10-17", "gender": "F"},
+          {"name": "John Mitchell", "zip": "30301", "birth": "1954-09-03", "gender": "F"},
+          {"name": "Helen Martinez", "zip": "90212", "birth": "1961-04-29", "gender": "F"},
+          {"name": "Nicole Mitchell", "zip": "85002", "birth": "1960-04-11", "gender": "M"},
+          {"name": "Carolyn Gonzalez", "zip": "10003", "birth": "1971-10-15", "gender": "M"},
+          {"name": "Jason Nelson", "zip": "02137", "birth": "1956-03-09", "gender": "F"},
+          {"name": "Sharon Lopez", "zip": "33101", "birth": "1996-10-22", "gender": "F"},
+          {"name": "Elizabeth Moore", "zip": "19101", "birth": "1990-06-11", "gender": "M"},
+          {"name": "Dorothy Lopez", "zip": "98101", "birth": "1969-01-11", "gender": "F"},
+          {"name": "Mary King", "zip": "19103", "birth": "1967-02-21", "gender": "M"},
+          {"name": "Carolyn Young", "zip": "60603", "birth": "1951-07-20", "gender": "M"},
+          {"name": "Stephen King", "zip": "02137", "birth": "1988-03-04", "gender": "F"},
+          {"name": "Kenneth Davis", "zip": "33101", "birth": "1998-01-28", "gender": "M"},
+          {"name": "Matthew Jackson", "zip": "90212", "birth": "1982-05-18", "gender": "M"},
+          {"name": "Donna Hall", "zip": "19103", "birth": "1961-04-30", "gender": "F"},
+          {"name": "Lisa Brown", "zip": "02134", "birth": "1992-11-10", "gender": "M"},
+          {"name": "Karen Torres", "zip": "19103", "birth": "1977-04-05", "gender": "M"},
+          {"name": "Edward Lewis", "zip": "19102", "birth": "1989-09-20", "gender": "F"},
+          {"name": "Benjamin Wilson", "zip": "02134", "birth": "1957-04-14", "gender": "M"},
+          {"name": "Frank Hill", "zip": "98101", "birth": "1976-02-17", "gender": "M"},
+          {"name": "Benjamin Nguyen", "zip": "85001", "birth": "1967-10-01", "gender": "F"},
+          {"name": "Linda Hernandez", "zip": "33103", "birth": "1977-08-06", "gender": "F"},
+          {"name": "Nicholas Wright", "zip": "98101", "birth": "1989-04-10", "gender": "M"},
+          {"name": "Gregory Torres", "zip": "30302", "birth": "1951-11-11", "gender": "F"},
+          {"name": "Sharon Green", "zip": "75201", "birth": "1994-02-11", "gender": "M"},
+          {"name": "Kevin Clark", "zip": "85002", "birth": "1994-06-14", "gender": "F"},
+          {"name": "Joseph Roberts", "zip": "60601", "birth": "1996-03-02", "gender": "M"},
+          {"name": "Jeffrey Carter", "zip": "10002", "birth": "1968-04-06", "gender": "F"},
+          {"name": "Nicole Thomas", "zip": "85002", "birth": "1964-03-17", "gender": "F"},
+          {"name": "Samuel Martinez", "zip": "98101", "birth": "1976-03-08", "gender": "F"},
+          {"name": "Matthew Hill", "zip": "98102", "birth": "1962-04-01", "gender": "M"},
+          {"name": "Patrick Martin", "zip": "75201", "birth": "1993-12-05", "gender": "M"},
+          {"name": "Dorothy Gonzalez", "zip": "85002", "birth": "1971-06-05", "gender": "F"},
+          {"name": "Raymond Adams", "zip": "10005", "birth": "1994-06-09", "gender": "M"},
+          {"name": "Ryan Smith", "zip": "33101", "birth": "1962-12-07", "gender": "F"},
+          {"name": "David Perez", "zip": "75202", "birth": "1997-11-15", "gender": "F"},
+          {"name": "Debra Jackson", "zip": "90212", "birth": "1958-02-09", "gender": "F"},
+          {"name": "Linda Jackson", "zip": "02137", "birth": "1983-08-18", "gender": "F"},
+          {"name": "Daniel Garcia", "zip": "30303", "birth": "1984-04-27", "gender": "M"},
+          {"name": "Steven Nelson", "zip": "10001", "birth": "1991-09-28", "gender": "F"},
+          {"name": "Jason Hall", "zip": "02134", "birth": "1990-12-26", "gender": "F"},
+          {"name": "Donna Hall", "zip": "02135", "birth": "1951-12-20", "gender": "F"},
+          {"name": "Sandra Hill", "zip": "33103", "birth": "1981-08-10", "gender": "M"},
+          {"name": "Samuel Williams", "zip": "02135", "birth": "1989-07-19", "gender": "M"},
+          {"name": "Betty Rodriguez", "zip": "33103", "birth": "1998-05-24", "gender": "F"},
+          {"name": "Cynthia Jones", "zip": "10005", "birth": "1970-03-29", "gender": "F"},
+          {"name": "Melissa Baker", "zip": "33101", "birth": "1973-07-09", "gender": "F"},
+          {"name": "Mark Adams", "zip": "10003", "birth": "1991-08-27", "gender": "F"},
+          {"name": "Richard Thomas", "zip": "19101", "birth": "1998-03-24", "gender": "M"},
+          {"name": "Katherine Miller", "zip": "75201", "birth": "1993-11-25", "gender": "F"},
+          {"name": "Richard Baker", "zip": "02137", "birth": "1998-11-06", "gender": "F"}
+        ];
+
+        const MEDICAL_RECORDS = [
+          {"id": "PAT-1014", "zip": "98102", "birth": "1987-12-18", "gender": "M", "blood": "B-", "diagnosis": "Hypothyroidism", "medication": "Phentermine", "bpSys": 142, "bpDia": 83, "heartRate": 83, "cholesterol": 265, "lastVisit": "2023-05-04"},
+          {"id": "PAT-1034", "zip": "02136", "birth": "1952-06-23", "gender": "M", "blood": "AB+", "diagnosis": "Allergic Rhinitis", "medication": "Amoxicillin", "bpSys": 116, "bpDia": 62, "heartRate": 61, "cholesterol": 261, "lastVisit": "2023-12-20"},
+          {"id": "PAT-1030", "zip": "02135", "birth": "1982-09-18", "gender": "M", "blood": "AB-", "diagnosis": "Anxiety Disorder", "medication": "Fluoxetine", "bpSys": 142, "bpDia": 66, "heartRate": 77, "cholesterol": 254, "lastVisit": "2024-09-27"},
+          {"id": "PAT-1078", "zip": "98101", "birth": "1976-03-08", "gender": "F", "blood": "O+", "diagnosis": "Vitamin D Deficiency", "medication": "Vitamin D3", "bpSys": 115, "bpDia": 89, "heartRate": 90, "cholesterol": 187, "lastVisit": "2024-01-28"},
+          {"id": "PAT-1016", "zip": "75202", "birth": "1979-08-24", "gender": "M", "blood": "B-", "diagnosis": "GERD", "medication": "Vitamin D3", "bpSys": 113, "bpDia": 94, "heartRate": 63, "cholesterol": 271, "lastVisit": "2023-09-06"},
+          {"id": "PAT-1015", "zip": "10003", "birth": "1980-05-01", "gender": "M", "blood": "B-", "diagnosis": "Bronchitis", "medication": "Fluoxetine", "bpSys": 100, "bpDia": 64, "heartRate": 100, "cholesterol": 165, "lastVisit": "2023-08-23"},
+          {"id": "PAT-1091", "zip": "33103", "birth": "1981-08-10", "gender": "M", "blood": "B-", "diagnosis": "UTI", "medication": "Omeprazole", "bpSys": 143, "bpDia": 68, "heartRate": 95, "cholesterol": 174, "lastVisit": "2024-10-04"},
+          {"id": "PAT-1038", "zip": "02135", "birth": "1986-06-07", "gender": "M", "blood": "AB+", "diagnosis": "Hypothyroidism", "medication": "Sertraline", "bpSys": 127, "bpDia": 97, "heartRate": 93, "cholesterol": 232, "lastVisit": "2024-04-21"},
+          {"id": "PAT-1010", "zip": "75202", "birth": "1951-01-12", "gender": "M", "blood": "AB+", "diagnosis": "Hyperlipidemia", "medication": "Sumatriptan", "bpSys": 118, "bpDia": 87, "heartRate": 65, "cholesterol": 266, "lastVisit": "2023-01-04"},
+          {"id": "PAT-1085", "zip": "90212", "birth": "1958-02-09", "gender": "F", "blood": "A-", "diagnosis": "Migraine", "medication": "Alendronate", "bpSys": 110, "bpDia": 79, "heartRate": 56, "cholesterol": 161, "lastVisit": "2023-11-29"},
+          {"id": "PAT-1079", "zip": "98102", "birth": "1962-04-01", "gender": "M", "blood": "AB+", "diagnosis": "Anemia", "medication": "Atorvastatin", "bpSys": 159, "bpDia": 92, "heartRate": 72, "cholesterol": 150, "lastVisit": "2023-10-17"},
+          {"id": "PAT-1071", "zip": "98101", "birth": "1989-04-10", "gender": "M", "blood": "A+", "diagnosis": "Anemia", "medication": "Atorvastatin", "bpSys": 138, "bpDia": 76, "heartRate": 56, "cholesterol": 173, "lastVisit": "2023-08-23"},
+          {"id": "PAT-1006", "zip": "02134", "birth": "1999-12-20", "gender": "M", "blood": "AB-", "diagnosis": "Type 2 Diabetes", "medication": "Fluoxetine", "bpSys": 152, "bpDia": 62, "heartRate": 75, "cholesterol": 252, "lastVisit": "2023-10-02"},
+          {"id": "PAT-1007", "zip": "19102", "birth": "2000-11-19", "gender": "F", "blood": "B-", "diagnosis": "Vitamin D Deficiency", "medication": "Phentermine", "bpSys": 156, "bpDia": 89, "heartRate": 64, "cholesterol": 217, "lastVisit": "2023-05-23"},
+          {"id": "PAT-1037", "zip": "85001", "birth": "1986-08-22", "gender": "F", "blood": "O+", "diagnosis": "Hypothyroidism", "medication": "Hydrocortisone", "bpSys": 108, "bpDia": 72, "heartRate": 81, "cholesterol": 247, "lastVisit": "2023-06-28"},
+          {"id": "PAT-1043", "zip": "19101", "birth": "1995-04-15", "gender": "F", "blood": "O-", "diagnosis": "Allergic Rhinitis", "medication": "Vitamin D3", "bpSys": 128, "bpDia": 76, "heartRate": 70, "cholesterol": 220, "lastVisit": "2024-06-17"},
+          {"id": "PAT-1066", "zip": "19102", "birth": "1989-09-20", "gender": "F", "blood": "O+", "diagnosis": "Hypothyroidism", "medication": "Amoxicillin", "bpSys": 139, "bpDia": 63, "heartRate": 94, "cholesterol": 175, "lastVisit": "2023-08-01"},
+          {"id": "PAT-1060", "zip": "02137", "birth": "1988-03-04", "gender": "F", "blood": "AB-", "diagnosis": "Osteoporosis", "medication": "Omeprazole", "bpSys": 119, "bpDia": 76, "heartRate": 69, "cholesterol": 180, "lastVisit": "2023-07-17"},
+          {"id": "PAT-1036", "zip": "85001", "birth": "1967-09-05", "gender": "F", "blood": "O+", "diagnosis": "Asthma", "medication": "Atorvastatin", "bpSys": 139, "bpDia": 80, "heartRate": 97, "cholesterol": 181, "lastVisit": "2023-11-04"},
+          {"id": "PAT-1051", "zip": "90212", "birth": "1961-04-29", "gender": "F", "blood": "A-", "diagnosis": "Bronchitis", "medication": "Sertraline", "bpSys": 129, "bpDia": 76, "heartRate": 78, "cholesterol": 192, "lastVisit": "2024-09-12"},
+          {"id": "PAT-1097", "zip": "19101", "birth": "1998-03-24", "gender": "M", "blood": "O+", "diagnosis": "Osteoporosis", "medication": "Naproxen", "bpSys": 142, "bpDia": 94, "heartRate": 81, "cholesterol": 189, "lastVisit": "2024-02-29"},
+          {"id": "PAT-1004", "zip": "10003", "birth": "1954-02-10", "gender": "M", "blood": "AB+", "diagnosis": "Asthma", "medication": "Fluoxetine", "bpSys": 155, "bpDia": 66, "heartRate": 79, "cholesterol": 221, "lastVisit": "2024-04-09"},
+          {"id": "PAT-1045", "zip": "60601", "birth": "1963-09-17", "gender": "M", "blood": "A-", "diagnosis": "Anemia", "medication": "Iron Supplement", "bpSys": 121, "bpDia": 94, "heartRate": 84, "cholesterol": 256, "lastVisit": "2023-03-05"},
+          {"id": "PAT-1054", "zip": "02137", "birth": "1956-03-09", "gender": "F", "blood": "A+", "diagnosis": "Anemia", "medication": "Vitamin D3", "bpSys": 106, "bpDia": 87, "heartRate": 78, "cholesterol": 267, "lastVisit": "2023-06-06"},
+          {"id": "PAT-1025", "zip": "10004", "birth": "1956-07-28", "gender": "M", "blood": "AB+", "diagnosis": "Arthritis", "medication": "Naproxen", "bpSys": 156, "bpDia": 64, "heartRate": 70, "cholesterol": 244, "lastVisit": "2023-10-19"},
+          {"id": "PAT-1092", "zip": "02135", "birth": "1989-07-19", "gender": "M", "blood": "AB-", "diagnosis": "Arthritis", "medication": "Albuterol", "bpSys": 158, "bpDia": 78, "heartRate": 75, "cholesterol": 256, "lastVisit": "2023-06-29"},
+          {"id": "PAT-1046", "zip": "60601", "birth": "1951-10-03", "gender": "F", "blood": "O-", "diagnosis": "Hypertension", "medication": "Naproxen", "bpSys": 119, "bpDia": 84, "heartRate": 81, "cholesterol": 206, "lastVisit": "2024-05-14"},
+          {"id": "PAT-1003", "zip": "02134", "birth": "1953-11-24", "gender": "F", "blood": "A-", "diagnosis": "Obesity", "medication": "Albuterol", "bpSys": 135, "bpDia": 78, "heartRate": 95, "cholesterol": 242, "lastVisit": "2024-08-14"},
+          {"id": "PAT-1086", "zip": "02137", "birth": "1983-08-18", "gender": "F", "blood": "B+", "diagnosis": "Depression", "medication": "Zolpidem", "bpSys": 126, "bpDia": 96, "heartRate": 98, "cholesterol": 196, "lastVisit": "2023-06-24"},
+          {"id": "PAT-1058", "zip": "19103", "birth": "1967-02-21", "gender": "M", "blood": "B-", "diagnosis": "Anemia", "medication": "Vitamin D3", "bpSys": 135, "bpDia": 75, "heartRate": 99, "cholesterol": 271, "lastVisit": "2024-10-23"},
+          {"id": "PAT-1008", "zip": "30301", "birth": "1998-05-10", "gender": "F", "blood": "O+", "diagnosis": "Bronchitis", "medication": "Phentermine", "bpSys": 123, "bpDia": 74, "heartRate": 63, "cholesterol": 280, "lastVisit": "2024-05-20"},
+          {"id": "PAT-1028", "zip": "19101", "birth": "1954-07-23", "gender": "M", "blood": "O+", "diagnosis": "GERD", "medication": "Metformin", "bpSys": 100, "bpDia": 81, "heartRate": 63, "cholesterol": 217, "lastVisit": "2023-06-15"},
+          {"id": "PAT-1018", "zip": "02136", "birth": "1959-10-21", "gender": "M", "blood": "B-", "diagnosis": "Anxiety Disorder", "medication": "Hydrocortisone", "bpSys": 128, "bpDia": 68, "heartRate": 82, "cholesterol": 196, "lastVisit": "2023-10-13"},
+          {"id": "PAT-1067", "zip": "02134", "birth": "1957-04-14", "gender": "M", "blood": "B-", "diagnosis": "Allergic Rhinitis", "medication": "Hydrocortisone", "bpSys": 104, "bpDia": 70, "heartRate": 55, "cholesterol": 254, "lastVisit": "2024-04-06"},
+          {"id": "PAT-1083", "zip": "33101", "birth": "1962-12-07", "gender": "F", "blood": "B+", "diagnosis": "Asthma", "medication": "Vitamin D3", "bpSys": 150, "bpDia": 76, "heartRate": 76, "cholesterol": 251, "lastVisit": "2024-10-27"},
+          {"id": "PAT-1056", "zip": "19101", "birth": "1990-06-11", "gender": "M", "blood": "O-", "diagnosis": "Bronchitis", "medication": "Ciprofloxacin", "bpSys": 142, "bpDia": 84, "heartRate": 76, "cholesterol": 157, "lastVisit": "2024-05-21"},
+          {"id": "PAT-1076", "zip": "10002", "birth": "1968-04-06", "gender": "F", "blood": "B+", "diagnosis": "Hypothyroidism", "medication": "Alendronate", "bpSys": 156, "bpDia": 91, "heartRate": 62, "cholesterol": 157, "lastVisit": "2024-10-07"},
+          {"id": "PAT-1089", "zip": "02134", "birth": "1990-12-26", "gender": "F", "blood": "B-", "diagnosis": "Obesity", "medication": "Vitamin D3", "bpSys": 106, "bpDia": 75, "heartRate": 79, "cholesterol": 241, "lastVisit": "2024-08-11"},
+          {"id": "PAT-1000", "zip": "10001", "birth": "1974-09-04", "gender": "M", "blood": "B-", "diagnosis": "Arthritis", "medication": "Sumatriptan", "bpSys": 143, "bpDia": 94, "heartRate": 60, "cholesterol": 258, "lastVisit": "2023-02-02"},
+          {"id": "PAT-1063", "zip": "19103", "birth": "1961-04-30", "gender": "F", "blood": "A-", "diagnosis": "Hypertension", "medication": "Amoxicillin", "bpSys": 118, "bpDia": 90, "heartRate": 85, "cholesterol": 262, "lastVisit": "2023-12-15"},
+          {"id": "PAT-1042", "zip": "98102", "birth": "1991-09-05", "gender": "M", "blood": "B-", "diagnosis": "Migraine", "medication": "Alendronate", "bpSys": 108, "bpDia": 89, "heartRate": 97, "cholesterol": 231, "lastVisit": "2024-03-29"},
+          {"id": "PAT-1009", "zip": "10002", "birth": "1959-11-02", "gender": "M", "blood": "B+", "diagnosis": "Anemia", "medication": "Ciprofloxacin", "bpSys": 104, "bpDia": 84, "heartRate": 79, "cholesterol": 269, "lastVisit": "2024-06-25"},
+          {"id": "PAT-1080", "zip": "75201", "birth": "1993-12-05", "gender": "M", "blood": "O-", "diagnosis": "Eczema", "medication": "Vitamin D3", "bpSys": 122, "bpDia": 81, "heartRate": 90, "cholesterol": 246, "lastVisit": "2024-04-11"},
+          {"id": "PAT-1024", "zip": "02136", "birth": "1971-06-01", "gender": "F", "blood": "O+", "diagnosis": "Arthritis", "medication": "Levothyroxine", "bpSys": 129, "bpDia": 80, "heartRate": 59, "cholesterol": 152, "lastVisit": "2024-04-14"},
+          {"id": "PAT-1088", "zip": "10001", "birth": "1991-09-28", "gender": "F", "blood": "B+", "diagnosis": "Asthma", "medication": "Alendronate", "bpSys": 160, "bpDia": 82, "heartRate": 92, "cholesterol": 226, "lastVisit": "2024-10-16"},
+          {"id": "PAT-1075", "zip": "60601", "birth": "1996-03-02", "gender": "M", "blood": "O-", "diagnosis": "Anemia", "medication": "Metformin", "bpSys": 112, "bpDia": 93, "heartRate": 78, "cholesterol": 277, "lastVisit": "2024-10-02"},
+          {"id": "PAT-1013", "zip": "19103", "birth": "1957-01-24", "gender": "M", "blood": "O-", "diagnosis": "Asthma", "medication": "Hydrocortisone", "bpSys": 149, "bpDia": 68, "heartRate": 63, "cholesterol": 271, "lastVisit": "2024-07-16"},
+          {"id": "PAT-1061", "zip": "33101", "birth": "1998-01-28", "gender": "M", "blood": "B-", "diagnosis": "Anxiety Disorder", "medication": "Vitamin D3", "bpSys": 117, "bpDia": 97, "heartRate": 88, "cholesterol": 222, "lastVisit": "2023-04-13"},
+          {"id": "PAT-1033", "zip": "85001", "birth": "1967-04-30", "gender": "F", "blood": "AB-", "diagnosis": "GERD", "medication": "Albuterol", "bpSys": 149, "bpDia": 77, "heartRate": 77, "cholesterol": 280, "lastVisit": "2024-02-14"},
+          {"id": "PAT-1093", "zip": "33103", "birth": "1998-05-24", "gender": "F", "blood": "AB+", "diagnosis": "Allergic Rhinitis", "medication": "Omeprazole", "bpSys": 158, "bpDia": 90, "heartRate": 73, "cholesterol": 236, "lastVisit": "2023-04-28"},
+          {"id": "PAT-1049", "zip": "90211", "birth": "1990-10-17", "gender": "F", "blood": "AB-", "diagnosis": "Obesity", "medication": "Omeprazole", "bpSys": 148, "bpDia": 86, "heartRate": 71, "cholesterol": 170, "lastVisit": "2024-04-26"},
+          {"id": "PAT-1031", "zip": "19102", "birth": "1971-03-29", "gender": "M", "blood": "B+", "diagnosis": "Anemia", "medication": "Lisinopril", "bpSys": 111, "bpDia": 81, "heartRate": 81, "cholesterol": 213, "lastVisit": "2023-10-01"},
+          {"id": "PAT-1029", "zip": "30301", "birth": "1988-05-15", "gender": "M", "blood": "A-", "diagnosis": "Asthma", "medication": "Ibuprofen", "bpSys": 134, "bpDia": 62, "heartRate": 78, "cholesterol": 187, "lastVisit": "2024-03-16"},
+          {"id": "PAT-1087", "zip": "30303", "birth": "1984-04-27", "gender": "M", "blood": "O-", "diagnosis": "Bronchitis", "medication": "Ibuprofen", "bpSys": 114, "bpDia": 89, "heartRate": 95, "cholesterol": 215, "lastVisit": "2024-04-15"},
+          {"id": "PAT-1094", "zip": "10005", "birth": "1970-03-29", "gender": "F", "blood": "AB-", "diagnosis": "Asthma", "medication": "Phentermine", "bpSys": 100, "bpDia": 76, "heartRate": 89, "cholesterol": 181, "lastVisit": "2024-04-10"},
+          {"id": "PAT-1011", "zip": "02134", "birth": "1994-11-29", "gender": "M", "blood": "A-", "diagnosis": "Hypothyroidism", "medication": "Zolpidem", "bpSys": 138, "bpDia": 72, "heartRate": 64, "cholesterol": 245, "lastVisit": "2023-06-15"},
+          {"id": "PAT-1044", "zip": "90212", "birth": "1974-08-21", "gender": "F", "blood": "A-", "diagnosis": "Hypothyroidism", "medication": "Fluoxetine", "bpSys": 117, "bpDia": 81, "heartRate": 75, "cholesterol": 170, "lastVisit": "2023-05-22"},
+          {"id": "PAT-1090", "zip": "02135", "birth": "1951-12-20", "gender": "F", "blood": "AB+", "diagnosis": "Hypertension", "medication": "Amoxicillin", "bpSys": 155, "bpDia": 63, "heartRate": 93, "cholesterol": 277, "lastVisit": "2023-10-21"},
+          {"id": "PAT-1074", "zip": "85002", "birth": "1994-06-14", "gender": "F", "blood": "O+", "diagnosis": "Eczema", "medication": "Metformin", "bpSys": 129, "bpDia": 65, "heartRate": 75, "cholesterol": 214, "lastVisit": "2023-11-28"},
+          {"id": "PAT-1053", "zip": "10003", "birth": "1971-10-15", "gender": "M", "blood": "AB+", "diagnosis": "UTI", "medication": "Sumatriptan", "bpSys": 150, "bpDia": 96, "heartRate": 57, "cholesterol": 238, "lastVisit": "2024-06-29"},
+          {"id": "PAT-1070", "zip": "33103", "birth": "1977-08-06", "gender": "F", "blood": "O-", "diagnosis": "Migraine", "medication": "Alendronate", "bpSys": 144, "bpDia": 79, "heartRate": 99, "cholesterol": 253, "lastVisit": "2023-10-06"},
+          {"id": "PAT-1081", "zip": "85002", "birth": "1971-06-05", "gender": "F", "blood": "B-", "diagnosis": "Anemia", "medication": "Metformin", "bpSys": 120, "bpDia": 90, "heartRate": 100, "cholesterol": 247, "lastVisit": "2024-01-31"},
+          {"id": "PAT-1005", "zip": "90210", "birth": "1983-03-19", "gender": "F", "blood": "B-", "diagnosis": "GERD", "medication": "Albuterol", "bpSys": 138, "bpDia": 100, "heartRate": 65, "cholesterol": 212, "lastVisit": "2023-06-17"},
+          {"id": "PAT-1077", "zip": "85002", "birth": "1964-03-17", "gender": "F", "blood": "A+", "diagnosis": "Eczema", "medication": "Iron Supplement", "bpSys": 105, "bpDia": 74, "heartRate": 62, "cholesterol": 268, "lastVisit": "2023-05-01"},
+          {"id": "PAT-1050", "zip": "30301", "birth": "1954-09-03", "gender": "F", "blood": "B-", "diagnosis": "Asthma", "medication": "Metformin", "bpSys": 148, "bpDia": 61, "heartRate": 70, "cholesterol": 201, "lastVisit": "2023-01-21"},
+          {"id": "PAT-1026", "zip": "75201", "birth": "1998-09-26", "gender": "F", "blood": "A+", "diagnosis": "Eczema", "medication": "Levothyroxine", "bpSys": 159, "bpDia": 66, "heartRate": 63, "cholesterol": 217, "lastVisit": "2023-04-29"},
+          {"id": "PAT-1022", "zip": "30302", "birth": "1992-10-10", "gender": "M", "blood": "A+", "diagnosis": "Insomnia", "medication": "Albuterol", "bpSys": 154, "bpDia": 71, "heartRate": 59, "cholesterol": 167, "lastVisit": "2023-08-29"},
+          {"id": "PAT-1019", "zip": "75202", "birth": "1956-10-06", "gender": "F", "blood": "A-", "diagnosis": "Type 2 Diabetes", "medication": "Hydrocortisone", "bpSys": 153, "bpDia": 60, "heartRate": 60, "cholesterol": 210, "lastVisit": "2023-06-20"},
+          {"id": "PAT-1041", "zip": "30302", "birth": "1967-06-12", "gender": "F", "blood": "O-", "diagnosis": "Obesity", "medication": "Fluoxetine", "bpSys": 109, "bpDia": 60, "heartRate": 61, "cholesterol": 258, "lastVisit": "2023-08-13"},
+          {"id": "PAT-1021", "zip": "19103", "birth": "1999-11-11", "gender": "F", "blood": "B+", "diagnosis": "Anxiety Disorder", "medication": "Levothyroxine", "bpSys": 113, "bpDia": 63, "heartRate": 92, "cholesterol": 165, "lastVisit": "2023-11-18"},
+          {"id": "PAT-1032", "zip": "10004", "birth": "1984-04-27", "gender": "M", "blood": "O-", "diagnosis": "Depression", "medication": "Sertraline", "bpSys": 152, "bpDia": 89, "heartRate": 77, "cholesterol": 228, "lastVisit": "2023-08-22"},
+          {"id": "PAT-1017", "zip": "90211", "birth": "1958-06-18", "gender": "M", "blood": "O+", "diagnosis": "Chronic Back Pain", "medication": "Iron Supplement", "bpSys": 126, "bpDia": 89, "heartRate": 58, "cholesterol": 175, "lastVisit": "2023-03-04"},
+          {"id": "PAT-1095", "zip": "33101", "birth": "1973-07-09", "gender": "F", "blood": "AB-", "diagnosis": "Migraine", "medication": "Fluoxetine", "bpSys": 130, "bpDia": 61, "heartRate": 94, "cholesterol": 233, "lastVisit": "2024-09-16"},
+          {"id": "PAT-1062", "zip": "90212", "birth": "1982-05-18", "gender": "M", "blood": "AB+", "diagnosis": "Hypertension", "medication": "Hydrocortisone", "bpSys": 108, "bpDia": 77, "heartRate": 57, "cholesterol": 163, "lastVisit": "2024-07-20"},
+          {"id": "PAT-1027", "zip": "30301", "birth": "1963-12-12", "gender": "F", "blood": "AB+", "diagnosis": "UTI", "medication": "Sertraline", "bpSys": 145, "bpDia": 81, "heartRate": 68, "cholesterol": 217, "lastVisit": "2024-06-01"},
+          {"id": "PAT-1047", "zip": "60602", "birth": "1993-07-27", "gender": "M", "blood": "O+", "diagnosis": "Hyperlipidemia", "medication": "Phentermine", "bpSys": 146, "bpDia": 70, "heartRate": 84, "cholesterol": 182, "lastVisit": "2024-09-29"},
+          {"id": "PAT-1039", "zip": "85001", "birth": "1969-03-04", "gender": "F", "blood": "B+", "diagnosis": "Asthma", "medication": "Levothyroxine", "bpSys": 132, "bpDia": 100, "heartRate": 94, "cholesterol": 235, "lastVisit": "2023-04-06"},
+          {"id": "PAT-1084", "zip": "75202", "birth": "1997-11-15", "gender": "F", "blood": "AB-", "diagnosis": "Vitamin D Deficiency", "medication": "Hydrocortisone", "bpSys": 102, "bpDia": 99, "heartRate": 59, "cholesterol": 210, "lastVisit": "2024-10-08"},
+          {"id": "PAT-1020", "zip": "98101", "birth": "1969-03-06", "gender": "F", "blood": "A+", "diagnosis": "Allergic Rhinitis", "medication": "Phentermine", "bpSys": 100, "bpDia": 84, "heartRate": 71, "cholesterol": 266, "lastVisit": "2023-10-20"},
+          {"id": "PAT-1072", "zip": "30302", "birth": "1951-11-11", "gender": "F", "blood": "A+", "diagnosis": "Allergic Rhinitis", "medication": "Vitamin D3", "bpSys": 133, "bpDia": 88, "heartRate": 72, "cholesterol": 196, "lastVisit": "2024-08-22"},
+          {"id": "PAT-1096", "zip": "10003", "birth": "1991-08-27", "gender": "F", "blood": "O+", "diagnosis": "Migraine", "medication": "Ibuprofen", "bpSys": 102, "bpDia": 62, "heartRate": 74, "cholesterol": 276, "lastVisit": "2023-04-29"},
+          {"id": "PAT-1012", "zip": "19102", "birth": "1997-07-31", "gender": "M", "blood": "AB-", "diagnosis": "Vitamin D Deficiency", "medication": "Lisinopril", "bpSys": 107, "bpDia": 83, "heartRate": 74, "cholesterol": 211, "lastVisit": "2023-03-01"},
+          {"id": "PAT-1064", "zip": "02134", "birth": "1992-11-10", "gender": "M", "blood": "A-", "diagnosis": "Obesity", "medication": "Vitamin D3", "bpSys": 104, "bpDia": 96, "heartRate": 95, "cholesterol": 163, "lastVisit": "2023-06-05"},
+          {"id": "PAT-1002", "zip": "60602", "birth": "1980-07-11", "gender": "F", "blood": "B+", "diagnosis": "Anxiety Disorder", "medication": "Atorvastatin", "bpSys": 106, "bpDia": 65, "heartRate": 79, "cholesterol": 174, "lastVisit": "2024-01-03"},
+          {"id": "PAT-1059", "zip": "60603", "birth": "1951-07-20", "gender": "M", "blood": "AB+", "diagnosis": "Depression", "medication": "Phentermine", "bpSys": 144, "bpDia": 75, "heartRate": 74, "cholesterol": 244, "lastVisit": "2024-04-29"},
+          {"id": "PAT-1048", "zip": "19102", "birth": "1985-05-08", "gender": "M", "blood": "A-", "diagnosis": "Anemia", "medication": "Ibuprofen", "bpSys": 155, "bpDia": 89, "heartRate": 66, "cholesterol": 162, "lastVisit": "2023-09-24"},
+          {"id": "PAT-1065", "zip": "19103", "birth": "1977-04-05", "gender": "M", "blood": "B-", "diagnosis": "Migraine", "medication": "Hydrocortisone", "bpSys": 148, "bpDia": 86, "heartRate": 93, "cholesterol": 207, "lastVisit": "2024-06-19"},
+          {"id": "PAT-1055", "zip": "33101", "birth": "1996-10-22", "gender": "F", "blood": "O-", "diagnosis": "Osteoporosis", "medication": "Iron Supplement", "bpSys": 152, "bpDia": 97, "heartRate": 72, "cholesterol": 232, "lastVisit": "2023-09-09"},
+          {"id": "PAT-1098", "zip": "75201", "birth": "1993-11-25", "gender": "F", "blood": "AB+", "diagnosis": "Type 2 Diabetes", "medication": "Naproxen", "bpSys": 113, "bpDia": 88, "heartRate": 83, "cholesterol": 210, "lastVisit": "2024-01-07"},
+          {"id": "PAT-1023", "zip": "19103", "birth": "1972-02-02", "gender": "M", "blood": "A-", "diagnosis": "Anemia", "medication": "Amoxicillin", "bpSys": 136, "bpDia": 93, "heartRate": 75, "cholesterol": 216, "lastVisit": "2023-07-29"},
+          {"id": "PAT-1099", "zip": "02137", "birth": "1998-11-06", "gender": "F", "blood": "A+", "diagnosis": "Obesity", "medication": "Omeprazole", "bpSys": 112, "bpDia": 67, "heartRate": 84, "cholesterol": 173, "lastVisit": "2023-08-06"},
+          {"id": "PAT-1052", "zip": "85002", "birth": "1960-04-11", "gender": "M", "blood": "AB+", "diagnosis": "Migraine", "medication": "Amoxicillin", "bpSys": 101, "bpDia": 79, "heartRate": 91, "cholesterol": 246, "lastVisit": "2024-02-11"},
+          {"id": "PAT-1069", "zip": "85001", "birth": "1967-10-01", "gender": "F", "blood": "A-", "diagnosis": "Eczema", "medication": "Fluoxetine", "bpSys": 141, "bpDia": 69, "heartRate": 72, "cholesterol": 186, "lastVisit": "2023-03-15"},
+          {"id": "PAT-1068", "zip": "98101", "birth": "1976-02-17", "gender": "M", "blood": "B-", "diagnosis": "Hypothyroidism", "medication": "Levothyroxine", "bpSys": 144, "bpDia": 89, "heartRate": 59, "cholesterol": 209, "lastVisit": "2023-09-28"},
+          {"id": "PAT-1082", "zip": "10005", "birth": "1994-06-09", "gender": "M", "blood": "B+", "diagnosis": "Insomnia", "medication": "Amoxicillin", "bpSys": 121, "bpDia": 66, "heartRate": 83, "cholesterol": 175, "lastVisit": "2024-06-22"},
+          {"id": "PAT-1073", "zip": "75201", "birth": "1994-02-11", "gender": "M", "blood": "O-", "diagnosis": "Chronic Back Pain", "medication": "Iron Supplement", "bpSys": 121, "bpDia": 80, "heartRate": 97, "cholesterol": 176, "lastVisit": "2023-06-14"},
+          {"id": "PAT-1040", "zip": "02135", "birth": "1970-02-26", "gender": "M", "blood": "B+", "diagnosis": "Hypertension", "medication": "Metformin", "bpSys": 115, "bpDia": 90, "heartRate": 94, "cholesterol": 168, "lastVisit": "2024-04-11"},
+          {"id": "PAT-1057", "zip": "98101", "birth": "1969-01-11", "gender": "F", "blood": "AB+", "diagnosis": "Hyperlipidemia", "medication": "Omeprazole", "bpSys": 156, "bpDia": 98, "heartRate": 99, "cholesterol": 220, "lastVisit": "2024-07-23"},
+          {"id": "PAT-1035", "zip": "60602", "birth": "1995-11-19", "gender": "M", "blood": "O+", "diagnosis": "Bronchitis", "medication": "Sertraline", "bpSys": 116, "bpDia": 62, "heartRate": 100, "cholesterol": 261, "lastVisit": "2023-01-02"},
+          {"id": "PAT-1001", "zip": "90211", "birth": "1970-11-15", "gender": "M", "blood": "B-", "diagnosis": "Eczema", "medication": "Iron Supplement", "bpSys": 114, "bpDia": 88, "heartRate": 92, "cholesterol": 221, "lastVisit": "2023-01-07"}
+        ];
+
+        // ============================================================
+        // GAME STATE
+        // ============================================================
+
+        const gameState = {
+            publicMatched: new Set(),
+            medicalMatched: new Set(),
+            selectedPublic: null,
+            selectedMedical: null,
+            attempts: 0,
+            revealed: 0,
+            isRunning: false,
+            memory: new Map(), // Stores seen quasi-IDs: "zip|birth|gender" -> {publicIndices: [], medicalIndices: []}
+            publicIndex: 0,
+            medicalIndex: 0
+        };
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+
+        function initDemo() {
+            renderPublicCards();
+            renderMedicalCards();
+            updateStats();
+        }
+
+        function renderPublicCards() {
+            const grid = document.getElementById('publicGrid');
+            grid.innerHTML = '';
+
+            PUBLIC_REGISTRY.forEach((person, index) => {
+                const card = document.createElement('div');
+                card.className = 'card public-card';
+                card.dataset.index = index;
+                card.innerHTML = `<div class="card-name">${person.name}</div>`;
+                card.onclick = () => selectPublicCard(index);
+                grid.appendChild(card);
+            });
+        }
+
+        function renderMedicalCards() {
+            const grid = document.getElementById('medicalGrid');
+            grid.innerHTML = '';
+
+            MEDICAL_RECORDS.forEach((record, index) => {
+                const card = document.createElement('div');
+                card.className = 'card medical-card';
+                card.dataset.index = index;
+                card.innerHTML = `<div class="card-patient-id">${record.id}</div>`;
+                card.onclick = () => selectMedicalCard(index);
+                grid.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        // CARD SELECTION
+        // ============================================================
+
+        function selectPublicCard(index) {
+            if (gameState.publicMatched.has(index)) return;
+            if (gameState.selectedPublic === index) return;
+
+            // Deselect previous
+            if (gameState.selectedPublic !== null) {
+                const prevCard = document.querySelector(`.public-card[data-index="${gameState.selectedPublic}"]`);
+                if (prevCard) {
+                    prevCard.classList.remove('selected', 'flipped');
+                }
+            }
+
+            gameState.selectedPublic = index;
+            const card = document.querySelector(`.public-card[data-index="${index}"]`);
+            card.classList.add('selected', 'flipped');
+
+            const person = PUBLIC_REGISTRY[index];
+            card.innerHTML = `
+                <div class="card-name">${person.name}</div>
+                <div class="quasi-ids">
+                    <div>ZIP: ${person.zip}</div>
+                    <div>DOB: ${person.birth}</div>
+                    <div>Gender: ${person.gender}</div>
+                </div>
+            `;
+
+            // Store in memory
+            const key = `${person.zip}|${person.birth}|${person.gender}`;
+            if (!gameState.memory.has(key)) {
+                gameState.memory.set(key, { publicIndices: [], medicalIndices: [] });
+            }
+            if (!gameState.memory.get(key).publicIndices.includes(index)) {
+                gameState.memory.get(key).publicIndices.push(index);
+            }
+
+            log(`Selected "${person.name}" from Public Registry`);
+            log(`Quasi-IDs: ZIP=${person.zip}, DOB=${person.birth}, Gender=${person.gender}`, 'info');
+
+            checkMatch();
+        }
+
+        function selectMedicalCard(index) {
+            if (gameState.medicalMatched.has(index)) return;
+            if (gameState.selectedMedical === index) return;
+
+            // Deselect previous
+            if (gameState.selectedMedical !== null) {
+                const prevCard = document.querySelector(`.medical-card[data-index="${gameState.selectedMedical}"]`);
+                if (prevCard && !gameState.medicalMatched.has(gameState.selectedMedical)) {
+                    prevCard.classList.remove('selected', 'flipped');
+                    const prevRecord = MEDICAL_RECORDS[gameState.selectedMedical];
+                    prevCard.innerHTML = `<div class="card-patient-id">${prevRecord.id}</div>`;
+                }
+            }
+
+            gameState.selectedMedical = index;
+            const card = document.querySelector(`.medical-card[data-index="${index}"]`);
+            card.classList.add('selected', 'flipped');
+
+            const record = MEDICAL_RECORDS[index];
+            // Show quasi-identifiers AND diagnosis when flipped
+            card.innerHTML = `
+                <div class="card-diagnosis-reveal">${record.diagnosis}</div>
+                <div class="quasi-ids">
+                    <div>ZIP: ${record.zip}</div>
+                    <div>DOB: ${record.birth}</div>
+                    <div>Gender: ${record.gender}</div>
+                </div>
+            `;
+
+            // Store in memory
+            const key = `${record.zip}|${record.birth}|${record.gender}`;
+            if (!gameState.memory.has(key)) {
+                gameState.memory.set(key, { publicIndices: [], medicalIndices: [] });
+            }
+            if (!gameState.memory.get(key).medicalIndices.includes(index)) {
+                gameState.memory.get(key).medicalIndices.push(index);
+            }
+
+            log(`Checking ${record.id}...`, 'info');
+
+            checkMatch();
+        }
+
+        // ============================================================
+        // MATCHING LOGIC
+        // ============================================================
+
+        function checkMatch() {
+            if (gameState.selectedPublic === null || gameState.selectedMedical === null) return;
+
+            gameState.attempts++;
+
+            const person = PUBLIC_REGISTRY[gameState.selectedPublic];
+            const record = MEDICAL_RECORDS[gameState.selectedMedical];
+
+            const isMatch = person.zip === record.zip &&
+                           person.birth === record.birth &&
+                           person.gender === record.gender;
+
+            if (isMatch) {
+                // Match found!
+                gameState.revealed++;
+                gameState.publicMatched.add(gameState.selectedPublic);
+                gameState.medicalMatched.add(gameState.selectedMedical);
+
+                const publicCard = document.querySelector(`.public-card[data-index="${gameState.selectedPublic}"]`);
+                const medicalCard = document.querySelector(`.medical-card[data-index="${gameState.selectedMedical}"]`);
+
+                publicCard.classList.add('matched');
+                medicalCard.classList.add('matched');
+
+                log(`MATCH! ${person.name} = ${record.id}`, 'success');
+                log(`REVEALED: ${person.name} has ${record.diagnosis}, takes ${record.medication}`, 'reveal');
+
+                showReveal(person, record);
+
+                gameState.selectedPublic = null;
+                gameState.selectedMedical = null;
+            } else {
+                log(`No match. Continuing search...`);
+                // Reset BOTH cards for next try - with delay so user can see the flip
+                const publicIdx = gameState.selectedPublic;
+                const medicalIdx = gameState.selectedMedical;
+                gameState.selectedPublic = null;
+                gameState.selectedMedical = null;
+
+                setTimeout(() => {
+                    const publicCard = document.querySelector(`.public-card[data-index="${publicIdx}"]`);
+                    if (publicCard && !gameState.publicMatched.has(publicIdx)) {
+                        publicCard.classList.remove('selected', 'flipped');
+                        publicCard.innerHTML = `<div class="card-name">${person.name}</div>`;
+                    }
+
+                    const medicalCard = document.querySelector(`.medical-card[data-index="${medicalIdx}"]`);
+                    if (medicalCard && !gameState.medicalMatched.has(medicalIdx)) {
+                        medicalCard.classList.remove('selected', 'flipped');
+                        medicalCard.innerHTML = `<div class="card-patient-id">${record.id}</div>`;
+                    }
+                }, 300);
+            }
+
+            updateStats();
+        }
+
+        // ============================================================
+        // REVEAL MODAL
+        // ============================================================
+
+        function showReveal(person, record) {
+            document.getElementById('revealIdentity').textContent = `${person.name} = ${record.id}`;
+            document.getElementById('revealMedical').innerHTML = `
+                <div><strong>Diagnosis:</strong> ${record.diagnosis}</div>
+                <div><strong>Medication:</strong> ${record.medication}</div>
+                <div><strong>Blood Type:</strong> ${record.blood}</div>
+                <div><strong>Blood Pressure:</strong> ${record.bpSys}/${record.bpDia}</div>
+                <div><strong>Heart Rate:</strong> ${record.heartRate} bpm</div>
+                <div><strong>Cholesterol:</strong> ${record.cholesterol}</div>
+                <div><strong>Last Visit:</strong> ${record.lastVisit}</div>
+            `;
+            document.getElementById('revealModal').classList.add('active');
+        }
+
+        function closeReveal() {
+            document.getElementById('revealModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // STATISTICS
+        // ============================================================
+
+        function updateStats() {
+            document.getElementById('statRevealed').textContent = gameState.revealed;
+            document.getElementById('statAttempts').textContent = gameState.attempts;
+
+            const successRate = gameState.attempts > 0
+                ? Math.round((gameState.revealed / gameState.attempts) * 100)
+                : 0;
+            document.getElementById('statSuccessRate').textContent = successRate + '%';
+
+            const progress = Math.round((gameState.revealed / 100) * 100);
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = progress + '%';
+        }
+
+        // ============================================================
+        // LOGGING
+        // ============================================================
+
+        function log(message, type = '') {
+            const logDiv = document.getElementById('attackLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // ============================================================
+        // AI ATTACK
+        // ============================================================
+
+        let attackInterval = null;
+
+        function toggleAttack() {
+            if (gameState.isRunning) {
+                stopAttack();
+            } else {
+                startAttack();
+            }
+        }
+
+        function startAttack() {
+            gameState.isRunning = true;
+            document.getElementById('btnAttack').textContent = 'Stop Attack';
+            document.getElementById('btnAttack').style.background = '#95a5a6';
+
+            const speed = parseInt(document.getElementById('attackSpeed').value);
+            attackInterval = setInterval(stepAttack, speed);
+        }
+
+        function stopAttack() {
+            gameState.isRunning = false;
+            document.getElementById('btnAttack').textContent = 'Start Attack';
+            document.getElementById('btnAttack').style.background = '';
+
+            if (attackInterval) {
+                clearInterval(attackInterval);
+                attackInterval = null;
+            }
+        }
+
+        function stepAttack() {
+            if (gameState.revealed >= 100) {
+                stopAttack();
+                log('Attack complete! All 100 identities revealed.', 'success');
+                return;
+            }
+
+            const strategy = document.getElementById('attackStrategy').value;
+
+            // Select public card if not selected
+            if (gameState.selectedPublic === null) {
+                const publicIndex = selectNextPublicCard(strategy);
+                if (publicIndex !== null) {
+                    selectPublicCard(publicIndex);
+                }
+                return;
+            }
+
+            // Select medical card
+            const medicalIndex = selectNextMedicalCard(strategy);
+            if (medicalIndex !== null) {
+                selectMedicalCard(medicalIndex);
+            }
+        }
+
+        function selectNextPublicCard(strategy) {
+            const available = [];
+            for (let i = 0; i < PUBLIC_REGISTRY.length; i++) {
+                if (!gameState.publicMatched.has(i)) {
+                    available.push(i);
+                }
+            }
+
+            if (available.length === 0) return null;
+
+            switch (strategy) {
+                case 'greedy':
+                    // If we know a match exists in memory, use it
+                    for (const [key, data] of gameState.memory) {
+                        if (data.publicIndices.length > 0 && data.medicalIndices.length > 0) {
+                            const pubIdx = data.publicIndices.find(i => !gameState.publicMatched.has(i));
+                            if (pubIdx !== undefined) return pubIdx;
+                        }
+                    }
+                    return available[0];
+
+                case 'brute-force':
+                    return available[0];
+
+                case 'random':
+                default:
+                    return available[Math.floor(Math.random() * available.length)];
+            }
+        }
+
+        function selectNextMedicalCard(strategy) {
+            const available = [];
+            for (let i = 0; i < MEDICAL_RECORDS.length; i++) {
+                if (!gameState.medicalMatched.has(i)) {
+                    available.push(i);
+                }
+            }
+
+            if (available.length === 0) return null;
+
+            const person = PUBLIC_REGISTRY[gameState.selectedPublic];
+            const targetKey = `${person.zip}|${person.birth}|${person.gender}`;
+
+            switch (strategy) {
+                case 'greedy':
+                    // Check if we know the matching medical record
+                    if (gameState.memory.has(targetKey)) {
+                        const medIdx = gameState.memory.get(targetKey).medicalIndices.find(
+                            i => !gameState.medicalMatched.has(i)
+                        );
+                        if (medIdx !== undefined) return medIdx;
+                    }
+                    // Otherwise, pick next available
+                    return available[gameState.medicalIndex++ % available.length];
+
+                case 'brute-force':
+                    // Systematically try each one
+                    return available[gameState.medicalIndex++ % available.length];
+
+                case 'random':
+                default:
+                    return available[Math.floor(Math.random() * available.length)];
+            }
+        }
+
+        // ============================================================
+        // RESET
+        // ============================================================
+
+        function resetDemo() {
+            stopAttack();
+
+            gameState.publicMatched.clear();
+            gameState.medicalMatched.clear();
+            gameState.selectedPublic = null;
+            gameState.selectedMedical = null;
+            gameState.attempts = 0;
+            gameState.revealed = 0;
+            gameState.memory.clear();
+            gameState.publicIndex = 0;
+            gameState.medicalIndex = 0;
+
+            document.getElementById('attackLog').innerHTML = `
+                <div class="log-entry info">> Attack system reset. Ready for new attack.</div>
+            `;
+
+            initDemo();
+        }
+
+        // Speed slider
+        document.getElementById('attackSpeed').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (gameState.isRunning) {
+                stopAttack();
+                startAttack();
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', initDemo);
+    </script>
+</body>
+</html>

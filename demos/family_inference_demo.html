@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Inference Demo | Knowledge-Based Systems | DS-AI Course</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* Demo Header */
+        .demo-header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+
+        .demo-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .info-banner strong {
+            color: #2980b9;
+        }
+
+        /* Query Controls */
+        .query-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e9ecef;
+        }
+
+        .query-controls label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .query-controls select {
+            padding: 0.7rem 1rem;
+            border: 2px solid #3498db;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            background: white;
+            min-width: 300px;
+        }
+
+        .query-controls button {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
+            color: white;
+        }
+
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-step {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #7f8c8d;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Main Layout - Three Panels */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Styles */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #34495e;
+            color: white;
+            padding: 0.8rem 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .panel-header.facts-header {
+            background: #3498db;
+        }
+
+        .panel-header.rules-header {
+            background: #e74c3c;
+        }
+
+        .panel-header.tree-header {
+            background: #9b59b6;
+        }
+
+        .panel-content {
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Facts Panel */
+        .fact-item {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
+            margin-bottom: 0.3rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+            transition: all 0.3s;
+        }
+
+        .fact-item.highlight {
+            background: #d4edda;
+            border-left-color: #27ae60;
+            font-weight: 600;
+        }
+
+        .fact-item.searching {
+            background: #fff3cd;
+            border-left-color: #f39c12;
+        }
+
+        /* Rules Panel */
+        .rule-item {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #e74c3c;
+            transition: all 0.3s;
+        }
+
+        .rule-item.highlight {
+            background: #fadbd8;
+            border-left-color: #c0392b;
+            font-weight: 600;
+        }
+
+        .rule-head {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .rule-body {
+            color: #2c3e50;
+            margin-left: 1rem;
+        }
+
+        /* Family Tree SVG Container */
+        .tree-container {
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 350px;
+            background: #fafafa;
+        }
+
+        .tree-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Person nodes in SVG */
+        .person-node {
+            transition: all 0.3s;
+        }
+
+        .person-node.highlight rect,
+        .person-node.highlight circle {
+            stroke: #27ae60 !important;
+            stroke-width: 4 !important;
+        }
+
+        .person-node.searching rect,
+        .person-node.searching circle {
+            stroke: #f39c12 !important;
+            stroke-width: 4 !important;
+            stroke-dasharray: 5, 3;
+        }
+
+        /* Inference Trace Panel */
+        .trace-panel {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+
+        .trace-header {
+            background: #27ae60;
+            color: white;
+            padding: 0.8rem 1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-counter {
+            background: rgba(255,255,255,0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .trace-content {
+            padding: 1rem;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trace-step {
+            display: flex;
+            gap: 1rem;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #bdc3c7;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.4s ease-out;
+        }
+
+        .trace-step.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .trace-step.active {
+            border-left-color: #f39c12;
+            background: #fff8e1;
+        }
+
+        .trace-step.success {
+            border-left-color: #27ae60;
+            background: #d4edda;
+        }
+
+        .trace-step.fail {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-action {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.3rem;
+        }
+
+        .step-detail {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #34495e;
+            background: white;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .step-substitution {
+            font-size: 0.8rem;
+            color: #9b59b6;
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
+
+        /* Result Banner */
+        .result-banner {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .result-banner.success {
+            display: block;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+
+        .result-banner.fail {
+            display: block;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .result-banner h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+        }
+
+        .result-banner p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.male {
+            background: #3498db;
+        }
+
+        .legend-color.female {
+            background: #e91e8b;
+        }
+
+        .legend-color.highlight {
+            background: #27ae60;
+        }
+
+        .legend-color.searching {
+            background: #f39c12;
+        }
+
+        /* Back Link */
+        .back-link {
+            text-align: center;
+            margin-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .back-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>Family Inference Demo</h1>
+        <p>See how Knowledge-Based Systems derive new facts through logical inference</p>
+    </div>
+
+    <div class="demo-container">
+        <div class="info-banner">
+            <strong>How it works:</strong> Select a query, then click "Run Query" to see the complete inference,
+            or "Step Through" to see each inference step one at a time. Watch how the system matches rules and facts!
+        </div>
+
+        <!-- Query Controls -->
+        <div class="query-controls">
+            <label for="query-select">Query:</label>
+            <select id="query-select">
+                <option value="grandparent_yusuf">grandparent(khalid, yusuf)?</option>
+                <option value="grandparent_who">grandparent(khalid, Who)?</option>
+                <option value="sibling">sibling(yusuf, layla)?</option>
+                <option value="ancestor">ancestor(khalid, sara)?</option>
+                <option value="descendant">descendant(Who, khalid)?</option>
+            </select>
+            <button class="btn-run" id="btn-run" onclick="runFullInference()">Run Query</button>
+            <button class="btn-step" id="btn-step" onclick="stepInference()">Step Through</button>
+            <button class="btn-reset" id="btn-reset" onclick="resetDemo()">Reset</button>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color male"></div>
+                <span>Male</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color female"></div>
+                <span>Female</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color highlight"></div>
+                <span>Match Found</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color searching"></div>
+                <span>Currently Searching</span>
+            </div>
+        </div>
+
+        <!-- Main Three-Panel Layout -->
+        <div class="main-layout">
+            <!-- Facts Panel (Left) -->
+            <div class="panel">
+                <div class="panel-header facts-header">Facts (Knowledge Base)</div>
+                <div class="panel-content" id="facts-panel">
+                    <div class="fact-item" data-fact="parent(khalid,ahmed)">parent(khalid, ahmed).</div>
+                    <div class="fact-item" data-fact="parent(khalid,nour)">parent(khalid, nour).</div>
+                    <div class="fact-item" data-fact="parent(fatima,ahmed)">parent(fatima, ahmed).</div>
+                    <div class="fact-item" data-fact="parent(fatima,nour)">parent(fatima, nour).</div>
+                    <div class="fact-item" data-fact="parent(ahmed,yusuf)">parent(ahmed, yusuf).</div>
+                    <div class="fact-item" data-fact="parent(ahmed,layla)">parent(ahmed, layla).</div>
+                    <div class="fact-item" data-fact="parent(nour,sara)">parent(nour, sara).</div>
+                    <div class="fact-item" data-fact="male(khalid)">male(khalid).</div>
+                    <div class="fact-item" data-fact="female(fatima)">female(fatima).</div>
+                    <div class="fact-item" data-fact="male(ahmed)">male(ahmed).</div>
+                    <div class="fact-item" data-fact="female(nour)">female(nour).</div>
+                    <div class="fact-item" data-fact="male(yusuf)">male(yusuf).</div>
+                    <div class="fact-item" data-fact="female(layla)">female(layla).</div>
+                    <div class="fact-item" data-fact="female(sara)">female(sara).</div>
+                </div>
+            </div>
+
+            <!-- Family Tree (Center) -->
+            <div class="panel">
+                <div class="panel-header tree-header">Family Tree</div>
+                <div class="tree-container">
+                    <svg viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Generation 1: Grandparents -->
+                        <g class="person-node" id="node-khalid">
+                            <rect x="120" y="20" width="80" height="40" rx="8" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                            <text x="160" y="45" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Khalid</text>
+                        </g>
+                        <g class="person-node" id="node-fatima">
+                            <rect x="220" y="20" width="80" height="40" rx="8" fill="#e91e8b" stroke="#c2185b" stroke-width="2"/>
+                            <text x="260" y="45" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Fatima</text>
+                        </g>
+
+                        <!-- Marriage line Gen 1 -->
+                        <line x1="200" y1="40" x2="220" y2="40" stroke="#7f8c8d" stroke-width="2"/>
+
+                        <!-- Connector to children -->
+                        <line x1="210" y1="40" x2="210" y2="70" stroke="#7f8c8d" stroke-width="2"/>
+                        <line x1="140" y1="70" x2="280" y2="70" stroke="#7f8c8d" stroke-width="2"/>
+
+                        <!-- Generation 2: Parents -->
+                        <line x1="140" y1="70" x2="140" y2="100" stroke="#7f8c8d" stroke-width="2"/>
+                        <g class="person-node" id="node-ahmed">
+                            <rect x="100" y="100" width="80" height="40" rx="8" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                            <text x="140" y="125" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Ahmed</text>
+                        </g>
+
+                        <line x1="280" y1="70" x2="280" y2="100" stroke="#7f8c8d" stroke-width="2"/>
+                        <g class="person-node" id="node-nour">
+                            <rect x="240" y="100" width="80" height="40" rx="8" fill="#e91e8b" stroke="#c2185b" stroke-width="2"/>
+                            <text x="280" y="125" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Nour</text>
+                        </g>
+
+                        <!-- Ahmed's children connector -->
+                        <line x1="140" y1="140" x2="140" y2="170" stroke="#7f8c8d" stroke-width="2"/>
+                        <line x1="80" y1="170" x2="200" y2="170" stroke="#7f8c8d" stroke-width="2"/>
+
+                        <!-- Generation 3: Grandchildren -->
+                        <line x1="80" y1="170" x2="80" y2="200" stroke="#7f8c8d" stroke-width="2"/>
+                        <g class="person-node" id="node-yusuf">
+                            <rect x="40" y="200" width="80" height="40" rx="8" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                            <text x="80" y="225" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Yusuf</text>
+                        </g>
+
+                        <line x1="200" y1="170" x2="200" y2="200" stroke="#7f8c8d" stroke-width="2"/>
+                        <g class="person-node" id="node-layla">
+                            <rect x="160" y="200" width="80" height="40" rx="8" fill="#e91e8b" stroke="#c2185b" stroke-width="2"/>
+                            <text x="200" y="225" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Layla</text>
+                        </g>
+
+                        <!-- Nour's child connector -->
+                        <line x1="280" y1="140" x2="280" y2="200" stroke="#7f8c8d" stroke-width="2"/>
+                        <g class="person-node" id="node-sara">
+                            <rect x="240" y="200" width="80" height="40" rx="8" fill="#e91e8b" stroke="#c2185b" stroke-width="2"/>
+                            <text x="280" y="225" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Sara</text>
+                        </g>
+
+                        <!-- Generation Labels -->
+                        <text x="450" y="45" fill="#7f8c8d" font-size="11" font-style="italic">Gen 1</text>
+                        <text x="450" y="125" fill="#7f8c8d" font-size="11" font-style="italic">Gen 2</text>
+                        <text x="450" y="225" fill="#7f8c8d" font-size="11" font-style="italic">Gen 3</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Rules Panel (Right) -->
+            <div class="panel">
+                <div class="panel-header rules-header">Rules (Inference Rules)</div>
+                <div class="panel-content" id="rules-panel">
+                    <div class="rule-item" data-rule="grandparent">
+                        <div class="rule-head">grandparent(X, Z) :-</div>
+                        <div class="rule-body">parent(X, Y),</div>
+                        <div class="rule-body">parent(Y, Z).</div>
+                    </div>
+                    <div class="rule-item" data-rule="sibling">
+                        <div class="rule-head">sibling(X, Y) :-</div>
+                        <div class="rule-body">parent(P, X),</div>
+                        <div class="rule-body">parent(P, Y),</div>
+                        <div class="rule-body">X \= Y.</div>
+                    </div>
+                    <div class="rule-item" data-rule="ancestor1">
+                        <div class="rule-head">ancestor(X, Y) :-</div>
+                        <div class="rule-body">parent(X, Y).</div>
+                    </div>
+                    <div class="rule-item" data-rule="ancestor2">
+                        <div class="rule-head">ancestor(X, Z) :-</div>
+                        <div class="rule-body">parent(X, Y),</div>
+                        <div class="rule-body">ancestor(Y, Z).</div>
+                    </div>
+                    <div class="rule-item" data-rule="descendant">
+                        <div class="rule-head">descendant(X, Y) :-</div>
+                        <div class="rule-body">ancestor(Y, X).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div class="result-banner" id="result-banner">
+            <h3 id="result-title">Result</h3>
+            <p id="result-text">Query result will appear here</p>
+        </div>
+
+        <!-- Inference Trace Panel -->
+        <div class="trace-panel">
+            <div class="trace-header">
+                <span>Inference Trace</span>
+                <span class="step-counter" id="step-counter">Step 0 / 0</span>
+            </div>
+            <div class="trace-content" id="trace-content">
+                <p style="color: #7f8c8d; text-align: center; padding: 2rem;">
+                    Select a query and click "Run Query" or "Step Through" to see the inference process.
+                </p>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="back-link">
+            <a href="../index.html">&larr; Back to Session 2: Knowledge-Based Systems</a>
+        </div>
+    </div>
+
+    <script>
+        // Inference engine state
+        let currentStep = 0;
+        let inferenceSteps = [];
+        let isRunning = false;
+        let animationTimeout = null;
+
+        // Query definitions with inference steps
+        const queries = {
+            grandparent_yusuf: {
+                query: "grandparent(khalid, yusuf)?",
+                description: "Is Khalid the grandparent of Yusuf?",
+                steps: [
+                    {
+                        action: "Match query with rule",
+                        detail: "grandparent(khalid, yusuf) matches grandparent(X, Z)",
+                        substitution: "X = khalid, Z = yusuf",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "yusuf"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Need to prove rule body",
+                        detail: "parent(khalid, Y) AND parent(Y, yusuf)",
+                        substitution: "Y is unknown - must find it",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Search for parent(khalid, Y)",
+                        detail: "Looking for facts matching parent(khalid, _)...",
+                        substitution: "",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid"],
+                        searchNodes: ["ahmed", "nour"],
+                        searchFacts: ["parent(khalid,ahmed)", "parent(khalid,nour)"]
+                    },
+                    {
+                        action: "Found matching fact",
+                        detail: "parent(khalid, ahmed)",
+                        substitution: "Y = ahmed",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "ahmed"],
+                        highlightFacts: ["parent(khalid,ahmed)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Now prove parent(ahmed, yusuf)",
+                        detail: "Looking for fact parent(ahmed, yusuf)...",
+                        substitution: "Need to verify this fact exists",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["ahmed"],
+                        searchNodes: ["yusuf", "layla"],
+                        searchFacts: ["parent(ahmed,yusuf)", "parent(ahmed,layla)"]
+                    },
+                    {
+                        action: "Found matching fact!",
+                        detail: "parent(ahmed, yusuf)",
+                        substitution: "Both conditions satisfied!",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "ahmed", "yusuf"],
+                        highlightFacts: ["parent(khalid,ahmed)", "parent(ahmed,yusuf)"],
+                        searchNodes: [],
+                        success: true
+                    }
+                ],
+                result: { success: true, title: "TRUE", text: "Khalid IS the grandparent of Yusuf (through Ahmed)" }
+            },
+            grandparent_who: {
+                query: "grandparent(khalid, Who)?",
+                description: "Who are Khalid's grandchildren?",
+                steps: [
+                    {
+                        action: "Match query with rule",
+                        detail: "grandparent(khalid, Who) matches grandparent(X, Z)",
+                        substitution: "X = khalid, Z = Who (variable)",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Search for parent(khalid, Y)",
+                        detail: "Finding Khalid's children...",
+                        substitution: "",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid"],
+                        searchNodes: ["ahmed", "nour"],
+                        searchFacts: ["parent(khalid,ahmed)", "parent(khalid,nour)"]
+                    },
+                    {
+                        action: "Found: Y = ahmed",
+                        detail: "parent(khalid, ahmed) - now find ahmed's children",
+                        substitution: "Y = ahmed",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "ahmed"],
+                        highlightFacts: ["parent(khalid,ahmed)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Find parent(ahmed, Who)",
+                        detail: "parent(ahmed, yusuf) and parent(ahmed, layla)",
+                        substitution: "Who = yusuf, Who = layla",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["ahmed", "yusuf", "layla"],
+                        highlightFacts: ["parent(ahmed,yusuf)", "parent(ahmed,layla)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Try Y = nour",
+                        detail: "parent(khalid, nour) - now find nour's children",
+                        substitution: "Y = nour",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "nour"],
+                        highlightFacts: ["parent(khalid,nour)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Find parent(nour, Who)",
+                        detail: "parent(nour, sara)",
+                        substitution: "Who = sara",
+                        highlightRule: "grandparent",
+                        highlightNodes: ["khalid", "nour", "sara"],
+                        highlightFacts: ["parent(nour,sara)"],
+                        searchNodes: [],
+                        success: true
+                    }
+                ],
+                result: { success: true, title: "FOUND 3 ANSWERS", text: "Who = yusuf, Who = layla, Who = sara" }
+            },
+            sibling: {
+                query: "sibling(yusuf, layla)?",
+                description: "Are Yusuf and Layla siblings?",
+                steps: [
+                    {
+                        action: "Match query with rule",
+                        detail: "sibling(yusuf, layla) matches sibling(X, Y)",
+                        substitution: "X = yusuf, Y = layla",
+                        highlightRule: "sibling",
+                        highlightNodes: ["yusuf", "layla"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Need to prove rule body",
+                        detail: "parent(P, yusuf) AND parent(P, layla) AND yusuf \\= layla",
+                        substitution: "P is unknown - same parent for both",
+                        highlightRule: "sibling",
+                        highlightNodes: ["yusuf", "layla"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Find parent of yusuf",
+                        detail: "Looking for parent(P, yusuf)...",
+                        substitution: "",
+                        highlightRule: "sibling",
+                        highlightNodes: ["yusuf"],
+                        searchNodes: ["ahmed"],
+                        searchFacts: ["parent(ahmed,yusuf)"]
+                    },
+                    {
+                        action: "Found parent",
+                        detail: "parent(ahmed, yusuf)",
+                        substitution: "P = ahmed",
+                        highlightRule: "sibling",
+                        highlightNodes: ["ahmed", "yusuf"],
+                        highlightFacts: ["parent(ahmed,yusuf)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Check parent(ahmed, layla)",
+                        detail: "Is Ahmed also Layla's parent?",
+                        substitution: "",
+                        highlightRule: "sibling",
+                        highlightNodes: ["ahmed"],
+                        searchNodes: ["layla"],
+                        searchFacts: ["parent(ahmed,layla)"]
+                    },
+                    {
+                        action: "Found matching fact!",
+                        detail: "parent(ahmed, layla) - same parent!",
+                        substitution: "yusuf \\= layla is TRUE",
+                        highlightRule: "sibling",
+                        highlightNodes: ["ahmed", "yusuf", "layla"],
+                        highlightFacts: ["parent(ahmed,yusuf)", "parent(ahmed,layla)"],
+                        searchNodes: [],
+                        success: true
+                    }
+                ],
+                result: { success: true, title: "TRUE", text: "Yusuf and Layla ARE siblings (both children of Ahmed)" }
+            },
+            ancestor: {
+                query: "ancestor(khalid, sara)?",
+                description: "Is Khalid an ancestor of Sara?",
+                steps: [
+                    {
+                        action: "Try first ancestor rule",
+                        detail: "ancestor(khalid, sara) :- parent(khalid, sara)?",
+                        substitution: "Check if direct parent",
+                        highlightRule: "ancestor1",
+                        highlightNodes: ["khalid", "sara"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Search for parent(khalid, sara)",
+                        detail: "Looking for direct parent relationship...",
+                        substitution: "",
+                        highlightRule: "ancestor1",
+                        highlightNodes: ["khalid"],
+                        searchNodes: ["sara"],
+                        searchFacts: []
+                    },
+                    {
+                        action: "Not found - try recursive rule",
+                        detail: "No direct parent(khalid, sara) exists",
+                        substitution: "Must use ancestor(X, Z) :- parent(X, Y), ancestor(Y, Z)",
+                        highlightRule: "ancestor2",
+                        highlightNodes: ["khalid", "sara"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Find parent(khalid, Y)",
+                        detail: "parent(khalid, nour)",
+                        substitution: "Y = nour",
+                        highlightRule: "ancestor2",
+                        highlightNodes: ["khalid", "nour"],
+                        highlightFacts: ["parent(khalid,nour)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Recursive call: ancestor(nour, sara)?",
+                        detail: "Now check if nour is ancestor of sara",
+                        substitution: "Applying rule recursively",
+                        highlightRule: "ancestor1",
+                        highlightNodes: ["nour", "sara"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Check parent(nour, sara)",
+                        detail: "parent(nour, sara) - FOUND!",
+                        substitution: "Direct parent relationship exists",
+                        highlightRule: "ancestor1",
+                        highlightNodes: ["khalid", "nour", "sara"],
+                        highlightFacts: ["parent(khalid,nour)", "parent(nour,sara)"],
+                        searchNodes: [],
+                        success: true
+                    }
+                ],
+                result: { success: true, title: "TRUE", text: "Khalid IS an ancestor of Sara (khalid -> nour -> sara)" }
+            },
+            descendant: {
+                query: "descendant(Who, khalid)?",
+                description: "Who are the descendants of Khalid?",
+                steps: [
+                    {
+                        action: "Match with descendant rule",
+                        detail: "descendant(Who, khalid) :- ancestor(khalid, Who)",
+                        substitution: "Descendant is reverse of ancestor",
+                        highlightRule: "descendant",
+                        highlightNodes: ["khalid"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Find all ancestor(khalid, Who)",
+                        detail: "First try: parent(khalid, Who)",
+                        substitution: "",
+                        highlightRule: "ancestor1",
+                        highlightNodes: ["khalid"],
+                        searchNodes: ["ahmed", "nour"]
+                    },
+                    {
+                        action: "Direct children found",
+                        detail: "parent(khalid, ahmed), parent(khalid, nour)",
+                        substitution: "Who = ahmed, Who = nour",
+                        highlightRule: "descendant",
+                        highlightNodes: ["khalid", "ahmed", "nour"],
+                        highlightFacts: ["parent(khalid,ahmed)", "parent(khalid,nour)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Recursive: descendants through ahmed",
+                        detail: "parent(ahmed, yusuf), parent(ahmed, layla)",
+                        substitution: "Who = yusuf, Who = layla",
+                        highlightRule: "ancestor2",
+                        highlightNodes: ["ahmed", "yusuf", "layla"],
+                        highlightFacts: ["parent(ahmed,yusuf)", "parent(ahmed,layla)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "Recursive: descendants through nour",
+                        detail: "parent(nour, sara)",
+                        substitution: "Who = sara",
+                        highlightRule: "ancestor2",
+                        highlightNodes: ["nour", "sara"],
+                        highlightFacts: ["parent(nour,sara)"],
+                        searchNodes: []
+                    },
+                    {
+                        action: "All descendants found!",
+                        detail: "Complete tree traversal done",
+                        substitution: "5 descendants total",
+                        highlightRule: "descendant",
+                        highlightNodes: ["khalid", "ahmed", "nour", "yusuf", "layla", "sara"],
+                        highlightFacts: ["parent(khalid,ahmed)", "parent(khalid,nour)", "parent(ahmed,yusuf)", "parent(ahmed,layla)", "parent(nour,sara)"],
+                        searchNodes: [],
+                        success: true
+                    }
+                ],
+                result: { success: true, title: "FOUND 5 ANSWERS", text: "Who = ahmed, nour, yusuf, layla, sara" }
+            }
+        };
+
+        function resetDemo() {
+            // Clear timeouts
+            if (animationTimeout) {
+                clearTimeout(animationTimeout);
+                animationTimeout = null;
+            }
+
+            currentStep = 0;
+            inferenceSteps = [];
+            isRunning = false;
+
+            // Reset UI
+            document.getElementById('step-counter').textContent = 'Step 0 / 0';
+            document.getElementById('trace-content').innerHTML = `
+                <p style="color: #7f8c8d; text-align: center; padding: 2rem;">
+                    Select a query and click "Run Query" or "Step Through" to see the inference process.
+                </p>
+            `;
+            document.getElementById('result-banner').className = 'result-banner';
+            document.getElementById('result-banner').style.display = 'none';
+
+            // Reset highlights
+            document.querySelectorAll('.fact-item').forEach(el => {
+                el.classList.remove('highlight', 'searching');
+            });
+            document.querySelectorAll('.rule-item').forEach(el => {
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.person-node').forEach(el => {
+                el.classList.remove('highlight', 'searching');
+            });
+
+            // Re-enable buttons
+            document.getElementById('btn-run').disabled = false;
+            document.getElementById('btn-step').disabled = false;
+        }
+
+        function initInference() {
+            const queryKey = document.getElementById('query-select').value;
+            const queryData = queries[queryKey];
+            inferenceSteps = queryData.steps;
+            currentStep = 0;
+
+            // Clear trace content
+            document.getElementById('trace-content').innerHTML = '';
+            document.getElementById('step-counter').textContent = `Step 0 / ${inferenceSteps.length}`;
+
+            // Create step elements
+            inferenceSteps.forEach((step, index) => {
+                const stepEl = document.createElement('div');
+                stepEl.className = 'trace-step';
+                stepEl.id = `step-${index}`;
+                stepEl.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <div class="step-action">${step.action}</div>
+                        <div class="step-detail">${step.detail}</div>
+                        ${step.substitution ? `<div class="step-substitution">${step.substitution}</div>` : ''}
+                    </div>
+                `;
+                document.getElementById('trace-content').appendChild(stepEl);
+            });
+        }
+
+        function showStep(stepIndex) {
+            const step = inferenceSteps[stepIndex];
+            const stepEl = document.getElementById(`step-${stepIndex}`);
+
+            // Update step counter
+            document.getElementById('step-counter').textContent = `Step ${stepIndex + 1} / ${inferenceSteps.length}`;
+
+            // Remove previous active states
+            document.querySelectorAll('.trace-step').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show and activate current step
+            stepEl.classList.add('visible', 'active');
+            if (step.success) {
+                stepEl.classList.add('success');
+            }
+
+            // Highlight rules
+            document.querySelectorAll('.rule-item').forEach(el => {
+                el.classList.remove('highlight');
+            });
+            if (step.highlightRule) {
+                const ruleEl = document.querySelector(`[data-rule="${step.highlightRule}"]`);
+                if (ruleEl) ruleEl.classList.add('highlight');
+            }
+
+            // Highlight facts
+            document.querySelectorAll('.fact-item').forEach(el => {
+                el.classList.remove('highlight', 'searching');
+            });
+            if (step.highlightFacts) {
+                step.highlightFacts.forEach(fact => {
+                    const factEl = document.querySelector(`[data-fact="${fact}"]`);
+                    if (factEl) factEl.classList.add('highlight');
+                });
+            }
+            if (step.searchFacts) {
+                step.searchFacts.forEach(fact => {
+                    const factEl = document.querySelector(`[data-fact="${fact}"]`);
+                    if (factEl) factEl.classList.add('searching');
+                });
+            }
+
+            // Highlight nodes
+            document.querySelectorAll('.person-node').forEach(el => {
+                el.classList.remove('highlight', 'searching');
+            });
+            if (step.highlightNodes) {
+                step.highlightNodes.forEach(node => {
+                    const nodeEl = document.getElementById(`node-${node}`);
+                    if (nodeEl) nodeEl.classList.add('highlight');
+                });
+            }
+            if (step.searchNodes) {
+                step.searchNodes.forEach(node => {
+                    const nodeEl = document.getElementById(`node-${node}`);
+                    if (nodeEl) nodeEl.classList.add('searching');
+                });
+            }
+
+            // Scroll trace into view
+            stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showResult() {
+            const queryKey = document.getElementById('query-select').value;
+            const result = queries[queryKey].result;
+            const banner = document.getElementById('result-banner');
+
+            banner.className = 'result-banner ' + (result.success ? 'success' : 'fail');
+            document.getElementById('result-title').textContent = result.title;
+            document.getElementById('result-text').textContent = result.text;
+            banner.style.display = 'block';
+
+            // Mark last step as success
+            const lastStep = document.getElementById(`step-${inferenceSteps.length - 1}`);
+            if (lastStep) {
+                lastStep.classList.remove('active');
+                lastStep.classList.add('success');
+            }
+        }
+
+        function runFullInference() {
+            resetDemo();
+            initInference();
+            isRunning = true;
+
+            document.getElementById('btn-run').disabled = true;
+            document.getElementById('btn-step').disabled = true;
+
+            function animateStep() {
+                if (currentStep < inferenceSteps.length) {
+                    showStep(currentStep);
+                    currentStep++;
+                    animationTimeout = setTimeout(animateStep, 1200);
+                } else {
+                    showResult();
+                    isRunning = false;
+                    document.getElementById('btn-run').disabled = false;
+                    document.getElementById('btn-step').disabled = false;
+                }
+            }
+
+            animateStep();
+        }
+
+        function stepInference() {
+            if (currentStep === 0) {
+                initInference();
+            }
+
+            if (currentStep < inferenceSteps.length) {
+                showStep(currentStep);
+                currentStep++;
+
+                if (currentStep >= inferenceSteps.length) {
+                    showResult();
+                }
+            }
+        }
+
+        // Reset when query changes
+        document.getElementById('query-select').addEventListener('change', resetDemo);
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <style>
+      .agent-box { fill: #2c5a82; stroke: #14202e; stroke-width: 3; }
+      .env-box { fill: #95a5a6; stroke: #14202e; stroke-width: 3; }
+      .sensor-box { fill: #2c6a5b; stroke: #14202e; stroke-width: 2; }
+      .actuator-box { fill: #b15c26; stroke: #14202e; stroke-width: 2; }
+      .arrow { fill: none; stroke: #14202e; stroke-width: 3; marker-end: url(#arrowhead); }
+      .feedback-arrow { fill: none; stroke: #6a3d75; stroke-width: 2; stroke-dasharray: 5,5; marker-end: url(#arrowhead-purple); }
+      .text-white { fill: white; font-family:inherit; font-size: 18px; font-weight: bold; text-anchor: middle; }
+      .text-dark { fill: #14202e; font-family:inherit; font-size: 16px; text-anchor: middle; }
+      .text-label { fill: #14202e; font-family:inherit; font-size: 14px; text-anchor: middle; font-style: italic; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#14202e" />
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#6a3d75" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" class="text-dark" style="font-size: 24px; font-weight: bold;">Intelligent Agent Architecture</text>
+
+  <!-- Environment (top) -->
+  <rect x="300" y="60" width="200" height="60" class="env-box" rx="8"/>
+  <text x="400" y="95" class="text-white">ENVIRONMENT</text>
+
+  <!-- Sensors -->
+  <rect x="320" y="160" width="160" height="50" class="sensor-box" rx="5"/>
+  <text x="400" y="190" class="text-white">SENSORS</text>
+  <text x="400" y="230" class="text-label">(Perceive)</text>
+
+  <!-- Arrow from environment to sensors -->
+  <path d="M 400 120 L 400 160" class="arrow"/>
+
+  <!-- Agent (center) -->
+  <rect x="250" y="270" width="300" height="100" class="agent-box" rx="8"/>
+  <text x="400" y="310" class="text-white" style="font-size: 22px;">AGENT</text>
+  <text x="400" y="335" class="text-white" style="font-size: 14px;">Processing</text>
+  <text x="400" y="355" class="text-white" style="font-size: 14px;">Decision-Making</text>
+
+  <!-- Arrow from sensors to agent -->
+  <path d="M 400 210 L 400 270" class="arrow"/>
+  <text x="430" y="245" class="text-label">Input</text>
+
+  <!-- Actuators -->
+  <rect x="320" y="410" width="160" height="50" class="actuator-box" rx="5"/>
+  <text x="400" y="440" class="text-white">ACTUATORS</text>
+  <text x="400" y="480" class="text-label">(Act)</text>
+
+  <!-- Arrow from agent to actuators -->
+  <path d="M 400 370 L 400 410" class="arrow"/>
+  <text x="430" y="395" class="text-label">Output</text>
+
+  <!-- Environment (bottom) -->
+  <rect x="600" y="420" width="150" height="50" class="env-box" rx="8"/>
+  <text x="675" y="450" class="text-white">ENVIRONMENT</text>
+
+  <!-- Arrow from actuators to environment -->
+  <path d="M 480 435 L 600 445" class="arrow"/>
+  <text x="540" y="425" class="text-label">Actions</text>
+
+  <!-- Feedback loop -->
+  <path d="M 675 420 L 675 90 L 500 90" class="feedback-arrow"/>
+  <text x="720" y="250" class="text-label" style="fill: #6a3d75; font-weight: bold;">Feedback Loop</text>
+
+  <!-- Side labels -->
+  <text x="100" y="200" class="text-dark" style="font-size: 14px; text-anchor: start;">1. Sense the environment</text>
+  <text x="100" y="320" class="text-dark" style="font-size: 14px; text-anchor: start;">2. Process information</text>
+  <text x="100" y="340" class="text-dark" style="font-size: 14px; text-anchor: start;">   and make decisions</text>
+  <text x="100" y="445" class="text-dark" style="font-size: 14px; text-anchor: start;">3. Take actions</text>
+</svg>

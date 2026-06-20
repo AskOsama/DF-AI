@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 550">
+  <defs>
+    <style>
+      .title { font-family:inherit; font-size: 18px; font-weight: bold; fill: #14202e; }
+      .subtitle { font-family:inherit; font-size: 11px; fill: #7f8c8d; font-style: italic; }
+      .section-title { font-family:inherit; font-size: 14px; font-weight: bold; fill: #14202e; }
+      .box-label { font-family:inherit; font-size: 13px; font-weight: bold; fill: #fff; }
+      .box-sublabel { font-family:inherit; font-size: 9px; fill: rgba(255,255,255,0.9); }
+      .tech-label { font-family:inherit; font-size: 10px; fill: #7f8c8d; }
+      .mapping-text { font-family: monospace; font-size: 9px; fill: #14202e; direction: ltr; }
+    </style>
+    <marker id="arrow-down" markerWidth="10" markerHeight="7" refX="5" refY="7" orient="auto">
+      <polygon points="0 0, 10 0, 5 7" fill="#6a3d75"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="375" y="30" text-anchor="middle" class="title">البنية الموحدة للأنظمة القائمة على المعرفة</text>
+  <text x="375" y="50" text-anchor="middle" class="subtitle">كيف تتوافق التقنيات المختلفة مع نفس النمط</text>
+
+  <!-- Main KBS Container -->
+  <rect x="120" y="70" width="510" height="420" rx="15" fill="#f8f9fa" stroke="#14202e" stroke-width="3"/>
+  <text x="375" y="95" text-anchor="middle" class="section-title">النظام القائم على المعرفة</text>
+
+  <!-- KNOWLEDGE BASE Box -->
+  <rect x="150" y="115" width="450" height="150" rx="10" fill="#e8f4fd" stroke="#2c5a82" stroke-width="2"/>
+  <text x="375" y="138" text-anchor="middle" class="section-title" style="fill: #2c5a82;">قاعدة المعرفة</text>
+
+  <!-- DATA Box -->
+  <rect x="170" y="150" width="200" height="100" rx="8" fill="#2c5a82" stroke="#2c5a82" stroke-width="2"/>
+  <text x="270" y="175" text-anchor="middle" class="box-label">البيانات</text>
+  <rect x="185" y="185" width="170" height="55" rx="4" fill="rgba(255,255,255,0.15)"/>
+  <text x="195" y="202" class="mapping-text" style="fill: #fff;">- Prolog facts</text>
+  <text x="195" y="215" class="mapping-text" style="fill: #fff;">- Datalog EDB</text>
+  <text x="195" y="228" class="mapping-text" style="fill: #fff;">- RDF triples</text>
+  <text x="195" y="241" class="mapping-text" style="fill: #fff;">- DL ABox</text>
+
+  <!-- RULES Box -->
+  <rect x="390" y="150" width="200" height="100" rx="8" fill="#b15c26" stroke="#b15c26" stroke-width="2"/>
+  <text x="490" y="175" text-anchor="middle" class="box-label">القواعد / الأنطولوجيا</text>
+  <rect x="405" y="185" width="170" height="55" rx="4" fill="rgba(255,255,255,0.15)"/>
+  <text x="415" y="202" class="mapping-text" style="fill: #fff;">- Prolog clauses</text>
+  <text x="415" y="215" class="mapping-text" style="fill: #fff;">- Datalog IDB</text>
+  <text x="415" y="228" class="mapping-text" style="fill: #fff;">- RDFS/OWL axioms</text>
+  <text x="415" y="241" class="mapping-text" style="fill: #fff;">- DL TBox</text>
+
+  <!-- Arrow to Inference Engine -->
+  <line x1="375" y1="265" x2="375" y2="295" stroke="#6a3d75" stroke-width="3" marker-end="url(#arrow-down)"/>
+
+  <!-- INFERENCE ENGINE Box -->
+  <rect x="200" y="300" width="350" height="80" rx="10" fill="#6a3d75" stroke="#7d3c98" stroke-width="2"/>
+  <text x="375" y="330" text-anchor="middle" class="box-label">محرك الاستدلال</text>
+  <rect x="220" y="342" width="310" height="30" rx="4" fill="rgba(255,255,255,0.15)"/>
+  <text x="230" y="360" class="mapping-text" style="fill: #fff;">Prolog: SLD Resolution   |   Datalog: Bottom-up</text>
+  <text x="230" y="370" class="mapping-text" style="fill: #fff;">OWL: Tableaux            |   Theorem: Resolution</text>
+
+  <!-- Arrow to Query Interface -->
+  <line x1="375" y1="380" x2="375" y2="410" stroke="#6a3d75" stroke-width="3" marker-end="url(#arrow-down)"/>
+
+  <!-- QUERY INTERFACE Box -->
+  <rect x="200" y="415" width="350" height="60" rx="10" fill="#2c6a5b" stroke="#1e8449" stroke-width="2"/>
+  <text x="375" y="443" text-anchor="middle" class="box-label">واجهة الاستعلام</text>
+  <text x="375" y="462" text-anchor="middle" class="box-sublabel" style="font-family: monospace;">Prolog: ?- goal  |  Datalog: ?- predicate  |  SPARQL: SELECT...WHERE</text>
+
+  <!-- Right side: Technology labels -->
+  <rect x="645" y="150" width="85" height="30" rx="4" fill="#d6cdb8" stroke="#d6cdb8"/>
+  <text x="687" y="170" text-anchor="middle" class="tech-label" style="font-weight: bold;">Prolog</text>
+
+  <rect x="645" y="195" width="85" height="30" rx="4" fill="#d6cdb8" stroke="#d6cdb8"/>
+  <text x="687" y="215" text-anchor="middle" class="tech-label" style="font-weight: bold;">Datalog</text>
+
+  <rect x="645" y="240" width="85" height="30" rx="4" fill="#d6cdb8" stroke="#d6cdb8"/>
+  <text x="687" y="260" text-anchor="middle" class="tech-label" style="font-weight: bold;">RDF/OWL</text>
+
+  <rect x="645" y="285" width="85" height="30" rx="4" fill="#d6cdb8" stroke="#d6cdb8"/>
+  <text x="687" y="305" text-anchor="middle" class="tech-label" style="font-weight: bold;">DL/FOL</text>
+
+  <!-- Connecting lines from labels to boxes -->
+  <line x1="645" y1="165" x2="605" y2="165" stroke="#d6cdb8" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="645" y1="210" x2="605" y2="210" stroke="#d6cdb8" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="645" y1="255" x2="605" y2="255" stroke="#d6cdb8" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="645" y1="300" x2="605" y2="300" stroke="#d6cdb8" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Bottom note -->
+  <rect x="150" y="495" width="450" height="30" rx="6" fill="#fff3cd" stroke="#a07c1d" stroke-width="1"/>
+  <text x="375" y="515" text-anchor="middle" class="tech-label" style="fill: #856404;">جميع التقنيات تتبع نفس نمط: البيانات + القواعد + الاستعلام = المعرفة</text>
+
+</svg>

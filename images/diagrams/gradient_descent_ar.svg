@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 320" width="500" height="320">
+  <defs>
+    <marker id="axisArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#14202e"/>
+    </marker>
+    <marker id="gradArrow" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#b15c26"/>
+    </marker>
+    <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2c5a82"/>
+      <stop offset="100%" style="stop-color:#6a3d75"/>
+    </linearGradient>
+    <style>
+      .title { font-family:inherit; font-size: 16px; font-weight: bold; fill: #14202e; direction: rtl; }
+      .axis-label { font-family:inherit; font-size: 13px; font-weight: bold; fill: #14202e; direction: rtl; }
+      .annotation { font-family:inherit; font-size: 12px; fill: #b15c26; font-weight: bold; direction: rtl; }
+      .sub-annotation { font-family:inherit; font-size: 11px; fill: #2c6a5b; font-style: italic; direction: rtl; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="250" y="25" text-anchor="middle" class="title">النزول التدريجي: إيجاد أقل خطأ</text>
+
+  <!-- Axes -->
+  <line x1="60" y1="260" x2="460" y2="260" stroke="#14202e" stroke-width="2" marker-end="url(#axisArrow)"/>
+  <line x1="60" y1="260" x2="60" y2="50" stroke="#14202e" stroke-width="2" marker-end="url(#axisArrow)"/>
+
+  <!-- Axis Labels -->
+  <text x="470" y="265" class="axis-label">الأوزان</text>
+  <text x="35" y="45" class="axis-label">الخطأ</text>
+
+  <!-- Error Curve -->
+  <path d="M 80 80
+           Q 120 90, 150 120
+           Q 180 150, 200 170
+           Q 230 200, 280 230
+           Q 330 245, 380 240
+           Q 420 235, 440 220"
+        stroke="url(#curveGrad)" stroke-width="4" fill="none"/>
+
+  <!-- Current position point -->
+  <circle cx="150" cy="120" r="8" fill="#b15c26"/>
+
+  <!-- Gradient arrow pointing downhill -->
+  <line x1="160" y1="130" x2="240" y2="195" stroke="#b15c26" stroke-width="3" marker-end="url(#gradArrow)"/>
+
+  <!-- Minimum point -->
+  <circle cx="350" cy="243" r="6" fill="#2c6a5b"/>
+  <text x="350" y="275" text-anchor="middle" class="sub-annotation">الحد الأدنى</text>
+
+  <!-- Annotations -->
+  <text x="175" y="100" class="annotation">التدرج يشير</text>
+  <text x="175" y="115" class="annotation">لهذا الاتجاه</text>
+
+  <rect x="245" y="175" width="115" height="25" rx="4" fill="#2c6a5b"/>
+  <text x="302" y="193" text-anchor="middle" style="font-family:inherit; font-size: 11px; fill: white; font-weight: bold;">"انزل للأسفل!"</text>
+</svg>

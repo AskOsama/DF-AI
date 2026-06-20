@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" direction="rtl">
+  <defs>
+    <linearGradient id="studentAGradAr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6a3d75;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#6a3d75;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="studentBGradAr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c5a82;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#2c5a82;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa" rx="10"/>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#14202e">مثال الاستدلال: تقدير العمر المفقود من بيانات الأشقاء</text>
+
+  <!-- Student A Card (Right side in RTL) -->
+  <rect x="590" y="60" width="180" height="200" rx="15" fill="#e8daef" stroke="#6a3d75" stroke-width="2"/>
+  <rect x="590" y="60" width="180" height="45" rx="15" fill="url(#studentAGradAr)"/>
+  <text x="680" y="88" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">الطالب أ</text>
+
+  <circle cx="680" cy="130" r="25" fill="#d4b8e8"/>
+  <text x="680" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="30">👩‍🎓</text>
+
+  <text x="680" y="175" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#555">التسجيل: 2025</text>
+  <text x="694" y="195" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#555">السنة: الأولى</text>
+  <rect x="605" y="205" width="150" height="25" rx="5" fill="#fff3cd" stroke="#a07c1d"/>
+  <text x="680" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#856404">العمر: ???</text>
+  <text x="694" y="248" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#555">الشقيق الأصغر</text>
+
+  <!-- Student B Card -->
+  <rect x="590" y="280" width="180" height="200" rx="15" fill="#e3f2fd" stroke="#2c5a82" stroke-width="2"/>
+  <rect x="590" y="280" width="180" height="45" rx="15" fill="url(#studentBGradAr)"/>
+  <text x="680" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">الطالب ب (الشقيق)</text>
+
+  <circle cx="680" cy="350" r="25" fill="#b8d4e8"/>
+  <text x="680" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="30">👨‍🎓</text>
+
+  <text x="680" y="395" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#555">التسجيل: 2023</text>
+  <text x="695" y="415" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#555">السنة: الثالثة</text>
+  <rect x="605" y="425" width="150" height="25" rx="5" fill="#d4edda" stroke="#28a745"/>
+  <text x="680" y="442" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#155724">العمر: 20</text>
+  <text x="694" y="468" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#555">الشقيق الأكبر</text>
+
+  <!-- Family link -->
+  <line x1="680" y1="260" x2="680" y2="280" stroke="#6a3d75" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="660" y="275" font-family="Arial, sans-serif" font-size="16">👨‍👩‍👧‍👦</text>
+
+  <!-- Timeline -->
+  <rect x="30" y="90" width="520" height="60" rx="10" fill="white" stroke="#d6cdb8"/>
+  <text x="290" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#14202e">الجدول الزمني</text>
+
+  <line x1="60" y1="130" x2="520" y2="130" stroke="#bdc3c8" stroke-width="3"/>
+
+  <circle cx="150" cy="130" r="8" fill="#2c5a82"/>
+  <text x="150" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">2023</text>
+  <text x="150" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2c5a82">ب يسجل</text>
+
+  <circle cx="350" cy="130" r="8" fill="#6a3d75"/>
+  <text x="350" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">2025</text>
+  <text x="350" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#6a3d75">أ يسجل</text>
+
+  <circle cx="470" cy="130" r="8" fill="#b15c26"/>
+  <text x="470" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">الآن</text>
+  <text x="470" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#b15c26">ب عمره 20</text>
+
+  <!-- Inference Steps -->
+  <rect x="30" y="170" width="520" height="200" rx="10" fill="#fff" stroke="#28a745" stroke-width="2"/>
+  <rect x="30" y="170" width="520" height="35" rx="10" fill="#28a745"/>
+  <text x="290" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">🔍 منطق الاستدلال</text>
+
+  <circle cx="520" cy="230" r="15" fill="#e3f2fd"/>
+  <text x="520" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">1</text>
+  <text x="300" y="230" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#14202e">ب سجل في 2023، الآن في 2025 = السنة الثالثة</text>
+  <text x="300" y="245" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#777">إذا كان ب عمره 20 الآن، كان ~18 عند التسجيل</text>
+
+  <circle cx="520" cy="280" r="15" fill="#e3f2fd"/>
+  <text x="520" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">2</text>
+  <text x="360" y="280" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#14202e">أ سجل في 2025 كطالب سنة أولى</text>
+  <text x="380" y="295" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#777">عمر الدخول المعتاد ≈ 18</text>
+
+  <circle cx="520" cy="330" r="15" fill="#e3f2fd"/>
+  <text x="520" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">3</text>
+  <text x="395" y="330" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#14202e">أ هو الشقيق الأصغر لـ ب</text>
+  <text x="325" y="345" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#777">أ يجب أن يكون ≤ 20، على الأرجح 18-19</text>
+
+  <!-- Result -->
+  <rect x="50" y="255" width="200" height="90" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="150" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#155724">نتيجة الاستدلال</text>
+  <text x="150" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#28a745">العمر ≈ 18</text>
+  <text x="150" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#155724">(تقدير، وليس يقين!)</text>
+
+  <!-- Warning -->
+  <rect x="30" y="385" width="520" height="50" rx="8" fill="#fff3cd" stroke="#a07c1d" stroke-width="2"/>
+  <text x="510" y="415" text-anchor="end" font-family="Arial, sans-serif" font-size="20">⚠️</text>
+  <text x="200" y="410" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#856404"><tspan font-weight="bold">تحذير الخصوصية:</tspan> إذا كنت تستطيع استنتاج العمر من التسجيل + بيانات الأشقاء،</text>
+  <text x="180" y="425" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#856404">فأي شخص لديه وصول لهذه البيانات "المجهولة" يستطيع ذلك أيضاً!</text>
+</svg>

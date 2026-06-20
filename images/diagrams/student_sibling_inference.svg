@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="studentAGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6a3d75;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6a3d75;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="studentBGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c5a82;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c5a82;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa" rx="10"/>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#14202e">Inference Example: Estimating Missing Age from Sibling Data</text>
+
+  <!-- Student A Card -->
+  <rect x="30" y="60" width="180" height="200" rx="15" fill="#e8daef" stroke="#6a3d75" stroke-width="2"/>
+  <rect x="30" y="60" width="180" height="45" rx="15" fill="url(#studentAGrad)"/>
+  <text x="120" y="88" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">Student A</text>
+
+  <!-- Student A icon -->
+  <circle cx="120" cy="130" r="25" fill="#d4b8e8"/>
+  <text x="120" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="30">👩‍🎓</text>
+
+  <!-- Student A details -->
+  <text x="45" y="175" font-family="Arial, sans-serif" font-size="12" fill="#555">Enrolled: 2025</text>
+  <text x="45" y="195" font-family="Arial, sans-serif" font-size="12" fill="#555">Year: First Year</text>
+  <rect x="45" y="205" width="150" height="25" rx="5" fill="#fff3cd" stroke="#a07c1d"/>
+  <text x="120" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#856404">Age: ???</text>
+  <text x="45" y="248" font-family="Arial, sans-serif" font-size="11" fill="#555">Younger sibling</text>
+
+  <!-- Student B Card -->
+  <rect x="30" y="280" width="180" height="200" rx="15" fill="#e3f2fd" stroke="#2c5a82" stroke-width="2"/>
+  <rect x="30" y="280" width="180" height="45" rx="15" fill="url(#studentBGrad)"/>
+  <text x="120" y="308" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">Student B (Sibling)</text>
+
+  <!-- Student B icon -->
+  <circle cx="120" cy="350" r="25" fill="#b8d4e8"/>
+  <text x="120" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="30">👨‍🎓</text>
+
+  <!-- Student B details -->
+  <text x="45" y="395" font-family="Arial, sans-serif" font-size="12" fill="#555">Enrolled: 2023</text>
+  <text x="45" y="415" font-family="Arial, sans-serif" font-size="12" fill="#555">Year: Third Year</text>
+  <rect x="45" y="425" width="150" height="25" rx="5" fill="#d4edda" stroke="#28a745"/>
+  <text x="120" y="442" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#155724">Age: 20</text>
+  <text x="45" y="468" font-family="Arial, sans-serif" font-size="11" fill="#555">Older sibling</text>
+
+  <!-- Family link icon -->
+  <line x1="120" y1="260" x2="120" y2="280" stroke="#6a3d75" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="140" y="275" font-family="Arial, sans-serif" font-size="16">👨‍👩‍👧‍👦</text>
+
+  <!-- Timeline -->
+  <rect x="250" y="90" width="520" height="60" rx="10" fill="white" stroke="#d6cdb8"/>
+  <text x="510" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#14202e">Timeline</text>
+
+  <!-- Timeline line -->
+  <line x1="280" y1="130" x2="740" y2="130" stroke="#bdc3c8" stroke-width="3"/>
+
+  <!-- 2023 marker -->
+  <circle cx="350" cy="130" r="8" fill="#2c5a82"/>
+  <text x="350" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">2023</text>
+  <text x="350" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2c5a82">B enrolls</text>
+
+  <!-- 2025 marker -->
+  <circle cx="550" cy="130" r="8" fill="#6a3d75"/>
+  <text x="550" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">2025</text>
+  <text x="550" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#6a3d75">A enrolls</text>
+
+  <!-- Today marker -->
+  <circle cx="670" cy="130" r="8" fill="#b15c26"/>
+  <text x="670" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">Now</text>
+  <text x="670" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#b15c26">B is 20</text>
+
+  <!-- Inference Steps -->
+  <rect x="250" y="170" width="520" height="200" rx="10" fill="#fff" stroke="#28a745" stroke-width="2"/>
+  <rect x="250" y="170" width="520" height="35" rx="10" fill="#28a745"/>
+  <text x="510" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">🔍 Inference Logic</text>
+
+  <!-- Step 1 -->
+  <circle cx="280" cy="230" r="15" fill="#e3f2fd"/>
+  <text x="280" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">1</text>
+  <text x="305" y="230" font-family="Arial, sans-serif" font-size="12" fill="#14202e">B enrolled in 2023, now in 2025 = third year</text>
+  <text x="305" y="245" font-family="Arial, sans-serif" font-size="11" fill="#777">If B is 20 now, B was ~18 when enrolled</text>
+
+  <!-- Step 2 -->
+  <circle cx="280" cy="280" r="15" fill="#e3f2fd"/>
+  <text x="280" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">2</text>
+  <text x="305" y="280" font-family="Arial, sans-serif" font-size="12" fill="#14202e">A enrolled in 2025 as first-year student</text>
+  <text x="305" y="295" font-family="Arial, sans-serif" font-size="11" fill="#777">Typical first-year entry age ≈ 18</text>
+
+  <!-- Step 3 -->
+  <circle cx="280" cy="330" r="15" fill="#e3f2fd"/>
+  <text x="280" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c5a82">3</text>
+  <text x="305" y="330" font-family="Arial, sans-serif" font-size="12" fill="#14202e">A is the younger sibling of B</text>
+  <text x="305" y="345" font-family="Arial, sans-serif" font-size="11" fill="#777">A must be ≤ 20, likely 18-19</text>
+
+  <!-- Result box -->
+  <rect x="520" y="255" width="230" height="90" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="635" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#155724">INFERENCE RESULT</text>
+  <text x="635" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#28a745">Age ≈ 18</text>
+  <text x="635" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#155724">(estimate, not certainty!)</text>
+
+  <!-- Warning box -->
+  <rect x="250" y="385" width="520" height="50" rx="8" fill="#fff3cd" stroke="#a07c1d" stroke-width="2"/>
+  <text x="285" y="415" font-family="Arial, sans-serif" font-size="20">⚠️</text>
+  <text x="320" y="410" font-family="Arial, sans-serif" font-size="12" fill="#856404"><tspan font-weight="bold">Privacy Implication:</tspan> If YOU can infer age from enrollment + sibling data,</text>
+  <text x="320" y="425" font-family="Arial, sans-serif" font-size="12" fill="#856404">so can anyone with access to this "anonymous" dataset!</text>
+
+  <!-- Arrow from B to inference -->
+  <path d="M 210 350 Q 230 280 250 260" stroke="#2c5a82" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+
+  <!-- Arrow from A to inference -->
+  <path d="M 210 160 Q 230 190 250 220" stroke="#6a3d75" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+</svg>

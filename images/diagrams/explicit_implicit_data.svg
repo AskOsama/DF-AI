@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400">
+  <defs>
+    <linearGradient id="blueGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c5a82;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c5a82;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="orangeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a07c1d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d35400;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="greenGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c6a5b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#229954;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="400" fill="#f8f9fa" rx="10"/>
+
+  <!-- Title -->
+  <text x="350" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#14202e">Explicit vs Implicit Data</text>
+
+  <!-- Left Box: Explicit Data -->
+  <rect x="30" y="55" width="200" height="280" rx="15" fill="#e3f2fd" stroke="#2c5a82" stroke-width="2"/>
+  <rect x="30" y="55" width="200" height="40" rx="15" fill="url(#blueGrad2)"/>
+  <text x="130" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">EXPLICIT DATA</text>
+  <text x="130" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#14202e">"What's directly recorded"</text>
+
+  <!-- Explicit data items -->
+  <!-- Form icon -->
+  <rect x="50" y="135" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="70" y="158" font-family="Arial, sans-serif" font-size="18">📋</text>
+  <text x="95" y="157" font-family="Arial, sans-serif" font-size="12" fill="#555">Name, Age, Gender</text>
+
+  <!-- Database icon -->
+  <rect x="50" y="180" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="70" y="203" font-family="Arial, sans-serif" font-size="18">🗄️</text>
+  <text x="95" y="202" font-family="Arial, sans-serif" font-size="12" fill="#555">ZIP Code, Income</text>
+
+  <!-- Sensor icon -->
+  <rect x="50" y="225" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="70" y="248" font-family="Arial, sans-serif" font-size="18">📱</text>
+  <text x="95" y="247" font-family="Arial, sans-serif" font-size="12" fill="#555">Clicks, Timestamps</text>
+
+  <!-- Transaction icon -->
+  <rect x="50" y="270" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="70" y="293" font-family="Arial, sans-serif" font-size="18">💳</text>
+  <text x="95" y="292" font-family="Arial, sans-serif" font-size="12" fill="#555">Purchases, Claims</text>
+
+  <!-- Center: Detective/Magnifying Glass transforming -->
+  <circle cx="350" cy="195" r="55" fill="#fff3cd" stroke="#a07c1d" stroke-width="3"/>
+  <!-- Detective icon -->
+  <text x="350" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="40">🔍</text>
+  <text x="350" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#856404">Feature</text>
+  <text x="350" y="228" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#856404">Engineering</text>
+
+  <!-- Transformation arrows -->
+  <!-- Left arrow -->
+  <path d="M 240 195 L 285 195" stroke="#2c5a82" stroke-width="3" fill="none" marker-end="url(#arrowBlue)"/>
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2c5a82" />
+    </marker>
+  </defs>
+
+  <!-- Right arrow -->
+  <path d="M 415 195 L 460 195" stroke="#a07c1d" stroke-width="3" fill="none" marker-end="url(#arrowOrange)"/>
+  <defs>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#a07c1d" />
+    </marker>
+  </defs>
+
+  <!-- Right Box: Implicit Data -->
+  <rect x="470" y="55" width="200" height="280" rx="15" fill="#fef3e2" stroke="#a07c1d" stroke-width="2"/>
+  <rect x="470" y="55" width="200" height="40" rx="15" fill="url(#orangeGrad2)"/>
+  <text x="570" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">IMPLICIT DATA</text>
+  <text x="570" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#14202e">"What can be derived"</text>
+
+  <!-- Implicit data items -->
+  <!-- Brain icon -->
+  <rect x="490" y="135" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="510" y="158" font-family="Arial, sans-serif" font-size="18">🧠</text>
+  <text x="535" y="157" font-family="Arial, sans-serif" font-size="12" fill="#555">Risk Score</text>
+
+  <!-- Calculator icon -->
+  <rect x="490" y="180" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="510" y="203" font-family="Arial, sans-serif" font-size="18">🧮</text>
+  <text x="535" y="202" font-family="Arial, sans-serif" font-size="12" fill="#555">BMI, Ratios</text>
+
+  <!-- Chart icon -->
+  <rect x="490" y="225" width="160" height="35" rx="8" fill="white" stroke="#bdc3c8"/>
+  <text x="510" y="248" font-family="Arial, sans-serif" font-size="18">📊</text>
+  <text x="535" y="247" font-family="Arial, sans-serif" font-size="12" fill="#555">Spending Patterns</text>
+
+  <!-- Eye icon (privacy) -->
+  <rect x="490" y="270" width="160" height="35" rx="8" fill="#fadbd8" stroke="#b15c26"/>
+  <text x="510" y="293" font-family="Arial, sans-serif" font-size="18">👁️</text>
+  <text x="535" y="292" font-family="Arial, sans-serif" font-size="12" fill="#922b21">Hidden Attributes!</text>
+
+  <!-- Bottom Message Box -->
+  <rect x="100" y="350" width="500" height="40" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="350" y="375" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#155724">The same techniques that help AI can also expose individuals!</text>
+
+  <!-- Decorative elements -->
+  <circle cx="330" cy="280" r="8" fill="#a07c1d" opacity="0.3"/>
+  <circle cx="370" cy="285" r="6" fill="#a07c1d" opacity="0.4"/>
+  <circle cx="345" cy="295" r="5" fill="#a07c1d" opacity="0.2"/>
+</svg>

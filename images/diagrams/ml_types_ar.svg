@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <defs>
+    <style>
+      .ml-box { stroke: #14202e; stroke-width: 3; rx: 10; }
+      .supervised { fill: #2c5a82; }
+      .unsupervised { fill: #2c6a5b; }
+      .reinforcement { fill: #b15c26; }
+      .text-title { fill: #14202e; font-family:inherit; font-size: 30px; font-weight: bold; text-anchor: middle; }
+      .text-header { fill: white; font-family:inherit; font-size: 22px; font-weight: bold; text-anchor: middle; }
+      .text-desc { fill: white; font-family:inherit; font-size: 14px; text-anchor: middle; }
+      .text-example { fill: white; font-family:inherit; font-size: 12px; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="40" class="text-title">الأنواع الرئيسية الثلاثة لتعلّم الآلة</text>
+
+  <!-- Supervised Learning -->
+  <rect x="50" y="90" width="250" height="450" class="ml-box supervised"/>
+  <text x="175" y="130" class="text-header">Supervised</text>
+  <text x="175" y="155" class="text-header">Learning</text>
+
+  <text x="175" y="195" class="text-desc" style="font-size: 16px; font-weight: bold;">التعلم من البيانات الموسومة</text>
+
+  <text x="70" y="235" class="text-desc">Teacher provides correct answers</text>
+  <text x="70" y="260" class="text-desc">Algorithm learns patterns</text>
+  <text x="70" y="285" class="text-desc">Makes predictions on new data</text>
+
+  <text x="175" y="325" class="text-desc" style="font-weight: bold;">أمثلة:</text>
+  <text x="70" y="350" class="text-example">• كشف البريد المزعج</text>
+  <text x="70" y="370" class="text-example">  (labeled spam/not spam)</text>
+  <text x="70" y="395" class="text-example">• Image recognition</text>
+  <text x="70" y="415" class="text-example">  (labeled cat/dog/bird)</text>
+  <text x="70" y="440" class="text-example">• Medical diagnosis</text>
+  <text x="70" y="460" class="text-example">  (labeled symptoms → disease)</text>
+  <text x="70" y="485" class="text-example">• التنبؤ بأسعار المنازل</text>
+
+  <!-- Diagram illustration -->
+  <rect x="70" y="505" width="30" height="20" fill="white" opacity="0.3"/>
+  <text x="105" y="520" class="text-example">Data + Labels → Model → Predictions</text>
+
+  <!-- Unsupervised Learning -->
+  <rect x="325" y="90" width="250" height="450" class="ml-box unsupervised"/>
+  <text x="450" y="130" class="text-header">Unsupervised</text>
+  <text x="450" y="155" class="text-header">Learning</text>
+
+  <text x="450" y="195" class="text-desc" style="font-size: 16px; font-weight: bold;">Finding patterns in data</text>
+
+  <text x="345" y="235" class="text-desc">No labeled answers provided</text>
+  <text x="345" y="260" class="text-desc">Algorithm discovers structure</text>
+  <text x="345" y="285" class="text-desc">Groups similar items together</text>
+
+  <text x="450" y="325" class="text-desc" style="font-weight: bold;">أمثلة:</text>
+  <text x="345" y="350" class="text-example">• تقسيم العملاء</text>
+  <text x="345" y="370" class="text-example">  (grouping similar customers)</text>
+  <text x="345" y="395" class="text-example">• Topic discovery</text>
+  <text x="345" y="415" class="text-example">  (finding themes in documents)</text>
+  <text x="345" y="440" class="text-example">• كشف الشذوذ</text>
+  <text x="345" y="460" class="text-example">  (finding unusual patterns)</text>
+  <text x="345" y="485" class="text-example">• Recommendation systems</text>
+
+  <text x="345" y="520" class="text-example">Data (no labels) → Model → Clusters/Patterns</text>
+
+  <!-- Reinforcement Learning -->
+  <rect x="600" y="90" width="250" height="450" class="ml-box reinforcement"/>
+  <text x="725" y="130" class="text-header">Reinforcement</text>
+  <text x="725" y="155" class="text-header">Learning</text>
+
+  <text x="725" y="195" class="text-desc" style="font-size: 16px; font-weight: bold;">Learning by trial and error</text>
+
+  <text x="620" y="235" class="text-desc">Agent takes actions</text>
+  <text x="620" y="260" class="text-desc">Receives rewards/penalties</text>
+  <text x="620" y="285" class="text-desc">Learns to maximize reward</text>
+
+  <text x="725" y="325" class="text-desc" style="font-weight: bold;">أمثلة:</text>
+  <text x="620" y="350" class="text-example">• Game playing AI</text>
+  <text x="620" y="370" class="text-example">  (AlphaGo, chess programs)</text>
+  <text x="620" y="395" class="text-example">• Robot control</text>
+  <text x="620" y="415" class="text-example">  (learning to walk, grasp)</text>
+  <text x="620" y="440" class="text-example">• السيارات ذاتية القيادة</text>
+  <text x="620" y="460" class="text-example">  (learning to navigate)</text>
+  <text x="620" y="485" class="text-example">• Resource optimization</text>
+
+  <text x="620" y="520" class="text-example">Actions + Rewards → Policy → Better Actions</text>
+
+  <!-- Bottom note -->
+  <rect x="50" y="560" width="800" height="30" fill="#f8f9fa" stroke="#14202e" stroke-width="2" rx="5"/>
+  <text x="450" y="582" style="fill: #14202e; font-family:inherit; font-size: 13px; text-anchor: middle;">Deep Learning is a powerful technique that can be used in all three types of machine learning</text>
+</svg>

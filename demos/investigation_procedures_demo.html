@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5-Step Investigation Procedures Demo | Computer Forensics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a3a4a;
+            --secondary-color: #2e7d8a;
+            --accent-color: #d4af37;
+            --success-color: #276749;
+            --warning-color: #c05621;
+            --light-gray: #f8f9fa;
+            --step1-color: #2b6cb0;
+            --step2-color: #276749;
+            --step3-color: #6b46c1;
+            --step4-color: #c05621;
+            --step5-color: #2e7d8a;
+            --acquire-color: #2b6cb0;
+            --authenticate-color: #276749;
+            --analyze-color: #c05621;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a3a4a 0%, #2e7d8a 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        h1 {
+            font-size: 2em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .lang-switch {
+            float: right;
+            padding: 0.5rem 1rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .lang-switch:hover {
+            background: var(--primary-color);
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--light-gray);
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 1rem 2rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 5-Step Process Section */
+        .process-section {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .process-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .process-flow {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem auto 2rem;
+            max-width: 100%;
+        }
+
+        .process-step {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .process-step:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .process-step.active {
+            transform: scale(1.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .step-icon {
+            font-size: 2em;
+            margin-bottom: 0.3rem;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .arrow-connector {
+            display: flex;
+            align-items: center;
+            color: var(--secondary-color);
+            font-size: 1.5em;
+            opacity: 0.5;
+        }
+
+        .step-identification { background: linear-gradient(135deg, var(--step1-color), #1a365d); }
+        .step-preservation { background: linear-gradient(135deg, var(--step2-color), #1a4731); }
+        .step-extraction { background: linear-gradient(135deg, var(--step3-color), #553c9a); }
+        .step-interpretation { background: linear-gradient(135deg, var(--step4-color), #9c4221); }
+        .step-documentation { background: linear-gradient(135deg, var(--step5-color), #1a3a4a); }
+
+        /* 3 A's Section */
+        .methodology-section {
+            background: linear-gradient(135deg, #ebf8ff, #e6fffa);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .methodology-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .three-as-flow {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1rem auto 2rem;
+        }
+
+        .three-a-step {
+            width: 180px;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .three-a-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .three-a-step.active {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .three-a-icon {
+            font-size: 2.5em;
+            margin-bottom: 0.5rem;
+        }
+
+        .three-a-title {
+            font-size: 1.2em;
+            margin-bottom: 0.3rem;
+        }
+
+        .three-a-subtitle {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .step-acquire { background: linear-gradient(135deg, var(--acquire-color), #1a365d); }
+        .step-authenticate { background: linear-gradient(135deg, var(--authenticate-color), #1a4731); }
+        .step-analyze { background: linear-gradient(135deg, var(--analyze-color), #9c4221); }
+
+        /* Info Panel */
+        .info-panel {
+            background: white;
+            border: 2px solid var(--secondary-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            min-height: 200px;
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .info-icon {
+            font-size: 2.5em;
+        }
+
+        .info-title {
+            font-size: 1.5em;
+            color: var(--primary-color);
+        }
+
+        .info-content h4 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .info-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            color: #666;
+            text-align: center;
+        }
+
+        .info-placeholder .icon {
+            font-size: 3em;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Scenario Simulator */
+        .scenario-section {
+            background: linear-gradient(135deg, #f0f9ff, #e3f2fd);
+            border: 2px solid var(--secondary-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .scenario-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .scenario-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .scenario-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            background: white;
+            color: var(--secondary-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-btn:hover {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .scenario-btn.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .scenario-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 1rem 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #ddd;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            background: var(--secondary-color);
+            transform: translateY(-50%);
+            transition: width 0.5s ease;
+            z-index: 2;
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 3;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 0.5rem;
+        }
+
+        .timeline-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed .timeline-dot,
+        .timeline-step.active .timeline-dot {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .timeline-step.active .timeline-dot {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .timeline-label {
+            font-size: 0.7em;
+            font-weight: 600;
+            text-align: center;
+            color: #666;
+        }
+
+        .timeline-step.completed .timeline-label,
+        .timeline-step.active .timeline-label {
+            color: var(--secondary-color);
+        }
+
+        /* Event Log */
+        .event-log {
+            background: #1a1a2e;
+            color: #0f0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .event-log p {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .event-log .step1-msg { color: #4299e1; }
+        .event-log .step2-msg { color: #48bb78; }
+        .event-log .step3-msg { color: #b794f4; }
+        .event-log .step4-msg { color: #ed8936; }
+        .event-log .step5-msg { color: #4fd1c5; }
+        .event-log .system-msg { color: #a0aec0; }
+
+        /* Key Points */
+        .key-points {
+            background: linear-gradient(135deg, #f0f9ff, #e3f2fd);
+            border: 2px solid var(--secondary-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .key-points h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .key-points ul {
+            margin-left: 1.5rem;
+        }
+
+        .key-points li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .process-step {
+                width: 100px;
+                height: 100px;
+                font-size: 0.75em;
+            }
+
+            .step-icon {
+                font-size: 1.5em;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .scenario-controls {
+                flex-direction: column;
+            }
+
+            .timeline-label {
+                font-size: 0.6em;
+            }
+
+            .arrow-connector {
+                display: none;
+            }
+
+            .tab-nav {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .process-step {
+                width: 80px;
+                height: 80px;
+            }
+
+            .timeline-dot {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9em;
+            }
+
+            .three-a-step {
+                width: 100%;
+            }
+        }
+
+        /* RTL Support */
+        [dir="rtl"] .info-content ul {
+            margin-left: 0;
+            margin-right: 1.5rem;
+        }
+
+        [dir="rtl"] .key-points ul {
+            margin-left: 0;
+            margin-right: 1.5rem;
+        }
+
+        [dir="rtl"] .back-link {
+            float: none;
+        }
+
+        [dir="rtl"] .lang-switch {
+            float: left;
+        }
+
+        [dir="rtl"] .arrow-connector {
+            transform: scaleX(-1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="lang-switch" onclick="toggleLanguage()">العربية</button>
+        <a href="../index.html" class="back-link" id="backLink">&larr; Back to Week 2</a>
+
+        <header>
+            <h1 id="mainTitle">Computer Forensic Investigation Procedures</h1>
+            <p class="subtitle" id="mainSubtitle">Interactive 5-Step Process & 3 A's Methodology</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('five-steps')" id="tabFiveSteps">5 Investigation Steps</button>
+            <button class="tab-btn" onclick="showTab('three-as')" id="tabThreeAs">3 A's Methodology</button>
+        </div>
+
+        <!-- Tab 1: 5-Step Process -->
+        <div id="five-steps" class="tab-content active">
+            <div class="process-section">
+                <h2 id="processTitle">The 5 Investigation Procedures</h2>
+                <p id="processIntro" style="text-align: center; margin-bottom: 1rem; color: #666;">Click on each step to learn about the investigation procedures</p>
+                <div class="process-flow">
+                    <div class="process-step step-identification" onclick="showStep('identification')">
+                        <span class="step-number">1</span>
+                        <span class="step-icon">🔍</span>
+                        <span id="stepIdentificationLabel">Identification</span>
+                    </div>
+                    <span class="arrow-connector">→</span>
+                    <div class="process-step step-preservation" onclick="showStep('preservation')">
+                        <span class="step-number">2</span>
+                        <span class="step-icon">🛡️</span>
+                        <span id="stepPreservationLabel">Preservation</span>
+                    </div>
+                    <span class="arrow-connector">→</span>
+                    <div class="process-step step-extraction" onclick="showStep('extraction')">
+                        <span class="step-number">3</span>
+                        <span class="step-icon">📥</span>
+                        <span id="stepExtractionLabel">Extraction</span>
+                    </div>
+                    <span class="arrow-connector">→</span>
+                    <div class="process-step step-interpretation" onclick="showStep('interpretation')">
+                        <span class="step-number">4</span>
+                        <span class="step-icon">🔬</span>
+                        <span id="stepInterpretationLabel">Interpretation</span>
+                    </div>
+                    <span class="arrow-connector">→</span>
+                    <div class="process-step step-documentation" onclick="showStep('documentation')">
+                        <span class="step-number">5</span>
+                        <span class="step-icon">📝</span>
+                        <span id="stepDocumentationLabel">Documentation</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel" id="info-panel">
+                <div class="info-placeholder">
+                    <span class="icon">👆</span>
+                    <p id="placeholderText"><strong>Click on a step</strong> to learn about each phase of the investigation procedure</p>
+                    <p id="placeholderSubtext" style="margin-top: 0.5rem; font-size: 0.9em;">Or run the scenario simulator below to see the process in action</p>
+                </div>
+            </div>
+
+            <!-- Scenario Simulator -->
+            <div class="scenario-section">
+                <h3 id="scenarioTitle">🎬 <span>Investigation Scenario Simulator</span></h3>
+                <p id="scenarioDesc" style="margin-bottom: 1rem;">Watch how a forensic investigation flows through all 5 steps:</p>
+
+                <div class="scenario-controls">
+                    <button class="scenario-btn" id="startBtn" onclick="startScenario()">
+                        <span id="startBtnText">▶️ Start: Data Breach Investigation</span>
+                    </button>
+                    <button class="scenario-btn" id="resetBtn" onclick="resetScenario()" disabled>
+                        <span id="resetBtnText">🔄 Reset</span>
+                    </button>
+                </div>
+
+                <!-- Timeline -->
+                <div class="timeline">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-progress" id="timeline-progress" style="width: 0%"></div>
+                    <div class="timeline-steps">
+                        <div class="timeline-step" id="tl-identification">
+                            <div class="timeline-dot">🔍</div>
+                            <span class="timeline-label" id="tlIdentification">Identification</span>
+                        </div>
+                        <div class="timeline-step" id="tl-preservation">
+                            <div class="timeline-dot">🛡️</div>
+                            <span class="timeline-label" id="tlPreservation">Preservation</span>
+                        </div>
+                        <div class="timeline-step" id="tl-extraction">
+                            <div class="timeline-dot">📥</div>
+                            <span class="timeline-label" id="tlExtraction">Extraction</span>
+                        </div>
+                        <div class="timeline-step" id="tl-interpretation">
+                            <div class="timeline-dot">🔬</div>
+                            <span class="timeline-label" id="tlInterpretation">Interpretation</span>
+                        </div>
+                        <div class="timeline-step" id="tl-documentation">
+                            <div class="timeline-dot">📝</div>
+                            <span class="timeline-label" id="tlDocumentation">Documentation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="event-log" id="event-log">
+                    <p class="system-msg" id="readyMsg">[System] Ready to simulate a data breach investigation...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 3 A's Methodology -->
+        <div id="three-as" class="tab-content">
+            <div class="methodology-section">
+                <h2 id="methodologyTitle">The 3 A's Methodology</h2>
+                <p id="methodologyIntro" style="text-align: center; margin-bottom: 1rem; color: #666;">The scientific approach to forensic investigation</p>
+                <div class="three-as-flow">
+                    <div class="three-a-step step-acquire" onclick="showThreeA('acquire')">
+                        <span class="three-a-icon">📥</span>
+                        <span class="three-a-title" id="acquireTitle">Acquire</span>
+                        <span class="three-a-subtitle" id="acquireSubtitle">Collect Evidence</span>
+                    </div>
+                    <div class="three-a-step step-authenticate" onclick="showThreeA('authenticate')">
+                        <span class="three-a-icon">✓</span>
+                        <span class="three-a-title" id="authenticateTitle">Authenticate</span>
+                        <span class="three-a-subtitle" id="authenticateSubtitle">Verify Integrity</span>
+                    </div>
+                    <div class="three-a-step step-analyze" onclick="showThreeA('analyze')">
+                        <span class="three-a-icon">🔬</span>
+                        <span class="three-a-title" id="analyzeTitle">Analyze</span>
+                        <span class="three-a-subtitle" id="analyzeSubtitle">Examine Evidence</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 A's Info Panel -->
+            <div class="info-panel" id="three-as-info-panel">
+                <div class="info-placeholder">
+                    <span class="icon">👆</span>
+                    <p id="threeAsPlaceholderText"><strong>Click on a methodology step</strong> to learn about Acquire, Authenticate, and Analyze</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Points -->
+        <div class="key-points">
+            <h3 id="keyPointsTitle">📌 <span>Key Points</span></h3>
+            <ul id="keyPointsList">
+                <li><strong>Sequential Process:</strong> Each investigation step must be completed properly before moving to the next to maintain evidence integrity.</li>
+                <li><strong>Chain of Custody:</strong> Documentation of who handled the evidence, when, and what was done is critical throughout all steps.</li>
+                <li><strong>Legal Compliance:</strong> All activities must follow proper legal procedures to ensure evidence admissibility in court.</li>
+                <li><strong>Integrity First:</strong> The original evidence must never be altered - always work with verified copies.</li>
+                <li><strong>The 3 A's:</strong> Acquire properly, Authenticate thoroughly, and Analyze systematically for court-ready evidence.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let currentLang = 'en';
+        let isSimulating = false;
+        let currentTab = 'five-steps';
+
+        const translations = {
+            en: {
+                mainTitle: 'Computer Forensic Investigation Procedures',
+                mainSubtitle: 'Interactive 5-Step Process & 3 A\'s Methodology',
+                backLink: '← Back to Week 2',
+                langSwitch: 'العربية',
+                tabFiveSteps: '5 Investigation Steps',
+                tabThreeAs: '3 A\'s Methodology',
+                processTitle: 'The 5 Investigation Procedures',
+                processIntro: 'Click on each step to learn about the investigation procedures',
+                stepIdentification: 'Identification',
+                stepPreservation: 'Preservation',
+                stepExtraction: 'Extraction',
+                stepInterpretation: 'Interpretation',
+                stepDocumentation: 'Documentation',
+                placeholderText: 'Click on a step to learn about each phase of the investigation procedure',
+                placeholderSubtext: 'Or run the scenario simulator below to see the process in action',
+                scenarioTitle: 'Investigation Scenario Simulator',
+                scenarioDesc: 'Watch how a forensic investigation flows through all 5 steps:',
+                startBtn: '▶️ Start: Data Breach Investigation',
+                resetBtn: '🔄 Reset',
+                readyMsg: '[System] Ready to simulate a data breach investigation...',
+                methodologyTitle: 'The 3 A\'s Methodology',
+                methodologyIntro: 'The scientific approach to forensic investigation',
+                acquireTitle: 'Acquire',
+                acquireSubtitle: 'Collect Evidence',
+                authenticateTitle: 'Authenticate',
+                authenticateSubtitle: 'Verify Integrity',
+                analyzeTitle: 'Analyze',
+                analyzeSubtitle: 'Examine Evidence',
+                threeAsPlaceholderText: 'Click on a methodology step to learn about Acquire, Authenticate, and Analyze',
+                keyPointsTitle: 'Key Points',
+                keyPoints: [
+                    '<strong>Sequential Process:</strong> Each investigation step must be completed properly before moving to the next to maintain evidence integrity.',
+                    '<strong>Chain of Custody:</strong> Documentation of who handled the evidence, when, and what was done is critical throughout all steps.',
+                    '<strong>Legal Compliance:</strong> All activities must follow proper legal procedures to ensure evidence admissibility in court.',
+                    '<strong>Integrity First:</strong> The original evidence must never be altered - always work with verified copies.',
+                    '<strong>The 3 A\'s:</strong> Acquire properly, Authenticate thoroughly, and Analyze systematically for court-ready evidence.'
+                ]
+            },
+            ar: {
+                mainTitle: 'إجراءات التحقيق الجنائي الحاسوبي',
+                mainSubtitle: 'عملية الخطوات الخمس التفاعلية ومنهجية الثلاثة أ',
+                backLink: 'العودة إلى الأسبوع الثاني ←',
+                langSwitch: 'English',
+                tabFiveSteps: 'خطوات التحقيق الخمس',
+                tabThreeAs: 'منهجية الثلاثة أ',
+                processTitle: 'إجراءات التحقيق الخمسة',
+                processIntro: 'انقر على كل خطوة للتعرف على إجراءات التحقيق',
+                stepIdentification: 'التحديد',
+                stepPreservation: 'الحفظ',
+                stepExtraction: 'الاستخراج',
+                stepInterpretation: 'التفسير',
+                stepDocumentation: 'التوثيق',
+                placeholderText: 'انقر على خطوة للتعرف على كل مرحلة من إجراءات التحقيق',
+                placeholderSubtext: 'أو شغّل محاكي السيناريو أدناه لرؤية العملية أثناء العمل',
+                scenarioTitle: 'محاكي سيناريو التحقيق',
+                scenarioDesc: 'شاهد كيف يتدفق التحقيق الجنائي عبر جميع الخطوات الخمس:',
+                startBtn: '▶️ ابدأ: تحقيق اختراق البيانات',
+                resetBtn: '🔄 إعادة تعيين',
+                readyMsg: '[النظام] جاهز لمحاكاة تحقيق اختراق البيانات...',
+                methodologyTitle: 'منهجية الثلاثة أ',
+                methodologyIntro: 'النهج العلمي للتحقيق الجنائي',
+                acquireTitle: 'الاستحواذ',
+                acquireSubtitle: 'جمع الأدلة',
+                authenticateTitle: 'التوثيق',
+                authenticateSubtitle: 'التحقق من السلامة',
+                analyzeTitle: 'التحليل',
+                analyzeSubtitle: 'فحص الأدلة',
+                threeAsPlaceholderText: 'انقر على خطوة منهجية للتعرف على الاستحواذ والتوثيق والتحليل',
+                keyPointsTitle: 'النقاط الرئيسية',
+                keyPoints: [
+                    '<strong>عملية تسلسلية:</strong> يجب إكمال كل خطوة تحقيق بشكل صحيح قبل الانتقال إلى التالية للحفاظ على سلامة الأدلة.',
+                    '<strong>سلسلة الحفظ:</strong> توثيق من تعامل مع الأدلة ومتى وماذا فعل أمر بالغ الأهمية طوال جميع الخطوات.',
+                    '<strong>الامتثال القانوني:</strong> يجب أن تتبع جميع الأنشطة الإجراءات القانونية الصحيحة لضمان مقبولية الأدلة في المحكمة.',
+                    '<strong>السلامة أولاً:</strong> يجب عدم تغيير الدليل الأصلي أبداً - اعمل دائماً مع نسخ تم التحقق منها.',
+                    '<strong>الثلاثة أ:</strong> استحوذ بشكل صحيح، ووثّق بدقة، وحلل بشكل منهجي للحصول على أدلة جاهزة للمحكمة.'
+                ]
+            }
+        };
+
+        const stepData = {
+            identification: {
+                icon: '🔍',
+                title: { en: 'Step 1: Identification', ar: 'الخطوة 1: التحديد' },
+                color: '#2b6cb0',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Recognize and determine potential sources of digital evidence relevant to the investigation.</p>
+
+                        <h4>🎯 Key Activities</h4>
+                        <ul>
+                            <li><strong>Scene Survey:</strong> Assess the physical environment for digital devices</li>
+                            <li><strong>Device Inventory:</strong> Catalog all computers, phones, storage media</li>
+                            <li><strong>Evidence Assessment:</strong> Determine which devices likely contain relevant evidence</li>
+                            <li><strong>Prioritization:</strong> Order examination based on volatility and relevance</li>
+                            <li><strong>Legal Review:</strong> Ensure proper authorization exists for each source</li>
+                        </ul>
+
+                        <h4>🔧 Evidence Sources</h4>
+                        <ul>
+                            <li>Computers, laptops, servers</li>
+                            <li>Mobile devices (smartphones, tablets)</li>
+                            <li>Storage media (USB, external drives, SD cards)</li>
+                            <li>Network devices and cloud accounts</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>التعرف على مصادر الأدلة الرقمية المحتملة ذات الصلة بالتحقيق وتحديدها.</p>
+
+                        <h4>🎯 الأنشطة الرئيسية</h4>
+                        <ul>
+                            <li><strong>مسح المشهد:</strong> تقييم البيئة المادية للأجهزة الرقمية</li>
+                            <li><strong>جرد الأجهزة:</strong> فهرسة جميع الحواسيب والهواتف ووسائط التخزين</li>
+                            <li><strong>تقييم الأدلة:</strong> تحديد الأجهزة المحتمل أن تحتوي على أدلة ذات صلة</li>
+                            <li><strong>تحديد الأولويات:</strong> ترتيب الفحص بناءً على التقلب والصلة</li>
+                            <li><strong>المراجعة القانونية:</strong> ضمان وجود تفويض مناسب لكل مصدر</li>
+                        </ul>
+
+                        <h4>🔧 مصادر الأدلة</h4>
+                        <ul>
+                            <li>الحواسيب والمحمولة والخوادم</li>
+                            <li>الأجهزة المحمولة (الهواتف الذكية، الأجهزة اللوحية)</li>
+                            <li>وسائط التخزين (USB، الأقراص الخارجية، بطاقات SD)</li>
+                            <li>أجهزة الشبكة والحسابات السحابية</li>
+                        </ul>
+                    `
+                }
+            },
+            preservation: {
+                icon: '🛡️',
+                title: { en: 'Step 2: Preservation', ar: 'الخطوة 2: الحفظ' },
+                color: '#276749',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Protect identified evidence from alteration, damage, or destruction to maintain integrity and legal admissibility.</p>
+
+                        <h4>🎯 Key Activities</h4>
+                        <ul>
+                            <li><strong>Secure the Scene:</strong> Control access to prevent tampering</li>
+                            <li><strong>Documentation:</strong> Photograph and record evidence state</li>
+                            <li><strong>Write Blocking:</strong> Use hardware/software to prevent modifications</li>
+                            <li><strong>Forensic Imaging:</strong> Create bit-by-bit copies of storage media</li>
+                            <li><strong>Hash Verification:</strong> Use MD5/SHA to verify integrity</li>
+                        </ul>
+
+                        <h4>📋 Chain of Custody</h4>
+                        <ul>
+                            <li>Record who has access to evidence at all times</li>
+                            <li>Document all transfers and handling</li>
+                            <li>Maintain detailed logs with timestamps</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>حماية الأدلة المحددة من التغيير أو التلف أو التدمير للحفاظ على السلامة والمقبولية القانونية.</p>
+
+                        <h4>🎯 الأنشطة الرئيسية</h4>
+                        <ul>
+                            <li><strong>تأمين المشهد:</strong> التحكم في الوصول لمنع العبث</li>
+                            <li><strong>التوثيق:</strong> تصوير وتسجيل حالة الأدلة</li>
+                            <li><strong>منع الكتابة:</strong> استخدام الأجهزة/البرامج لمنع التعديلات</li>
+                            <li><strong>التصوير الجنائي:</strong> إنشاء نسخ بت-بت من وسائط التخزين</li>
+                            <li><strong>التحقق بالتجزئة:</strong> استخدام MD5/SHA للتحقق من السلامة</li>
+                        </ul>
+
+                        <h4>📋 سلسلة الحفظ</h4>
+                        <ul>
+                            <li>تسجيل من لديه حق الوصول إلى الأدلة في جميع الأوقات</li>
+                            <li>توثيق جميع عمليات النقل والتعامل</li>
+                            <li>الحفاظ على سجلات مفصلة مع الطوابع الزمنية</li>
+                        </ul>
+                    `
+                }
+            },
+            extraction: {
+                icon: '📥',
+                title: { en: 'Step 3: Extraction', ar: 'الخطوة 3: الاستخراج' },
+                color: '#6b46c1',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Recover data from preserved evidence using forensic tools and techniques.</p>
+
+                        <h4>🎯 Key Activities</h4>
+                        <ul>
+                            <li><strong>Logical Extraction:</strong> Copy files through the operating system</li>
+                            <li><strong>Physical Extraction:</strong> Bit-by-bit imaging of entire storage</li>
+                            <li><strong>Live Extraction:</strong> Capture data from running systems</li>
+                            <li><strong>Deleted File Recovery:</strong> Recover files from unallocated space</li>
+                        </ul>
+
+                        <h4>🔧 Common Extraction Tasks</h4>
+                        <ul>
+                            <li>Recover deleted files and fragments</li>
+                            <li>Decrypt encrypted files and containers</li>
+                            <li>Parse email databases and chat logs</li>
+                            <li>Extract browser artifacts and metadata</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>استرداد البيانات من الأدلة المحفوظة باستخدام أدوات وتقنيات التحليل الجنائي.</p>
+
+                        <h4>🎯 الأنشطة الرئيسية</h4>
+                        <ul>
+                            <li><strong>الاستخراج المنطقي:</strong> نسخ الملفات من خلال نظام التشغيل</li>
+                            <li><strong>الاستخراج المادي:</strong> تصوير بت-بت للتخزين بالكامل</li>
+                            <li><strong>الاستخراج المباشر:</strong> التقاط البيانات من الأنظمة العاملة</li>
+                            <li><strong>استرداد الملفات المحذوفة:</strong> استرداد الملفات من المساحة غير المخصصة</li>
+                        </ul>
+
+                        <h4>🔧 مهام الاستخراج الشائعة</h4>
+                        <ul>
+                            <li>استرداد الملفات المحذوفة والأجزاء</li>
+                            <li>فك تشفير الملفات والحاويات المشفرة</li>
+                            <li>تحليل قواعد بيانات البريد الإلكتروني وسجلات الدردشة</li>
+                            <li>استخراج مصنوعات المتصفح والبيانات الوصفية</li>
+                        </ul>
+                    `
+                }
+            },
+            interpretation: {
+                icon: '🔬',
+                title: { en: 'Step 4: Interpretation', ar: 'الخطوة 4: التفسير' },
+                color: '#c05621',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Analyze extracted data to understand its meaning, relevance, and significance to the investigation.</p>
+
+                        <h4>🎯 Key Activities</h4>
+                        <ul>
+                            <li><strong>Timeline Analysis:</strong> Construct chronological sequence of events</li>
+                            <li><strong>Link Analysis:</strong> Identify relationships between entities</li>
+                            <li><strong>Pattern Recognition:</strong> Identify suspicious patterns or anomalies</li>
+                            <li><strong>Content Analysis:</strong> Review meaning and context of data</li>
+                            <li><strong>Correlation:</strong> Connect evidence from multiple sources</li>
+                        </ul>
+
+                        <h4>⚠️ Objectivity</h4>
+                        <ul>
+                            <li>Consider all possible explanations</li>
+                            <li>Report both inculpatory and exculpatory evidence</li>
+                            <li>Avoid confirmation bias</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>تحليل البيانات المستخرجة لفهم معناها وصلتها وأهميتها للتحقيق.</p>
+
+                        <h4>🎯 الأنشطة الرئيسية</h4>
+                        <ul>
+                            <li><strong>تحليل الجدول الزمني:</strong> بناء تسلسل زمني للأحداث</li>
+                            <li><strong>تحليل الروابط:</strong> تحديد العلاقات بين الكيانات</li>
+                            <li><strong>التعرف على الأنماط:</strong> تحديد الأنماط أو الشذوذات المشبوهة</li>
+                            <li><strong>تحليل المحتوى:</strong> مراجعة معنى وسياق البيانات</li>
+                            <li><strong>الربط:</strong> ربط الأدلة من مصادر متعددة</li>
+                        </ul>
+
+                        <h4>⚠️ الموضوعية</h4>
+                        <ul>
+                            <li>النظر في جميع التفسيرات الممكنة</li>
+                            <li>الإبلاغ عن أدلة الإدانة والبراءة</li>
+                            <li>تجنب تحيز التأكيد</li>
+                        </ul>
+                    `
+                }
+            },
+            documentation: {
+                icon: '📝',
+                title: { en: 'Step 5: Documentation', ar: 'الخطوة 5: التوثيق' },
+                color: '#2e7d8a',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Record all actions, findings, and conclusions throughout the investigation for reproducibility and legal credibility.</p>
+
+                        <h4>🎯 What to Document</h4>
+                        <ul>
+                            <li><strong>Evidence Handling:</strong> Collection, transfer, storage procedures</li>
+                            <li><strong>Tools Used:</strong> Software/hardware versions and configurations</li>
+                            <li><strong>Procedures:</strong> Step-by-step account of analysis methods</li>
+                            <li><strong>Findings:</strong> All discoveries, significant and minor</li>
+                            <li><strong>Timestamps:</strong> Date and time of all actions</li>
+                        </ul>
+
+                        <h4>📄 Report Types</h4>
+                        <ul>
+                            <li>Technical reports for experts</li>
+                            <li>Executive summaries for stakeholders</li>
+                            <li>Expert witness reports for court</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>تسجيل جميع الإجراءات والنتائج والاستنتاجات طوال التحقيق لقابلية التكرار والمصداقية القانونية.</p>
+
+                        <h4>🎯 ما يجب توثيقه</h4>
+                        <ul>
+                            <li><strong>معالجة الأدلة:</strong> إجراءات الجمع والنقل والتخزين</li>
+                            <li><strong>الأدوات المستخدمة:</strong> إصدارات وتكوينات البرامج/الأجهزة</li>
+                            <li><strong>الإجراءات:</strong> حساب خطوة بخطوة لطرق التحليل</li>
+                            <li><strong>النتائج:</strong> جميع الاكتشافات، الهامة والثانوية</li>
+                            <li><strong>الطوابع الزمنية:</strong> تاريخ ووقت جميع الإجراءات</li>
+                        </ul>
+
+                        <h4>📄 أنواع التقارير</h4>
+                        <ul>
+                            <li>التقارير التقنية للخبراء</li>
+                            <li>الملخصات التنفيذية لأصحاب المصلحة</li>
+                            <li>تقارير الشاهد الخبير للمحكمة</li>
+                        </ul>
+                    `
+                }
+            }
+        };
+
+        const threeAsData = {
+            acquire: {
+                icon: '📥',
+                title: { en: 'Acquire', ar: 'الاستحواذ' },
+                color: '#2b6cb0',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Properly collect and secure digital evidence from identified sources.</p>
+
+                        <h4>🎯 Key Principles</h4>
+                        <ul>
+                            <li><strong>Proper Collection:</strong> Use validated forensic techniques</li>
+                            <li><strong>Forensic Imaging:</strong> Create bit-by-bit copies of storage media</li>
+                            <li><strong>Volatile Data:</strong> Capture memory and live data before shutdown</li>
+                            <li><strong>Legal Compliance:</strong> Follow proper legal requirements</li>
+                            <li><strong>Chain of Custody:</strong> Begin documentation immediately</li>
+                        </ul>
+
+                        <h4>🔧 Best Practices</h4>
+                        <ul>
+                            <li>Use write-blockers to prevent modifications</li>
+                            <li>Create multiple copies for analysis</li>
+                            <li>Document all acquisition steps</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>جمع وتأمين الأدلة الرقمية بشكل صحيح من المصادر المحددة.</p>
+
+                        <h4>🎯 المبادئ الرئيسية</h4>
+                        <ul>
+                            <li><strong>الجمع السليم:</strong> استخدام تقنيات جنائية معتمدة</li>
+                            <li><strong>التصوير الجنائي:</strong> إنشاء نسخ بت-بت من وسائط التخزين</li>
+                            <li><strong>البيانات المتقلبة:</strong> التقاط الذاكرة والبيانات الحية قبل الإغلاق</li>
+                            <li><strong>الامتثال القانوني:</strong> اتباع المتطلبات القانونية الصحيحة</li>
+                            <li><strong>سلسلة الحفظ:</strong> بدء التوثيق فوراً</li>
+                        </ul>
+
+                        <h4>🔧 أفضل الممارسات</h4>
+                        <ul>
+                            <li>استخدام مانعات الكتابة لمنع التعديلات</li>
+                            <li>إنشاء نسخ متعددة للتحليل</li>
+                            <li>توثيق جميع خطوات الاستحواذ</li>
+                        </ul>
+                    `
+                }
+            },
+            authenticate: {
+                icon: '✓',
+                title: { en: 'Authenticate', ar: 'التوثيق' },
+                color: '#276749',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Verify that evidence has not been altered and prove its integrity.</p>
+
+                        <h4>🎯 Key Principles</h4>
+                        <ul>
+                            <li><strong>Hash Values:</strong> Calculate MD5, SHA-1, SHA-256 of original</li>
+                            <li><strong>Verification:</strong> Confirm copies match original hashes</li>
+                            <li><strong>Documentation:</strong> Record authentication at every transfer</li>
+                            <li><strong>Write Protection:</strong> Prevent accidental modifications</li>
+                            <li><strong>Access Logs:</strong> Track all evidence access</li>
+                        </ul>
+
+                        <h4>🔧 Verification Methods</h4>
+                        <ul>
+                            <li>Cryptographic hash comparison</li>
+                            <li>Digital signatures</li>
+                            <li>Timestamp verification</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>التحقق من أن الأدلة لم تُغيَّر وإثبات سلامتها.</p>
+
+                        <h4>🎯 المبادئ الرئيسية</h4>
+                        <ul>
+                            <li><strong>قيم التجزئة:</strong> حساب MD5 و SHA-1 و SHA-256 للأصل</li>
+                            <li><strong>التحقق:</strong> تأكيد تطابق النسخ مع تجزئات الأصل</li>
+                            <li><strong>التوثيق:</strong> تسجيل التحقق عند كل عملية نقل</li>
+                            <li><strong>حماية الكتابة:</strong> منع التعديلات غير المقصودة</li>
+                            <li><strong>سجلات الوصول:</strong> تتبع جميع عمليات الوصول للأدلة</li>
+                        </ul>
+
+                        <h4>🔧 طرق التحقق</h4>
+                        <ul>
+                            <li>مقارنة التجزئة التشفيرية</li>
+                            <li>التوقيعات الرقمية</li>
+                            <li>التحقق من الطوابع الزمنية</li>
+                        </ul>
+                    `
+                }
+            },
+            analyze: {
+                icon: '🔬',
+                title: { en: 'Analyze', ar: 'التحليل' },
+                color: '#c05621',
+                content: {
+                    en: `
+                        <h4>📖 Purpose</h4>
+                        <p>Systematically examine authenticated evidence to find relevant information.</p>
+
+                        <h4>🎯 Key Principles</h4>
+                        <ul>
+                            <li><strong>Validated Tools:</strong> Use court-accepted forensic software</li>
+                            <li><strong>Systematic Search:</strong> Apply methodical examination techniques</li>
+                            <li><strong>Documentation:</strong> Record all findings and their significance</li>
+                            <li><strong>Alternative Theories:</strong> Consider multiple interpretations</li>
+                            <li><strong>Evidence-Based:</strong> Conclusions based only on evidence</li>
+                        </ul>
+
+                        <h4>🔧 Analysis Techniques</h4>
+                        <ul>
+                            <li>Keyword searching and filtering</li>
+                            <li>Timeline reconstruction</li>
+                            <li>File signature analysis</li>
+                            <li>Metadata examination</li>
+                        </ul>
+                    `,
+                    ar: `
+                        <h4>📖 الغرض</h4>
+                        <p>فحص الأدلة الموثقة بشكل منهجي للعثور على المعلومات ذات الصلة.</p>
+
+                        <h4>🎯 المبادئ الرئيسية</h4>
+                        <ul>
+                            <li><strong>أدوات معتمدة:</strong> استخدام برامج جنائية مقبولة من المحاكم</li>
+                            <li><strong>البحث المنهجي:</strong> تطبيق تقنيات فحص منظمة</li>
+                            <li><strong>التوثيق:</strong> تسجيل جميع النتائج وأهميتها</li>
+                            <li><strong>النظريات البديلة:</strong> النظر في تفسيرات متعددة</li>
+                            <li><strong>مبني على الأدلة:</strong> استنتاجات مبنية على الأدلة فقط</li>
+                        </ul>
+
+                        <h4>🔧 تقنيات التحليل</h4>
+                        <ul>
+                            <li>البحث بالكلمات الرئيسية والتصفية</li>
+                            <li>إعادة بناء الجدول الزمني</li>
+                            <li>تحليل توقيع الملفات</li>
+                            <li>فحص البيانات الوصفية</li>
+                        </ul>
+                    `
+                }
+            }
+        };
+
+        const scenarioMessages = {
+            en: {
+                start: '[SCENARIO START] Data breach investigation initiated...',
+                identification: [
+                    '[IDENTIFICATION] Assessing the breach scene - affected servers identified',
+                    '[IDENTIFICATION] Multiple devices found: web server, database server, workstations',
+                    '[IDENTIFICATION] Network logs show unauthorized access attempts',
+                    '[IDENTIFICATION] Evidence sources prioritized: server logs first, then endpoints'
+                ],
+                preservation: [
+                    '[PRESERVATION] Isolating affected systems from network',
+                    '[PRESERVATION] Deploying write-blockers on storage devices',
+                    '[PRESERVATION] Creating forensic images of server hard drives',
+                    '[PRESERVATION] Chain of custody documentation initiated'
+                ],
+                extraction: [
+                    '[EXTRACTION] Extracting server access logs...',
+                    '[EXTRACTION] Recovering deleted log files from unallocated space',
+                    '[EXTRACTION] Parsing database transaction logs',
+                    '[EXTRACTION] Extracting browser history from admin workstations'
+                ],
+                interpretation: [
+                    '[INTERPRETATION] Analyzing access patterns and timestamps',
+                    '[INTERPRETATION] Building timeline of breach events',
+                    '[INTERPRETATION] Correlating IP addresses with known threat actors',
+                    '[INTERPRETATION] Identified data exfiltration window: 2:00-4:00 AM',
+                    '[INTERPRETATION] 50,000 customer records potentially compromised'
+                ],
+                documentation: [
+                    '[DOCUMENTATION] Recording all findings with timestamps',
+                    '[DOCUMENTATION] Creating detailed evidence inventory',
+                    '[DOCUMENTATION] Compiling incident response report',
+                    '[DOCUMENTATION] Preparing executive summary for stakeholders'
+                ],
+                complete: '[SCENARIO COMPLETE] Investigation concluded. Evidence package ready for legal review.'
+            },
+            ar: {
+                start: '[بدء السيناريو] بدء تحقيق اختراق البيانات...',
+                identification: [
+                    '[التحديد] تقييم مشهد الاختراق - تم تحديد الخوادم المتأثرة',
+                    '[التحديد] تم العثور على أجهزة متعددة: خادم الويب، خادم قاعدة البيانات، محطات العمل',
+                    '[التحديد] تظهر سجلات الشبكة محاولات وصول غير مصرح بها',
+                    '[التحديد] تم ترتيب أولويات مصادر الأدلة: سجلات الخادم أولاً، ثم نقاط النهاية'
+                ],
+                preservation: [
+                    '[الحفظ] عزل الأنظمة المتأثرة عن الشبكة',
+                    '[الحفظ] نشر مانعات الكتابة على أجهزة التخزين',
+                    '[الحفظ] إنشاء صور جنائية لأقراص الخادم الصلبة',
+                    '[الحفظ] بدء توثيق سلسلة الحفظ'
+                ],
+                extraction: [
+                    '[الاستخراج] استخراج سجلات وصول الخادم...',
+                    '[الاستخراج] استرداد ملفات السجل المحذوفة من المساحة غير المخصصة',
+                    '[الاستخراج] تحليل سجلات معاملات قاعدة البيانات',
+                    '[الاستخراج] استخراج سجل المتصفح من محطات عمل المسؤولين'
+                ],
+                interpretation: [
+                    '[التفسير] تحليل أنماط الوصول والطوابع الزمنية',
+                    '[التفسير] بناء جدول زمني لأحداث الاختراق',
+                    '[التفسير] ربط عناوين IP بالجهات الفاعلة المعروفة',
+                    '[التفسير] تم تحديد نافذة تسريب البيانات: 2:00-4:00 صباحاً',
+                    '[التفسير] 50,000 سجل عميل من المحتمل أن يكونوا قد تعرضوا للخطر'
+                ],
+                documentation: [
+                    '[التوثيق] تسجيل جميع النتائج مع الطوابع الزمنية',
+                    '[التوثيق] إنشاء جرد تفصيلي للأدلة',
+                    '[التوثيق] تجميع تقرير الاستجابة للحوادث',
+                    '[التوثيق] إعداد ملخص تنفيذي لأصحاب المصلحة'
+                ],
+                complete: '[اكتمل السيناريو] اختتم التحقيق. حزمة الأدلة جاهزة للمراجعة القانونية.'
+            }
+        };
+
+        function showTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ar' : 'en';
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            updateUILanguage();
+        }
+
+        function updateUILanguage() {
+            const t = translations[currentLang];
+
+            document.getElementById('mainTitle').textContent = t.mainTitle;
+            document.getElementById('mainSubtitle').textContent = t.mainSubtitle;
+            document.getElementById('backLink').innerHTML = t.backLink;
+            document.getElementById('backLink').href = currentLang === 'ar' ? '../weeks/week2_ar.html' : '../weeks/week2.html';
+            document.querySelector('.lang-switch').textContent = t.langSwitch;
+
+            document.getElementById('tabFiveSteps').textContent = t.tabFiveSteps;
+            document.getElementById('tabThreeAs').textContent = t.tabThreeAs;
+
+            document.getElementById('processTitle').textContent = t.processTitle;
+            document.getElementById('processIntro').textContent = t.processIntro;
+
+            document.getElementById('stepIdentificationLabel').textContent = t.stepIdentification;
+            document.getElementById('stepPreservationLabel').textContent = t.stepPreservation;
+            document.getElementById('stepExtractionLabel').textContent = t.stepExtraction;
+            document.getElementById('stepInterpretationLabel').textContent = t.stepInterpretation;
+            document.getElementById('stepDocumentationLabel').textContent = t.stepDocumentation;
+
+            document.getElementById('tlIdentification').textContent = t.stepIdentification;
+            document.getElementById('tlPreservation').textContent = t.stepPreservation;
+            document.getElementById('tlExtraction').textContent = t.stepExtraction;
+            document.getElementById('tlInterpretation').textContent = t.stepInterpretation;
+            document.getElementById('tlDocumentation').textContent = t.stepDocumentation;
+
+            document.getElementById('placeholderText').innerHTML = '<strong>' + t.placeholderText + '</strong>';
+            document.getElementById('placeholderSubtext').textContent = t.placeholderSubtext;
+
+            document.querySelector('#scenarioTitle span').textContent = t.scenarioTitle;
+            document.getElementById('scenarioDesc').textContent = t.scenarioDesc;
+            document.getElementById('startBtnText').textContent = t.startBtn;
+            document.getElementById('resetBtnText').textContent = t.resetBtn;
+            document.getElementById('readyMsg').textContent = t.readyMsg;
+
+            document.getElementById('methodologyTitle').textContent = t.methodologyTitle;
+            document.getElementById('methodologyIntro').textContent = t.methodologyIntro;
+            document.getElementById('acquireTitle').textContent = t.acquireTitle;
+            document.getElementById('acquireSubtitle').textContent = t.acquireSubtitle;
+            document.getElementById('authenticateTitle').textContent = t.authenticateTitle;
+            document.getElementById('authenticateSubtitle').textContent = t.authenticateSubtitle;
+            document.getElementById('analyzeTitle').textContent = t.analyzeTitle;
+            document.getElementById('analyzeSubtitle').textContent = t.analyzeSubtitle;
+
+            document.getElementById('threeAsPlaceholderText').innerHTML = '<strong>' + t.threeAsPlaceholderText + '</strong>';
+
+            document.querySelector('#keyPointsTitle span').textContent = t.keyPointsTitle;
+            const keyPointsList = document.getElementById('keyPointsList');
+            keyPointsList.innerHTML = t.keyPoints.map(point => `<li>${point}</li>`).join('');
+        }
+
+        function showStep(step) {
+            const data = stepData[step];
+            const panel = document.getElementById('info-panel');
+
+            panel.innerHTML = `
+                <div class="info-header">
+                    <span class="info-icon">${data.icon}</span>
+                    <span class="info-title" style="color: ${data.color}">${data.title[currentLang]}</span>
+                </div>
+                <div class="info-content">
+                    ${data.content[currentLang]}
+                </div>
+            `;
+
+            document.querySelectorAll('.process-step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step-${step}`).classList.add('active');
+        }
+
+        function showThreeA(step) {
+            const data = threeAsData[step];
+            const panel = document.getElementById('three-as-info-panel');
+
+            panel.innerHTML = `
+                <div class="info-header">
+                    <span class="info-icon">${data.icon}</span>
+                    <span class="info-title" style="color: ${data.color}">${data.title[currentLang]}</span>
+                </div>
+                <div class="info-content">
+                    ${data.content[currentLang]}
+                </div>
+            `;
+
+            document.querySelectorAll('.three-a-step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step-${step}`).classList.add('active');
+        }
+
+        function logEvent(text, type = 'system-msg') {
+            const log = document.getElementById('event-log');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = text;
+            log.appendChild(p);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateTimeline(step, status) {
+            const steps = ['identification', 'preservation', 'extraction', 'interpretation', 'documentation'];
+            const index = steps.indexOf(step);
+            const progress = ((index + 1) / steps.length) * 100;
+
+            document.getElementById('timeline-progress').style.width = progress + '%';
+
+            steps.forEach((s, i) => {
+                const el = document.getElementById('tl-' + s);
+                el.classList.remove('active', 'completed');
+                if (i < index) {
+                    el.classList.add('completed');
+                } else if (i === index) {
+                    el.classList.add(status);
+                }
+            });
+        }
+
+        async function startScenario() {
+            if (isSimulating) return;
+            isSimulating = true;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = false;
+            document.getElementById('event-log').innerHTML = '';
+
+            const msgs = scenarioMessages[currentLang];
+
+            logEvent(msgs.start, 'system-msg');
+
+            // Step 1: Identification
+            await delay(1500);
+            updateTimeline('identification', 'active');
+            showStep('identification');
+            for (const msg of msgs.identification) {
+                logEvent(msg, 'step1-msg');
+                await delay(1000);
+            }
+
+            // Step 2: Preservation
+            await delay(1500);
+            updateTimeline('preservation', 'active');
+            showStep('preservation');
+            for (const msg of msgs.preservation) {
+                logEvent(msg, 'step2-msg');
+                await delay(1000);
+            }
+
+            // Step 3: Extraction
+            await delay(1500);
+            updateTimeline('extraction', 'active');
+            showStep('extraction');
+            for (const msg of msgs.extraction) {
+                logEvent(msg, 'step3-msg');
+                await delay(1000);
+            }
+
+            // Step 4: Interpretation
+            await delay(1500);
+            updateTimeline('interpretation', 'active');
+            showStep('interpretation');
+            for (const msg of msgs.interpretation) {
+                logEvent(msg, 'step4-msg');
+                await delay(1000);
+            }
+
+            // Step 5: Documentation
+            await delay(1500);
+            updateTimeline('documentation', 'active');
+            showStep('documentation');
+            for (const msg of msgs.documentation) {
+                logEvent(msg, 'step5-msg');
+                await delay(1000);
+            }
+
+            await delay(1500);
+            logEvent(msgs.complete, 'system-msg');
+
+            isSimulating = false;
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function resetScenario() {
+            isSimulating = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = true;
+            document.getElementById('timeline-progress').style.width = '0%';
+
+            document.querySelectorAll('.timeline-step').forEach(s => {
+                s.classList.remove('active', 'completed');
+            });
+
+            document.querySelectorAll('.process-step').forEach(s => {
+                s.classList.remove('active');
+            });
+
+            const t = translations[currentLang];
+            document.getElementById('event-log').innerHTML = `<p class="system-msg">${t.readyMsg}</p>`;
+
+            document.getElementById('info-panel').innerHTML = `
+                <div class="info-placeholder">
+                    <span class="icon">👆</span>
+                    <p id="placeholderText"><strong>${t.placeholderText}</strong></p>
+                    <p id="placeholderSubtext" style="margin-top: 0.5rem; font-size: 0.9em;">${t.placeholderSubtext}</p>
+                </div>
+            `;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

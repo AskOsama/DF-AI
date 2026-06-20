@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Algorithm Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .controls {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+        select, button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        select {
+            background: #0f3460;
+            color: white;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .btn-new {
+            background: #2196F3;
+        }
+        .btn-reset {
+            background: #607D8B;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .metric {
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+        .accuracy { color: #4CAF50; }
+        .loss { color: #FF5722; }
+        .misc { color: #FFC107; }
+        
+        .equation {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
+        }
+        .equation span {
+            color: #4FC3F7;
+            font-weight: bold;
+        }
+        
+        .canvas-container {
+            background: #0f0f23;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-line {
+            width: 30px;
+            height: 3px;
+        }
+        .blue { background: #4FC3F7; }
+        .red { background: #EF5350; }
+        .yellow { background: #FFD54F; }
+        .green { background: #66BB6A; }
+        
+        .algo-info {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .algo-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4FC3F7;
+            margin-bottom: 5px;
+        }
+        .algo-desc {
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Classic ML Algorithms - Training Output</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Algorithm</label>
+                <select id="algorithm">
+                    <option value="linear">Linear Classifier</option>
+                    <option value="regression">Linear Regression</option>
+                    <option value="tree">Decision Tree</option>
+                    <option value="kmeans">K-Means Clustering</option>
+                </select>
+            </div>
+            <button class="btn-new" onclick="generateData()">New Data</button>
+            <button onclick="train()">Train</button>
+            <button class="btn-reset" onclick="reset()">Reset</button>
+        </div>
+        
+        <div class="equation" id="equation">y = <span>?</span>x + <span>?</span></div>
+        
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value accuracy" id="metric1">--</div>
+                <div class="metric-label" id="label1">Accuracy</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value misc" id="metric2">--</div>
+                <div class="metric-label" id="label2">Misclassified</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value loss" id="metric3">--</div>
+                <div class="metric-label" id="label3">Loss</div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="canvas" width="600" height="450"></canvas>
+            <div class="legend" id="legend">
+                <div class="legend-item">
+                    <div class="legend-dot blue"></div>
+                    <span>Class A</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot red"></div>
+                    <span>Class B</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line yellow"></div>
+                    <span>Decision Boundary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="algo-info">
+            <div class="algo-name" id="algoName">Linear Classifier</div>
+            <div class="algo-desc" id="algoDesc">Finds a straight line to separate classes. Simple but effective for linearly separable data.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let dataA = [];
+        let dataB = [];
+        let regressionData = [];
+        let trained = false;
+        let model = {};
+        
+        const algoInfo = {
+            linear: {
+                name: "Linear Classifier (Classification)",
+                desc: "Finds a straight line to separate two classes. Predicts categories: A or B."
+            },
+            regression: {
+                name: "Linear Regression (Regression)",
+                desc: "Fits a line to predict continuous values. Minimizes the distance between points and the line."
+            },
+            tree: {
+                name: "Decision Tree (Classification)",
+                desc: "Creates axis-aligned splits using yes/no questions. Makes rectangular decision regions."
+            },
+            kmeans: {
+                name: "K-Means Clustering (Unsupervised)",
+                desc: "Groups data into K clusters by finding centroids. No labels needed - discovers natural groupings."
+            }
+        };
+        
+        function updateLegend(algo) {
+            const legend = document.getElementById('legend');
+            if (algo === 'regression') {
+                legend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-dot green"></div>
+                        <span>Data Points</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line yellow"></div>
+                        <span>Best Fit Line</span>
+                    </div>
+                `;
+            } else if (algo === 'kmeans') {
+                legend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-dot blue"></div>
+                        <span>Cluster 1</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot red"></div>
+                        <span>Cluster 2</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot green"></div>
+                        <span>Cluster 3</span>
+                    </div>
+                `;
+            } else {
+                legend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-dot blue"></div>
+                        <span>Class A</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot red"></div>
+                        <span>Class B</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line yellow"></div>
+                        <span>Decision Boundary</span>
+                    </div>
+                `;
+            }
+        }
+        
+        function generateData() {
+            const algo = document.getElementById('algorithm').value;
+            dataA = [];
+            dataB = [];
+            regressionData = [];
+            
+            if (algo === 'regression') {
+                // Generate regression data (continuous)
+                let trueSlope = 0.8 + Math.random() * 0.8;
+                let trueIntercept = -1 + Math.random() * 2;
+                
+                for (let i = 0; i < 40; i++) {
+                    let x = -3.5 + Math.random() * 7;
+                    let noise = (Math.random() - 0.5) * 2;
+                    let y = trueSlope * x + trueIntercept + noise;
+                    regressionData.push({x, y});
+                }
+            } else if (algo === 'kmeans') {
+                // For K-means, generate 3 clusters without labels
+                for (let i = 0; i < 20; i++) {
+                    dataA.push({
+                        x: -2.5 + (Math.random() - 0.5) * 2,
+                        y: 2 + (Math.random() - 0.5) * 2
+                    });
+                }
+                for (let i = 0; i < 20; i++) {
+                    dataB.push({
+                        x: 2.5 + (Math.random() - 0.5) * 2,
+                        y: 1.5 + (Math.random() - 0.5) * 2
+                    });
+                }
+                for (let i = 0; i < 20; i++) {
+                    dataA.push({
+                        x: 0 + (Math.random() - 0.5) * 2,
+                        y: -2 + (Math.random() - 0.5) * 2
+                    });
+                }
+            } else {
+                // Generate two classes for classification
+                for (let i = 0; i < 30; i++) {
+                    dataA.push({
+                        x: -1.5 + (Math.random() - 0.5) * 3,
+                        y: -1.5 + (Math.random() - 0.5) * 3
+                    });
+                }
+                for (let i = 0; i < 30; i++) {
+                    dataB.push({
+                        x: 1.5 + (Math.random() - 0.5) * 3,
+                        y: 1.5 + (Math.random() - 0.5) * 3
+                    });
+                }
+            }
+            
+            trained = false;
+            model = {};
+            updateEquation('?', '?');
+            updateMetricsDisplay(algo, false);
+            draw();
+        }
+        
+        function reset() {
+            trained = false;
+            model = {};
+            const algo = document.getElementById('algorithm').value;
+            updateEquation('?', '?');
+            updateMetricsDisplay(algo, false);
+            draw();
+        }
+        
+        function updateEquation(slope, intercept) {
+            const sign = intercept >= 0 ? '+' : '-';
+            const absIntercept = Math.abs(intercept);
+            document.getElementById('equation').innerHTML = 
+                `y = <span>${slope}</span>x ${sign} <span>${typeof absIntercept === 'number' ? absIntercept.toFixed(2) : absIntercept}</span>`;
+        }
+        
+        function updateMetricsDisplay(algo, isTrained) {
+            const m1 = document.getElementById('metric1');
+            const m2 = document.getElementById('metric2');
+            const m3 = document.getElementById('metric3');
+            const l1 = document.getElementById('label1');
+            const l2 = document.getElementById('label2');
+            const l3 = document.getElementById('label3');
+            
+            if (!isTrained) {
+                m1.textContent = '--';
+                m2.textContent = '--';
+                m3.textContent = '--';
+            }
+            
+            if (algo === 'regression') {
+                l1.textContent = 'R² SCORE';
+                l2.textContent = 'POINTS';
+                l3.textContent = 'MSE';
+            } else if (algo === 'kmeans') {
+                l1.textContent = 'CLUSTERS';
+                l2.textContent = 'POINTS';
+                l3.textContent = 'INERTIA';
+            } else {
+                l1.textContent = 'ACCURACY';
+                l2.textContent = 'MISCLASSIFIED';
+                l3.textContent = 'LOSS';
+            }
+        }
+        
+        function train() {
+            const algo = document.getElementById('algorithm').value;
+            trained = true;
+            
+            switch(algo) {
+                case 'linear':
+                    trainLinear();
+                    break;
+                case 'regression':
+                    trainRegression();
+                    break;
+                case 'tree':
+                    trainTree();
+                    break;
+                case 'kmeans':
+                    trainKMeans();
+                    break;
+            }
+            
+            draw();
+        }
+        
+        function trainLinear() {
+            // Simple linear classifier using class means
+            let sumA = dataA.reduce((acc, p) => ({x: acc.x + p.x, y: acc.y + p.y}), {x: 0, y: 0});
+            let sumB = dataB.reduce((acc, p) => ({x: acc.x + p.x, y: acc.y + p.y}), {x: 0, y: 0});
+            
+            let centerA = {x: sumA.x / dataA.length, y: sumA.y / dataA.length};
+            let centerB = {x: sumB.x / dataB.length, y: sumB.y / dataB.length};
+            
+            let midpoint = {x: (centerA.x + centerB.x) / 2, y: (centerA.y + centerB.y) / 2};
+            let slope = (centerB.y - centerA.y) / (centerB.x - centerA.x);
+            let perpSlope = -1 / slope;
+            
+            model = {
+                slope: perpSlope,
+                intercept: midpoint.y - perpSlope * midpoint.x
+            };
+            
+            updateEquation(model.slope.toFixed(2), model.intercept);
+            calculateClassificationMetrics();
+        }
+        
+        function trainRegression() {
+            // Least squares linear regression
+            let n = regressionData.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            
+            regressionData.forEach(p => {
+                sumX += p.x;
+                sumY += p.y;
+                sumXY += p.x * p.y;
+                sumX2 += p.x * p.x;
+            });
+            
+            let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            let intercept = (sumY - slope * sumX) / n;
+            
+            model = { slope, intercept };
+            
+            updateEquation(slope.toFixed(2), intercept);
+            calculateRegressionMetrics();
+        }
+        
+        function trainTree() {
+            // Find best split on x-axis
+            let allPoints = [...dataA.map(p => ({...p, label: 'A'})), ...dataB.map(p => ({...p, label: 'B'}))];
+            
+            // Simple: find the x value that best separates classes
+            let sortedByX = [...allPoints].sort((a, b) => a.x - b.x);
+            let bestSplit = 0;
+            let bestScore = 0;
+            
+            for (let i = 1; i < sortedByX.length; i++) {
+                let splitX = (sortedByX[i-1].x + sortedByX[i].x) / 2;
+                let left = allPoints.filter(p => p.x < splitX);
+                let right = allPoints.filter(p => p.x >= splitX);
+                
+                let leftA = left.filter(p => p.label === 'A').length;
+                let rightB = right.filter(p => p.label === 'B').length;
+                let score = leftA + rightB;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestSplit = splitX;
+                }
+            }
+            
+            model.splits = [{axis: 'x', value: bestSplit}];
+            
+            updateEquation('x', bestSplit);
+            document.getElementById('equation').innerHTML = 
+                `if x < <span>${bestSplit.toFixed(2)}</span> → Class A, else → Class B`;
+            
+            calculateClassificationMetrics();
+        }
+        
+        function trainKMeans() {
+            let allPoints = [...dataA, ...dataB];
+            
+            // Initialize centroids
+            let centroids = [
+                {x: -2, y: 2, color: '#4FC3F7'},
+                {x: 2, y: 2, color: '#EF5350'},
+                {x: 0, y: -2, color: '#66BB6A'}
+            ];
+            
+            // Run iterations
+            for (let iter = 0; iter < 15; iter++) {
+                // Assign points to nearest centroid
+                allPoints.forEach(p => {
+                    let minDist = Infinity;
+                    centroids.forEach((c, i) => {
+                        let dist = Math.sqrt((p.x - c.x) ** 2 + (p.y - c.y) ** 2);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            p.cluster = i;
+                        }
+                    });
+                });
+                
+                // Update centroids
+                centroids.forEach((c, i) => {
+                    let clusterPoints = allPoints.filter(p => p.cluster === i);
+                    if (clusterPoints.length > 0) {
+                        c.x = clusterPoints.reduce((s, p) => s + p.x, 0) / clusterPoints.length;
+                        c.y = clusterPoints.reduce((s, p) => s + p.y, 0) / clusterPoints.length;
+                    }
+                });
+            }
+            
+            model.centroids = centroids;
+            model.points = allPoints;
+            
+            document.getElementById('equation').innerHTML = 
+                `Centroids: <span>(${centroids[0].x.toFixed(1)}, ${centroids[0].y.toFixed(1)})</span>, 
+                 <span>(${centroids[1].x.toFixed(1)}, ${centroids[1].y.toFixed(1)})</span>, 
+                 <span>(${centroids[2].x.toFixed(1)}, ${centroids[2].y.toFixed(1)})</span>`;
+            
+            // Calculate inertia
+            let inertia = allPoints.reduce((sum, p) => {
+                let c = centroids[p.cluster];
+                return sum + (p.x - c.x) ** 2 + (p.y - c.y) ** 2;
+            }, 0);
+            
+            document.getElementById('metric1').textContent = '3';
+            document.getElementById('metric2').textContent = allPoints.length;
+            document.getElementById('metric3').textContent = inertia.toFixed(2);
+        }
+        
+        function calculateClassificationMetrics() {
+            let correct = 0;
+            let total = dataA.length + dataB.length;
+            const algo = document.getElementById('algorithm').value;
+            
+            dataA.forEach(p => {
+                if (classify(p, algo) === 'A') correct++;
+            });
+            dataB.forEach(p => {
+                if (classify(p, algo) === 'B') correct++;
+            });
+            
+            let accuracy = ((correct / total) * 100).toFixed(1);
+            let misclassified = total - correct;
+            let loss = (misclassified / total * 10).toFixed(3);
+            
+            document.getElementById('metric1').textContent = accuracy + '%';
+            document.getElementById('metric2').textContent = misclassified + '/' + total;
+            document.getElementById('metric3').textContent = loss;
+        }
+        
+        function calculateRegressionMetrics() {
+            let n = regressionData.length;
+            let meanY = regressionData.reduce((s, p) => s + p.y, 0) / n;
+            
+            let ssRes = 0, ssTot = 0;
+            regressionData.forEach(p => {
+                let predicted = model.slope * p.x + model.intercept;
+                ssRes += (p.y - predicted) ** 2;
+                ssTot += (p.y - meanY) ** 2;
+            });
+            
+            let r2 = 1 - (ssRes / ssTot);
+            let mse = ssRes / n;
+            
+            document.getElementById('metric1').textContent = r2.toFixed(3);
+            document.getElementById('metric2').textContent = n;
+            document.getElementById('metric3').textContent = mse.toFixed(3);
+        }
+        
+        function classify(point, algo) {
+            if (algo === 'linear') {
+                return point.y > model.slope * point.x + model.intercept ? 'B' : 'A';
+            } else if (algo === 'tree') {
+                return point.x < model.splits[0].value ? 'A' : 'B';
+            }
+            return 'A';
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const scale = 60;
+            const offsetX = canvas.width / 2;
+            const offsetY = canvas.height / 2;
+            
+            // Draw grid
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for (let i = -5; i <= 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(offsetX + i * scale, 0);
+                ctx.lineTo(offsetX + i * scale, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, offsetY + i * scale);
+                ctx.lineTo(canvas.width, offsetY + i * scale);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, offsetY);
+            ctx.lineTo(canvas.width, offsetY);
+            ctx.moveTo(offsetX, 0);
+            ctx.lineTo(offsetX, canvas.height);
+            ctx.stroke();
+            
+            // Axis labels
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Segoe UI';
+            ctx.fillText('X', canvas.width - 20, offsetY - 10);
+            ctx.fillText('Y', offsetX + 10, 20);
+            
+            const algo = document.getElementById('algorithm').value;
+            
+            // Draw based on algorithm
+            if (algo === 'regression') {
+                // Draw regression line if trained
+                if (trained) {
+                    ctx.strokeStyle = '#FFD54F';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    let x1 = -5, x2 = 5;
+                    let y1 = model.slope * x1 + model.intercept;
+                    let y2 = model.slope * x2 + model.intercept;
+                    ctx.moveTo(offsetX + x1 * scale, offsetY - y1 * scale);
+                    ctx.lineTo(offsetX + x2 * scale, offsetY - y2 * scale);
+                    ctx.stroke();
+                    
+                    // Draw residuals
+                    ctx.strokeStyle = 'rgba(255, 87, 34, 0.5)';
+                    ctx.lineWidth = 1;
+                    regressionData.forEach(p => {
+                        let predicted = model.slope * p.x + model.intercept;
+                        ctx.beginPath();
+                        ctx.moveTo(offsetX + p.x * scale, offsetY - p.y * scale);
+                        ctx.lineTo(offsetX + p.x * scale, offsetY - predicted * scale);
+                        ctx.stroke();
+                    });
+                }
+                
+                // Draw data points
+                regressionData.forEach(p => {
+                    ctx.fillStyle = '#66BB6A';
+                    ctx.beginPath();
+                    ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+            } else if (algo === 'kmeans') {
+                if (trained && model.centroids) {
+                    // Draw cluster regions
+                    model.points.forEach(p => {
+                        ctx.fillStyle = model.centroids[p.cluster].color + '30';
+                        ctx.beginPath();
+                        ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 25, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    
+                    // Draw points
+                    model.points.forEach(p => {
+                        ctx.fillStyle = model.centroids[p.cluster].color;
+                        ctx.beginPath();
+                        ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    
+                    // Draw centroids
+                    model.centroids.forEach(c => {
+                        ctx.fillStyle = c.color;
+                        ctx.beginPath();
+                        ctx.arc(offsetX + c.x * scale, offsetY - c.y * scale, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // Cross marker
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(offsetX + c.x * scale - 8, offsetY - c.y * scale);
+                        ctx.lineTo(offsetX + c.x * scale + 8, offsetY - c.y * scale);
+                        ctx.moveTo(offsetX + c.x * scale, offsetY - c.y * scale - 8);
+                        ctx.lineTo(offsetX + c.x * scale, offsetY - c.y * scale + 8);
+                        ctx.stroke();
+                    });
+                } else {
+                    // Draw unlabeled points
+                    [...dataA, ...dataB].forEach(p => {
+                        ctx.fillStyle = '#888';
+                        ctx.beginPath();
+                        ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+                
+            } else {
+                // Classification algorithms
+                if (trained) {
+                    if (algo === 'linear') {
+                        ctx.strokeStyle = '#FFD54F';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        let x1 = -5, x2 = 5;
+                        let y1 = model.slope * x1 + model.intercept;
+                        let y2 = model.slope * x2 + model.intercept;
+                        ctx.moveTo(offsetX + x1 * scale, offsetY - y1 * scale);
+                        ctx.lineTo(offsetX + x2 * scale, offsetY - y2 * scale);
+                        ctx.stroke();
+                    } else if (algo === 'tree' && model.splits) {
+                        ctx.strokeStyle = '#FFD54F';
+                        ctx.lineWidth = 3;
+                        let xSplit = model.splits[0].value;
+                        ctx.beginPath();
+                        ctx.moveTo(offsetX + xSplit * scale, 0);
+                        ctx.lineTo(offsetX + xSplit * scale, canvas.height);
+                        ctx.stroke();
+                        
+                        // Shade regions
+                        ctx.fillStyle = 'rgba(79, 195, 247, 0.1)';
+                        ctx.fillRect(0, 0, offsetX + xSplit * scale, canvas.height);
+                        ctx.fillStyle = 'rgba(239, 83, 80, 0.1)';
+                        ctx.fillRect(offsetX + xSplit * scale, 0, canvas.width, canvas.height);
+                    }
+                }
+                
+                // Draw Class A - Blue
+                dataA.forEach(p => {
+                    ctx.fillStyle = '#4FC3F7';
+                    ctx.beginPath();
+                    ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // Draw Class B - Red
+                dataB.forEach(p => {
+                    ctx.fillStyle = '#EF5350';
+                    ctx.beginPath();
+                    ctx.arc(offsetX + p.x * scale, offsetY - p.y * scale, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+        
+        document.getElementById('algorithm').addEventListener('change', function() {
+            const algo = this.value;
+            document.getElementById('algoName').textContent = algoInfo[algo].name;
+            document.getElementById('algoDesc').textContent = algoInfo[algo].desc;
+            updateLegend(algo);
+            updateMetricsDisplay(algo, false);
+            generateData();
+        });
+        
+        // Initialize
+        generateData();
+    </script>
+</body>
+</html>

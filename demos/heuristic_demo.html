@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Heuristic Visualization | DS-AI Course</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* ===== Game Container Styles (from memory_game_demo.html) ===== */
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .game-stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-stats strong {
+            color: #3498db;
+            font-size: 1.5rem;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem auto;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            user-select: none;
+            border: none;
+            position: relative;
+            min-height: 70px;
+        }
+
+        .card::before {
+            content: "?";
+            position: absolute;
+            color: rgba(255,255,255,0.3);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .card::after {
+            content: attr(data-position);
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .card:hover:not(.flipped):not(.matched) {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .card.flipped {
+            background: white;
+            color: #2c3e50;
+            border: 3px solid #3498db;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .card.flipped::before {
+            content: none;
+        }
+
+        .card.matched {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            cursor: default;
+            animation: matchPulse 0.6s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .card.matched::before {
+            content: none;
+        }
+
+        .card.ai-recommended {
+            box-shadow: 0 0 0 4px #f39c12, 0 8px 25px rgba(243, 156, 18, 0.5);
+        }
+
+        .card.ai-selecting {
+            animation: aiPulse 0.5s ease infinite;
+            box-shadow: 0 0 0 4px #e74c3c, 0 8px 25px rgba(231, 76, 60, 0.6);
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        /* ===== AI Controls Section ===== */
+        .ai-controls {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .ai-controls h3 {
+            margin: 0 0 1rem 0;
+            color: white;
+        }
+
+        .ai-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .ai-controls button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-ai-start {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-ai-start:hover:not(:disabled) {
+            background: #2ecc71;
+        }
+
+        .btn-ai-pause {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-ai-pause:hover:not(:disabled) {
+            background: #f1c40f;
+        }
+
+        .btn-ai-step {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-ai-step:hover:not(:disabled) {
+            background: #5dade2;
+        }
+
+        .btn-ai-stop {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-ai-stop:hover:not(:disabled) {
+            background: #ec7063;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .speed-control input[type="range"] {
+            width: 120px;
+        }
+
+        .speed-control span {
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .strategy-select {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-select select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        /* ===== Action Log ===== */
+        .action-log {
+            background: #1a1a2e;
+            color: #eee;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .action-log h4 {
+            margin: 0 0 0.5rem 0;
+            color: #3498db;
+            font-family: inherit;
+        }
+
+        .log-entry {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-turn {
+            color: #f39c12;
+        }
+
+        .log-action {
+            color: #2ecc71;
+        }
+
+        .log-score {
+            color: #9b59b6;
+        }
+
+        .log-match {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .log-success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        /* ===== Statistics Panel ===== */
+        .stats-panel {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .stats-panel h3 {
+            margin: 0 0 1rem 0;
+            color: #3498db;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-item .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-item.highlight .stat-value {
+            color: #27ae60;
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db 0%, #27ae60 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* ===== Compact Mode for Large Card Counts ===== */
+        .game-board.compact-mode .card {
+            font-size: 1rem;
+            min-height: 40px;
+        }
+
+        .game-board.compact-mode .card::before {
+            font-size: 1rem;
+        }
+
+        .game-board.compact-mode .card::after {
+            font-size: 0.5rem;
+        }
+
+        @keyframes matchPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* ===== Setup Section ===== */
+        .setup-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .setup-section h2 {
+            color: white;
+            border: none;
+            margin-top: 0;
+        }
+
+        .setup-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .setup-controls label {
+            font-size: 1.1rem;
+        }
+
+        .setup-controls select {
+            padding: 0.8rem 1.5rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-start {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* ===== Heuristic Table ===== */
+        .heuristic-section {
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .heuristic-section h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .heuristic-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .heuristic-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 0.8rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+        }
+
+        .heuristic-table td {
+            padding: 0.6rem;
+            text-align: center;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .heuristic-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .heuristic-table tr:hover {
+            background: #e8f4fc;
+        }
+
+        .heuristic-table tr.matched-row {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .heuristic-table tr.best-choice {
+            background: #fff3cd;
+            font-weight: bold;
+        }
+
+        .heuristic-table .score-high {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .heuristic-table .score-medium {
+            color: #f39c12;
+        }
+
+        .heuristic-table .score-low {
+            color: #95a5a6;
+        }
+
+        .heuristic-table .match-available {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        /* ===== AI Recommendation Panel ===== */
+        .ai-panel {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .ai-panel h3 {
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-panel .recommendation {
+            background: rgba(255,255,255,0.15);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .ai-panel .explanation {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* ===== Config Panel ===== */
+        .config-panel {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .config-panel h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .config-item label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .config-item input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .config-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ===== Game Buttons ===== */
+        .game-buttons {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .game-buttons button,
+        .game-buttons a {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            margin: 0.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #3498db;
+            border: 2px solid #3498db;
+        }
+
+        .btn-secondary:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        /* ===== Win Message ===== */
+        .win-message {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border-radius: 12px;
+            margin: 1rem 0;
+            animation: fadeIn 0.5s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .win-message h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.8rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Hidden State ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 600px) {
+            .game-board {
+                padding: 1rem;
+                gap: 0.6rem;
+            }
+            .card {
+                font-size: 1.5rem;
+                min-height: 50px;
+            }
+            .game-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            .heuristic-table {
+                font-size: 0.8rem;
+            }
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="course-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h1>Memory Heuristic Visualization</h1>
+        <p>Play Yourself or Watch AI Use Heuristic Search</p>
+    </header>
+
+    <main>
+        <div class="game-container">
+            <!-- Setup Section -->
+            <section id="setupSection" class="setup-section">
+                <h2>Memory Heuristic Game</h2>
+                <p>Play yourself or watch the AI use heuristic search to find all matching pairs!</p>
+                <div class="setup-controls">
+                    <label for="playMode">Play Mode:</label>
+                    <select id="playMode">
+                        <option value="manual">Manual (I'll play)</option>
+                        <option value="ai-greedy" selected>AI: Greedy</option>
+                        <option value="ai-epsilon">AI: Epsilon-Greedy</option>
+                        <option value="ai-random">AI: Random</option>
+                        <option value="ai-bruteforce">AI: Brute Force</option>
+                    </select>
+
+                    <label for="matchSize">Match:</label>
+                    <select id="matchSize">
+                        <option value="2" selected>Pairs (2)</option>
+                        <option value="3">Triplets (3)</option>
+                        <option value="4">Quads (4)</option>
+                    </select>
+
+                    <label for="cardCount">Cards:</label>
+                    <select id="cardCount">
+                        <option value="8" selected>8</option>
+                        <option value="12">12</option>
+                        <option value="16">16</option>
+                        <option value="24">24</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="custom">Custom...</option>
+                    </select>
+                    <input type="number" id="customCardCount" min="4" max="1000"
+                           placeholder="Enter count" style="width: 100px; display: none;"
+                           onchange="validateCustomCount()">
+
+                    <button class="btn-start" onclick="startGame()">Start Game</button>
+                </div>
+            </section>
+
+            <!-- Game Area (hidden until game starts) -->
+            <div id="gameArea" class="hidden">
+                <!-- Game Stats -->
+                <div class="game-stats">
+                    <span>Turn: <strong id="turnCount">0</strong></span>
+                    <span>Moves: <strong id="moveCount">0</strong></span>
+                    <span>Matches: <strong id="matchCount">0</strong> / <strong id="totalPairs">0</strong></span>
+                </div>
+
+                <!-- AI Controls -->
+                <section class="ai-controls">
+                    <h3>AI Auto-Play Controls</h3>
+                    <div class="ai-controls-row">
+                        <button id="btnAutoPlay" class="btn-ai-start" onclick="AIPlayer.start()">
+                            Start AI
+                        </button>
+                        <button id="btnPause" class="btn-ai-pause" onclick="AIPlayer.pause()" disabled>
+                            Pause
+                        </button>
+                        <button id="btnStep" class="btn-ai-step" onclick="AIPlayer.step()">
+                            Step
+                        </button>
+                        <button id="btnStop" class="btn-ai-stop" onclick="AIPlayer.stop()" disabled>
+                            Reset
+                        </button>
+
+                        <div class="strategy-select">
+                            <label for="strategySelect">Strategy:</label>
+                            <select id="strategySelect" onchange="AIPlayer.setStrategy(this.value)">
+                                <option value="greedy">Greedy (Best Score)</option>
+                                <option value="epsilon-greedy">Epsilon-Greedy</option>
+                                <option value="random">Random</option>
+                                <option value="brute-force">Brute Force</option>
+                            </select>
+                        </div>
+
+                        <div class="speed-control">
+                            <label for="speedControl">Speed:</label>
+                            <input type="range" id="speedControl" min="200" max="2000" value="800"
+                                   onchange="AIPlayer.setSpeed(this.value)">
+                            <span id="speedDisplay">800ms</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Log -->
+                    <div class="action-log" id="actionLog">
+                        <h4>AI Decision Log</h4>
+                        <div id="logEntries">
+                            <div class="log-entry">Waiting for AI to start...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Statistics Panel -->
+                <section class="stats-panel" id="statsPanel">
+                    <h3>Search Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Cards</div>
+                            <div class="stat-value" id="statTotalCards">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Match Size</div>
+                            <div class="stat-value" id="statMatchSize">2</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Search Space</div>
+                            <div class="stat-value" id="statSearchSpace">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Comparisons</div>
+                            <div class="stat-value" id="statComparisons">0</div>
+                        </div>
+                        <div class="stat-item highlight">
+                            <div class="stat-label">Matches Found</div>
+                            <div class="stat-value" id="statMatchesFound">0/0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Efficiency</div>
+                            <div class="stat-value" id="statEfficiency">0%</div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Game Board -->
+                <div class="game-board" id="gameBoard">
+                    <!-- Cards generated by JavaScript -->
+                </div>
+
+                <!-- Win Message (hidden initially) -->
+                <div id="winMessage" class="hidden"></div>
+
+                <!-- AI Recommendation Panel -->
+                <section class="ai-panel" id="aiPanel">
+                    <h3>AI Recommendation</h3>
+                    <div class="recommendation" id="aiRecommendation">
+                        Click a card to start playing...
+                    </div>
+                    <div class="explanation" id="aiExplanation">
+                        The AI uses the memory heuristic to suggest the best card to flip based on what it remembers.
+                    </div>
+                </section>
+
+                <!-- Heuristic Table -->
+                <section class="heuristic-section">
+                    <h3>Memory Heuristic Table</h3>
+                    <p style="text-align: center; color: #666; margin-bottom: 1rem;">
+                        This table shows the heuristic score for each card position. Higher scores = better choices!
+                    </p>
+                    <table class="heuristic-table" id="heuristicTable">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Known Value</th>
+                                <th>Seen at Turn</th>
+                                <th>Turns Ago</th>
+                                <th>Base Score</th>
+                                <th>Recency Factor</th>
+                                <th>Match Bonus</th>
+                                <th>Final Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heuristicBody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Heuristic Configuration Panel -->
+                <section class="config-panel">
+                    <h3>Heuristic Configuration (Adjustable Parameters)</h3>
+                    <p style="color: #666; margin-bottom: 1rem;">
+                        Modify these values to see how they affect the AI's decision-making:
+                    </p>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label for="cfgKnownScore">Known Card Base Score</label>
+                            <input type="number" id="cfgKnownScore" value="100" min="0" onchange="updateConfig()">
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgUnknownScore">Unknown Card Score</label>
+                            <input type="number" id="cfgUnknownScore" value="10" min="0" onchange="updateConfig()">
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgMatchBonus">Match Available Bonus</label>
+                            <input type="number" id="cfgMatchBonus" value="500" min="0" onchange="updateConfig()">
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgRecencyWeight">Recency Decay Factor (0-1)</label>
+                            <input type="number" id="cfgRecencyWeight" value="0.9" min="0" max="1" step="0.05" onchange="updateConfig()">
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgEnableStochastic">
+                                <input type="checkbox" id="cfgEnableStochastic" onchange="updateConfig()">
+                                Enable Stochastic Noise
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgNoiseFactor">Random Noise Factor</label>
+                            <input type="number" id="cfgNoiseFactor" value="0.2" min="0" max="1" step="0.05" onchange="updateConfig()">
+                        </div>
+                        <div class="config-item">
+                            <label for="cfgExplorationRate">Exploration Rate (epsilon)</label>
+                            <input type="number" id="cfgExplorationRate" value="0.1" min="0" max="1" step="0.05" onchange="updateConfig()">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Game Buttons -->
+                <div class="game-buttons">
+                    <button class="btn-primary" onclick="resetGame()">New Game</button>
+                    <button class="btn-secondary" onclick="showSetup()">Change Settings</button>
+                    <a href="../index.html" class="btn-secondary">Back to Lecture</a>
+                </div>
+            </div>
+
+            <!-- Educational Connection -->
+            <section class="content-section" style="margin-top: 2rem;">
+                <div class="definition">
+                    <h3>Understanding the Heuristic Function</h3>
+                    <p>The memory heuristic calculates a score for each card position using this formula:</p>
+                    <pre style="background: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto;"><code>function calculateScore(position):
+    if card is MATCHED:
+        return 0  (already done)
+
+    if card is UNKNOWN:
+        return UNKNOWN_SCORE  (low priority)
+
+    if card is KNOWN:
+        base = KNOWN_CARD_SCORE
+        recency = RECENCY_WEIGHT ^ turnsAgo
+        bonus = MATCH_BONUS if matchingPairKnown else 0
+
+        score = base * recency + bonus
+
+        if STOCHASTIC_ENABLED:
+            score += random_noise()
+
+        return score</code></pre>
+                </div>
+
+                <div class="key-pattern" style="margin-top: 1.5rem;">
+                    <h4>Key Concepts Demonstrated</h4>
+                    <ul>
+                        <li><strong>Memory Heuristic:</strong> Remembering seen cards gives them higher scores</li>
+                        <li><strong>Recency Effect:</strong> Recently seen cards are more reliably remembered (higher confidence)</li>
+                        <li><strong>Greedy Choice:</strong> When a match is known, prioritize it with bonus points</li>
+                        <li><strong>Exploration vs Exploitation:</strong> Unknown cards have low but non-zero scores</li>
+                        <li><strong>Stochastic Search:</strong> Adding randomness can help explore alternatives</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="../index.html">Simple Memory Game</a> |
+            <a href="../index.html">Week 4 Session 1</a> |
+            <a href="../index.html">Course Home</a>
+        </p>
+        <p>&copy; 2025 Introduction to Data Science & AI Course</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // HEURISTIC CONFIGURATION (Easily Extendable)
+        // ============================================================
+        const HeuristicConfig = {
+            // Base scoring parameters
+            KNOWN_CARD_SCORE: 100,      // Score for a card we've seen
+            UNKNOWN_CARD_SCORE: 10,     // Score for an unknown card
+            MATCH_AVAILABLE_BONUS: 500, // Bonus when we know both cards of a pair
+
+            // Recency weighting (memory decay)
+            RECENCY_WEIGHT: 0.9,        // Score multiplier per turn ago (0.9^turnsAgo)
+
+            // Stochastic/Random factors (for extensibility)
+            enableStochastic: false,    // Toggle stochastic behavior
+            RANDOM_NOISE_FACTOR: 0.2,   // How much randomness to add (0-1)
+            EXPLORATION_RATE: 0.1,      // Epsilon for epsilon-greedy (future use)
+
+            // Extension points for custom heuristics
+            customScoreModifier: null,  // Function: (baseScore, cardInfo) => modifiedScore
+            customTieBreaker: null      // Function: (cards) => selectedCard
+        };
+
+        // ============================================================
+        // HEURISTIC EXTENSIONS (Room for Future Modifications)
+        // ============================================================
+        const HeuristicExtensions = {
+            /**
+             * Epsilon-greedy selection: with probability epsilon, choose randomly
+             * @param {Array} scores - Array of {position, score}
+             * @param {number} epsilon - Exploration rate (0-1)
+             * @returns {number} Selected position
+             */
+            epsilonGreedy: function(scores, epsilon) {
+                if (Math.random() < epsilon) {
+                    // Explore: pick random unmatched card
+                    const validScores = scores.filter(s => s.score > 0);
+                    return validScores[Math.floor(Math.random() * validScores.length)].position;
+                }
+                // Exploit: pick best score
+                return scores.reduce((best, curr) => curr.score > best.score ? curr : best).position;
+            },
+
+            /**
+             * Softmax selection: probabilistic selection based on scores
+             * @param {Array} scores - Array of {position, score}
+             * @param {number} temperature - Higher = more random
+             * @returns {number} Selected position
+             */
+            softmaxSelection: function(scores, temperature = 1.0) {
+                const validScores = scores.filter(s => s.score > 0);
+                const expScores = validScores.map(s => ({
+                    position: s.position,
+                    expScore: Math.exp(s.score / temperature)
+                }));
+                const sumExp = expScores.reduce((sum, s) => sum + s.expScore, 0);
+
+                let random = Math.random() * sumExp;
+                for (const s of expScores) {
+                    random -= s.expScore;
+                    if (random <= 0) return s.position;
+                }
+                return expScores[expScores.length - 1].position;
+            },
+
+            /**
+             * Add Gaussian noise to score
+             * @param {number} score - Base score
+             * @param {number} factor - Noise factor (0-1)
+             * @returns {number} Score with noise
+             */
+            addGaussianNoise: function(score, factor) {
+                // Box-Muller transform for Gaussian
+                const u1 = Math.random();
+                const u2 = Math.random();
+                const gaussian = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                return score + gaussian * score * factor;
+            },
+
+            /**
+             * Simulated annealing temperature schedule
+             * @param {number} turn - Current turn
+             * @param {number} maxTurns - Expected max turns
+             * @returns {number} Temperature (higher early, lower late)
+             */
+            annealingTemperature: function(turn, maxTurns) {
+                return Math.max(0.1, 1 - (turn / maxTurns));
+            }
+        };
+
+        // ============================================================
+        // AI PLAYER (Automated Greedy Search)
+        // ============================================================
+        const AIPlayer = {
+            // State
+            isRunning: false,
+            isPaused: false,
+            speed: 800,
+            strategy: 'greedy',  // 'greedy', 'epsilon-greedy', 'random'
+
+            // Promise resolver for async control
+            _resolveWait: null,
+
+            /**
+             * Select a card using the current strategy
+             * @returns {object} Selected card score object
+             */
+            selectCard: function() {
+                const allScores = calculateAllScores(gameState, HeuristicConfig);
+                let available = allScores.filter(s =>
+                    s.status !== 'matched' &&
+                    !gameState.flippedCards.some(f => f.position === s.position)
+                );
+
+                if (available.length === 0) return null;
+
+                // ============================================================
+                // CRITICAL FIX: Smart second card selection
+                // When first card is already flipped, we must be intelligent:
+                // 1. If we know where the match is -> pick it (guaranteed match)
+                // 2. If we don't -> pick UNKNOWN cards only (exploration)
+                // 3. NEVER pick a known card that doesn't match (waste of turn!)
+                // ============================================================
+                if (gameState.flippedCards.length === 1) {
+                    const firstCardPosition = gameState.flippedCards[0].position;
+                    const firstCardValue = gameState.cards[firstCardPosition];
+
+                    // Check if we know where the matching card is
+                    const matchingCard = available.find(s =>
+                        s.status === 'known' && s.knownValue === firstCardValue
+                    );
+
+                    if (matchingCard) {
+                        // We know where the match is! Pick it immediately
+                        this.log(`Found match for ${firstCardValue} at position ${matchingCard.position + 1}!`, 'success');
+                        return matchingCard;
+                    }
+
+                    // We don't know where the match is
+                    // Filter out known cards that we KNOW don't match (they're useless)
+                    const smartFiltered = available.filter(s =>
+                        s.status === 'unknown'  // Keep unknown cards (might be the match)
+                    );
+
+                    // If we have unknown cards, use them; otherwise fall back to all available
+                    if (smartFiltered.length > 0) {
+                        available = smartFiltered;
+                        this.log(`No known match for ${firstCardValue}, exploring ${smartFiltered.length} unknown cards`, 'action');
+                    }
+                }
+
+                // Apply strategy to (filtered) available cards
+                switch (this.strategy) {
+                    case 'greedy':
+                        // Pick highest score (after smart filtering)
+                        available.sort((a, b) => b.finalScore - a.finalScore);
+                        return available[0];
+
+                    case 'epsilon-greedy':
+                        // With probability epsilon, pick random; else pick best
+                        if (Math.random() < HeuristicConfig.EXPLORATION_RATE) {
+                            return available[Math.floor(Math.random() * available.length)];
+                        }
+                        available.sort((a, b) => b.finalScore - a.finalScore);
+                        return available[0];
+
+                    case 'random':
+                        // Pure random selection
+                        return available[Math.floor(Math.random() * available.length)];
+
+                    case 'brute-force':
+                        // Deliberately dumb: just pick lowest index, no memory use
+                        // This demonstrates why heuristics matter!
+                        available.sort((a, b) => a.position - b.position);
+                        return available[0];
+
+                    default:
+                        available.sort((a, b) => b.finalScore - a.finalScore);
+                        return available[0];
+                }
+            },
+
+            /**
+             * Log an action to the action log
+             */
+            log: function(message, type = 'action') {
+                const logEntries = document.getElementById('logEntries');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+
+                const turnSpan = `<span class="log-turn">[Turn ${gameState.currentTurn}]</span>`;
+                let typeClass = 'log-action';
+                if (type === 'score') typeClass = 'log-score';
+                if (type === 'match') typeClass = 'log-match';
+                if (type === 'success') typeClass = 'log-success';
+
+                entry.innerHTML = `${turnSpan} <span class="${typeClass}">${message}</span>`;
+                logEntries.appendChild(entry);
+
+                // Auto-scroll to bottom
+                const logContainer = document.getElementById('actionLog');
+                logContainer.scrollTop = logContainer.scrollHeight;
+            },
+
+            /**
+             * Clear the action log
+             */
+            clearLog: function() {
+                const logEntries = document.getElementById('logEntries');
+                logEntries.innerHTML = '<div class="log-entry">AI started...</div>';
+            },
+
+            /**
+             * Wait for a specified time (respecting pause state)
+             */
+            wait: async function(ms) {
+                return new Promise(resolve => {
+                    this._resolveWait = resolve;
+                    setTimeout(() => {
+                        if (!this.isPaused) {
+                            resolve();
+                        }
+                    }, ms);
+                });
+            },
+
+            /**
+             * Flip a card by position (for AI control)
+             */
+            flipCardByPosition: async function(position) {
+                const cards = document.querySelectorAll('.card');
+                const cardElement = cards[position];
+
+                if (!cardElement ||
+                    cardElement.classList.contains('flipped') ||
+                    cardElement.classList.contains('matched')) {
+                    return false;
+                }
+
+                // Highlight the card being selected
+                cardElement.classList.add('ai-selecting');
+                await this.wait(this.speed / 3);
+                cardElement.classList.remove('ai-selecting');
+
+                // Flip the card (reuse existing logic)
+                cardElement.classList.add('flipped');
+                gameState.flippedCards.push({ element: cardElement, position: position });
+
+                // Update memory
+                gameState.memory.set(position, {
+                    value: gameState.cards[position],
+                    seenAtTurn: gameState.currentTurn
+                });
+
+                // Update displays
+                updateStatsDisplay();
+                updateHeuristicTable();
+                updateAIRecommendation();
+
+                return true;
+            },
+
+            /**
+             * Execute one complete turn (flip matchSize cards)
+             */
+            playTurn: async function() {
+                if (gameState.matchCount === gameState.totalGroups) {
+                    this.log('Game complete!', 'success');
+                    this.stop();
+                    return false;
+                }
+
+                const matchSize = gameState.matchSize;
+                const selectedCards = [];
+
+                // Select and flip matchSize cards
+                for (let i = 0; i < matchSize; i++) {
+                    const card = this.selectCard();
+                    if (!card) {
+                        this.log(`No card available for position ${i + 1}!`, 'match');
+                        return false;
+                    }
+
+                    selectedCards.push(card);
+
+                    // Check if we're going for a known match (after first card)
+                    let matchIndicator = '';
+                    if (i > 0 && card.hasMatchAvailable &&
+                        gameState.cards[selectedCards[0].position] === gameState.cards[card.position]) {
+                        matchIndicator = ' [MATCH EXPECTED]';
+                    }
+
+                    const logType = i === 0 ? 'action' : 'score';
+                    this.log(`Selecting position ${card.position + 1} (${card.status === 'known' ? card.knownValue : '?'}) - Score: ${card.finalScore.toFixed(1)}${matchIndicator}`, logType);
+
+                    await this.flipCardByPosition(card.position);
+
+                    if (i < matchSize - 1) {
+                        await this.wait(this.speed / 2);
+                    }
+                }
+
+                // Check for match
+                gameState.moveCount++;
+                gameState.currentTurn++;
+
+                const firstValue = gameState.cards[selectedCards[0].position];
+                const isMatch = selectedCards.every(card =>
+                    gameState.cards[card.position] === firstValue
+                );
+
+                if (isMatch) {
+                    this.log(`MATCH FOUND! ${firstValue}`, 'success');
+
+                    // Mark all cards as matched
+                    gameState.flippedCards.forEach(card => {
+                        card.element.classList.add('matched');
+                        gameState.matchedPositions.add(card.position);
+                    });
+                    gameState.matchCount++;
+                    gameState.flippedCards = [];
+
+                    updateStatsDisplay();
+                    updateStatisticsPanel();
+                    if (gameState.cards.length <= 100) {
+                        updateHeuristicTable();
+                    }
+
+                    if (gameState.matchCount === gameState.totalGroups) {
+                        await this.wait(this.speed);
+                        showWinMessage();
+                        this.log('All groups matched!', 'success');
+                        this.stop();
+                        return false;
+                    }
+                } else {
+                    this.log(`No match. Remembering positions...`, 'match');
+
+                    await this.wait(this.speed);
+
+                    // Flip all cards back
+                    gameState.flippedCards.forEach(card => {
+                        card.element.classList.remove('flipped');
+                    });
+                    gameState.flippedCards = [];
+
+                    if (gameState.cards.length <= 100) {
+                        updateHeuristicTable();
+                    }
+                    updateAIRecommendation();
+                }
+
+                updateStatsDisplay();
+                updateStatisticsPanel();
+                return true;
+            },
+
+            /**
+             * Main run loop
+             */
+            run: async function() {
+                this.isRunning = true;
+                this.isPaused = false;
+                this.updateButtons();
+                this.clearLog();
+
+                while (this.isRunning && gameState.matchCount < gameState.totalGroups) {
+                    if (this.isPaused) {
+                        // Wait for unpause
+                        await new Promise(resolve => {
+                            this._resolveWait = resolve;
+                        });
+                        if (!this.isRunning) break;
+                    }
+
+                    const continued = await this.playTurn();
+                    if (!continued) break;
+
+                    await this.wait(this.speed);
+                }
+
+                this.isRunning = false;
+                this.updateButtons();
+            },
+
+            /**
+             * Start auto-play
+             */
+            start: function() {
+                if (this.isRunning) return;
+                this.run();
+            },
+
+            /**
+             * Pause auto-play
+             */
+            pause: function() {
+                if (!this.isRunning) return;
+                this.isPaused = !this.isPaused;
+
+                if (!this.isPaused && this._resolveWait) {
+                    this._resolveWait();
+                }
+
+                this.updateButtons();
+                this.log(this.isPaused ? 'Paused' : 'Resumed', 'action');
+            },
+
+            /**
+             * Execute single step
+             */
+            step: async function() {
+                if (this.isRunning) return;
+
+                // Clear previous log if this is the first step
+                if (gameState.currentTurn === 0) {
+                    this.clearLog();
+                }
+
+                this.log('--- Step Mode ---', 'action');
+                await this.playTurn();
+            },
+
+            /**
+             * Stop and reset
+             */
+            stop: function() {
+                this.isRunning = false;
+                this.isPaused = false;
+                if (this._resolveWait) {
+                    this._resolveWait();
+                }
+                this.updateButtons();
+            },
+
+            /**
+             * Set playback speed
+             */
+            setSpeed: function(ms) {
+                this.speed = parseInt(ms);
+                document.getElementById('speedDisplay').textContent = ms + 'ms';
+            },
+
+            /**
+             * Set strategy
+             */
+            setStrategy: function(strategy) {
+                this.strategy = strategy;
+                this.log(`Strategy changed to: ${strategy}`, 'action');
+            },
+
+            /**
+             * Update button states
+             */
+            updateButtons: function() {
+                const btnStart = document.getElementById('btnAutoPlay');
+                const btnPause = document.getElementById('btnPause');
+                const btnStep = document.getElementById('btnStep');
+                const btnStop = document.getElementById('btnStop');
+
+                btnStart.disabled = this.isRunning;
+                btnPause.disabled = !this.isRunning;
+                btnStep.disabled = this.isRunning;
+                btnStop.disabled = !this.isRunning && gameState.currentTurn === 0;
+
+                btnPause.textContent = this.isPaused ? 'Resume' : 'Pause';
+            }
+        };
+
+        // ============================================================
+        // GAME STATE
+        // ============================================================
+        let gameState = {
+            cards: [],              // Array of emoji values at each position
+            memory: new Map(),      // position -> {value, seenAtTurn}
+            matchedPositions: new Set(), // Set of matched position indices
+            flippedCards: [],       // Currently flipped card elements
+            currentTurn: 0,         // Current turn number
+            moveCount: 0,           // Total moves (groups flipped)
+            matchCount: 0,          // Matched groups count
+            totalGroups: 0,         // Total groups in game
+            matchSize: 2,           // Number of cards that must match (2, 3, 4)
+            comparisons: 0,         // Total comparisons made
+            isLocked: false,        // Prevent clicking during animation
+            gameStarted: false,
+            playMode: 'manual',     // 'manual', 'ai-greedy', 'ai-epsilon', 'ai-random', 'ai-bruteforce'
+            fastMode: false         // Skip animations for large card counts
+        };
+
+        // Emoji sets for different game sizes
+        const emojiSets = {
+            small: ['🎯', '🧠', '🔍', '⚡', '🎲', '✓', '🌟', '💡'],
+            medium: ['🎯', '🧠', '🔍', '⚡', '🎲', '✓', '🌟', '💡', '🔥', '💎', '🎨', '🎵'],
+            large: ['🎯', '🧠', '🔍', '⚡', '🎲', '✓', '🌟', '💡', '🔥', '💎', '🎨', '🎵', '🚀', '🎮', '📊', '🔮']
+        };
+
+        // ============================================================
+        // CORE HEURISTIC FUNCTION
+        // ============================================================
+
+        /**
+         * Calculate heuristic score for a card position
+         * This is the main function that evaluates how good it is to flip a card
+         *
+         * @param {number} position - Card position (0-indexed)
+         * @param {object} state - Current game state
+         * @param {object} config - Heuristic configuration
+         * @returns {object} Score breakdown with components
+         */
+        function calculateHeuristicScore(position, state, config) {
+            const result = {
+                position: position,
+                knownValue: '?',
+                seenAtTurn: '-',
+                turnsAgo: '-',
+                baseScore: 0,
+                recencyFactor: 1,
+                matchBonus: 0,
+                finalScore: 0,
+                status: 'unknown',
+                hasMatchAvailable: false
+            };
+
+            // If already matched, score is 0
+            if (state.matchedPositions.has(position)) {
+                result.status = 'matched';
+                result.knownValue = state.cards[position];
+                return result;
+            }
+
+            // Check if we know this card
+            if (state.memory.has(position)) {
+                const memoryEntry = state.memory.get(position);
+                result.knownValue = memoryEntry.value;
+                result.seenAtTurn = memoryEntry.seenAtTurn;
+                result.turnsAgo = state.currentTurn - memoryEntry.seenAtTurn;
+                result.status = 'known';
+
+                // Base score for known card
+                result.baseScore = config.KNOWN_CARD_SCORE;
+
+                // Apply recency decay
+                result.recencyFactor = Math.pow(config.RECENCY_WEIGHT, result.turnsAgo);
+
+                // Check if matching pair is known in memory
+                result.hasMatchAvailable = hasMatchingPairInMemory(
+                    memoryEntry.value,
+                    position,
+                    state.memory,
+                    state.matchedPositions
+                );
+
+                if (result.hasMatchAvailable) {
+                    result.matchBonus = config.MATCH_AVAILABLE_BONUS;
+                }
+
+                // Calculate final score
+                result.finalScore = (result.baseScore * result.recencyFactor) + result.matchBonus;
+
+            } else {
+                // Unknown card gets base unknown score
+                result.baseScore = config.UNKNOWN_CARD_SCORE;
+                result.finalScore = config.UNKNOWN_CARD_SCORE;
+                result.status = 'unknown';
+            }
+
+            // Apply stochastic noise if enabled
+            if (config.enableStochastic && result.finalScore > 0) {
+                const noise = HeuristicExtensions.addGaussianNoise(
+                    result.finalScore,
+                    config.RANDOM_NOISE_FACTOR
+                );
+                result.finalScore = Math.max(0, noise);
+            }
+
+            // Apply custom modifier if defined
+            if (config.customScoreModifier && typeof config.customScoreModifier === 'function') {
+                result.finalScore = config.customScoreModifier(result.finalScore, result);
+            }
+
+            return result;
+        }
+
+        /**
+         * Check if a matching pair exists in memory
+         * @param {string} value - The card value to match
+         * @param {number} excludePosition - Position to exclude (the card we're checking)
+         * @param {Map} memory - Memory map
+         * @param {Set} matchedPositions - Already matched positions
+         * @returns {boolean}
+         */
+        function hasMatchingPairInMemory(value, excludePosition, memory, matchedPositions) {
+            for (const [pos, entry] of memory.entries()) {
+                if (pos !== excludePosition &&
+                    entry.value === value &&
+                    !matchedPositions.has(pos)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Get the position of matching pair in memory
+         */
+        function getMatchingPairPosition(value, excludePosition, memory, matchedPositions) {
+            for (const [pos, entry] of memory.entries()) {
+                if (pos !== excludePosition &&
+                    entry.value === value &&
+                    !matchedPositions.has(pos)) {
+                    return pos;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Calculate scores for all positions and return sorted by score
+         */
+        function calculateAllScores(state, config) {
+            const scores = [];
+            for (let i = 0; i < state.cards.length; i++) {
+                scores.push(calculateHeuristicScore(i, state, config));
+            }
+            return scores;
+        }
+
+        // ============================================================
+        // GAME INITIALIZATION
+        // ============================================================
+
+        /**
+         * Validate custom card count input
+         */
+        function validateCustomCount() {
+            const matchSize = parseInt(document.getElementById('matchSize').value);
+            const customInput = document.getElementById('customCardCount');
+            let count = parseInt(customInput.value);
+
+            if (!count || count < matchSize * 2) {
+                customInput.style.borderColor = '#e74c3c';
+                return false;
+            }
+
+            // Round to nearest valid count (divisible by matchSize)
+            if (count % matchSize !== 0) {
+                count = Math.round(count / matchSize) * matchSize;
+                if (count < matchSize * 2) count = matchSize * 2;
+                customInput.value = count;
+            }
+
+            customInput.style.borderColor = '#27ae60';
+            return true;
+        }
+
+        function startGame() {
+            const cardCountSelect = document.getElementById('cardCount');
+            let cardCount;
+
+            if (cardCountSelect.value === 'custom') {
+                cardCount = parseInt(document.getElementById('customCardCount').value);
+                if (!cardCount || cardCount < 4) {
+                    alert('Please enter a valid card count (minimum 4)');
+                    return;
+                }
+            } else {
+                cardCount = parseInt(cardCountSelect.value);
+            }
+
+            const matchSize = parseInt(document.getElementById('matchSize').value);
+
+            // Validate card count is divisible by match size
+            if (cardCount % matchSize !== 0) {
+                alert(`Card count (${cardCount}) must be divisible by match size (${matchSize})`);
+                return;
+            }
+
+            // Validate minimum cards
+            if (cardCount < matchSize * 2) {
+                alert(`Need at least ${matchSize * 2} cards for match size ${matchSize}`);
+                return;
+            }
+
+            initGame(cardCount, matchSize);
+        }
+
+        // Show/hide custom card count input
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardCountSelect = document.getElementById('cardCount');
+            const customInput = document.getElementById('customCardCount');
+
+            cardCountSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customInput.style.display = 'inline-block';
+                    customInput.focus();
+                } else {
+                    customInput.style.display = 'none';
+                }
+            });
+        });
+
+        function initGame(cardCount, matchSize = 2) {
+            // Get play mode
+            const playMode = document.getElementById('playMode').value;
+
+            // Calculate number of unique symbols needed
+            const groupCount = cardCount / matchSize;
+
+            // Generate symbols
+            const symbols = generateSymbols(groupCount);
+
+            // Create cards array with matchSize copies of each symbol
+            let cards = [];
+            symbols.forEach(symbol => {
+                for (let i = 0; i < matchSize; i++) {
+                    cards.push(symbol);
+                }
+            });
+            shuffleArray(cards);
+
+            // Determine if we need fast mode (skip animations for large counts)
+            const fastMode = cardCount > 50;
+
+            // Calculate search space (combinations)
+            const searchSpace = calculateSearchSpace(cardCount, matchSize);
+
+            // Reset game state
+            gameState = {
+                cards: cards,
+                memory: new Map(),
+                matchedPositions: new Set(),
+                flippedCards: [],
+                currentTurn: 0,
+                moveCount: 0,
+                matchCount: 0,
+                totalGroups: groupCount,
+                matchSize: matchSize,
+                comparisons: 0,
+                isLocked: false,
+                gameStarted: true,
+                playMode: playMode,
+                fastMode: fastMode,
+                searchSpace: searchSpace
+            };
+
+            // Update UI
+            document.getElementById('setupSection').classList.add('hidden');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('winMessage').classList.add('hidden');
+
+            // Configure based on play mode
+            const aiControlsSection = document.querySelector('.ai-controls');
+            const statsPanel = document.getElementById('statsPanel');
+            const isManualMode = playMode === 'manual';
+
+            if (isManualMode) {
+                // Manual mode: Hide AI controls, show stats
+                aiControlsSection.classList.add('hidden');
+                document.getElementById('logEntries').innerHTML =
+                    '<div class="log-entry">Manual mode - click cards to play!</div>';
+            } else {
+                // AI mode: Show controls and set strategy
+                aiControlsSection.classList.remove('hidden');
+
+                // Set AI strategy based on play mode
+                if (playMode === 'ai-greedy') {
+                    AIPlayer.strategy = 'greedy';
+                    document.getElementById('strategySelect').value = 'greedy';
+                } else if (playMode === 'ai-epsilon') {
+                    AIPlayer.strategy = 'epsilon-greedy';
+                    document.getElementById('strategySelect').value = 'epsilon-greedy';
+                } else if (playMode === 'ai-random') {
+                    AIPlayer.strategy = 'random';
+                    document.getElementById('strategySelect').value = 'random';
+                } else if (playMode === 'ai-bruteforce') {
+                    AIPlayer.strategy = 'brute-force';
+                    document.getElementById('strategySelect').value = 'brute-force';
+                }
+
+                document.getElementById('logEntries').innerHTML =
+                    `<div class="log-entry">AI Mode: ${AIPlayer.strategy}. Click "Start AI" or "Step" to begin...</div>`;
+
+                // Adjust speed for large card counts
+                if (fastMode) {
+                    AIPlayer.speed = 100;
+                    document.getElementById('speedControl').value = 100;
+                    document.getElementById('speedDisplay').textContent = '100ms';
+                }
+            }
+
+            // Reset AI state
+            AIPlayer.stop();
+            AIPlayer.updateButtons();
+
+            // Update statistics panel
+            updateStatisticsPanel();
+
+            // Update stats display
+            updateStatsDisplay();
+
+            // Render game board
+            renderGameBoard(cardCount);
+
+            // Update heuristic table (only for smaller games)
+            if (cardCount <= 100) {
+                updateHeuristicTable();
+            } else {
+                document.getElementById('heuristicBody').innerHTML =
+                    '<tr><td colspan="9" style="text-align:center;padding:1rem;">Heuristic table hidden for large card counts</td></tr>';
+            }
+
+            // Update AI recommendation
+            updateAIRecommendation();
+        }
+
+        /**
+         * Generate symbols for the game
+         * Uses emojis for small counts, numbers for large counts
+         */
+        function generateSymbols(count) {
+            if (count <= 16) {
+                // Use emojis
+                const allEmojis = [...emojiSets.large];
+                while (allEmojis.length < count) {
+                    allEmojis.push(String(allEmojis.length + 1));
+                }
+                return allEmojis.slice(0, count);
+            } else {
+                // Use numbers for large counts
+                return Array.from({length: count}, (_, i) => String(i + 1));
+            }
+        }
+
+        /**
+         * Calculate search space (number of possible combinations)
+         */
+        function calculateSearchSpace(n, k) {
+            // C(n, k) = n! / (k! * (n-k)!)
+            // Simplified calculation to avoid overflow
+            let result = 1;
+            for (let i = 0; i < k; i++) {
+                result = result * (n - i) / (i + 1);
+            }
+            return Math.round(result);
+        }
+
+        /**
+         * Update the statistics panel
+         */
+        function updateStatisticsPanel() {
+            document.getElementById('statTotalCards').textContent = gameState.cards.length;
+            document.getElementById('statMatchSize').textContent = gameState.matchSize;
+            document.getElementById('statSearchSpace').textContent = formatNumber(gameState.searchSpace);
+            document.getElementById('statComparisons').textContent = formatNumber(gameState.comparisons);
+            document.getElementById('statMatchesFound').textContent =
+                `${gameState.matchCount}/${gameState.totalGroups}`;
+
+            // Calculate efficiency
+            const optimalMoves = gameState.totalGroups;
+            const efficiency = gameState.moveCount > 0
+                ? Math.round((gameState.matchCount / gameState.moveCount) * 100)
+                : 0;
+            document.getElementById('statEfficiency').textContent = `${efficiency}%`;
+
+            // Update progress bar
+            const progress = Math.round((gameState.matchCount / gameState.totalGroups) * 100);
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = `${progress}%`;
+            progressFill.textContent = `${progress}%`;
+        }
+
+        /**
+         * Format large numbers with commas
+         */
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function renderGameBoard(cardCount) {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            // Remove previous mode classes
+            board.classList.remove('compact-mode');
+
+            // Determine grid columns and mode based on card count
+            let columns;
+            if (cardCount <= 4) columns = 2;
+            else if (cardCount <= 6) columns = 3;
+            else if (cardCount <= 16) columns = 4;
+            else if (cardCount <= 36) columns = 6;
+            else if (cardCount <= 64) {
+                columns = 8;
+                board.classList.add('compact-mode');
+            } else if (cardCount <= 100) {
+                columns = 10;
+                board.classList.add('compact-mode');
+            } else {
+                // Very large: limit display
+                columns = 10;
+                board.classList.add('compact-mode');
+            }
+
+            board.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            board.style.maxWidth = cardCount > 50 ? '100%' : '500px';
+
+            // Create card elements
+            gameState.cards.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.symbol = symbol;
+                card.dataset.position = index + 1; // 1-indexed for display
+                card.dataset.index = index;
+                card.textContent = symbol;
+                card.addEventListener('click', () => flipCard(card, index));
+                board.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        // GAME LOGIC
+        // ============================================================
+
+        function flipCard(cardElement, position) {
+            // Guard clauses
+            if (gameState.isLocked) return;
+            if (cardElement.classList.contains('flipped')) return;
+            if (cardElement.classList.contains('matched')) return;
+            if (gameState.flippedCards.length >= gameState.matchSize) return;
+
+            // Flip the card
+            cardElement.classList.add('flipped');
+            gameState.flippedCards.push({ element: cardElement, position: position });
+
+            // Update memory - we've now seen this card
+            gameState.memory.set(position, {
+                value: gameState.cards[position],
+                seenAtTurn: gameState.currentTurn
+            });
+
+            // Increment comparison counter
+            gameState.comparisons++;
+
+            // Check for match when matchSize cards are flipped
+            if (gameState.flippedCards.length === gameState.matchSize) {
+                gameState.moveCount++;
+                gameState.currentTurn++;
+                checkMatch();
+            }
+
+            // Update displays
+            updateStatsDisplay();
+            updateStatisticsPanel();
+            if (gameState.cards.length <= 100) {
+                updateHeuristicTable();
+            }
+            updateAIRecommendation();
+        }
+
+        function checkMatch() {
+            const flippedCards = gameState.flippedCards;
+
+            // Check if ALL flipped cards have the same value
+            const firstValue = gameState.cards[flippedCards[0].position];
+            const allMatch = flippedCards.every(card =>
+                gameState.cards[card.position] === firstValue
+            );
+
+            if (allMatch) {
+                // Match found!
+                flippedCards.forEach(card => {
+                    card.element.classList.add('matched');
+                    gameState.matchedPositions.add(card.position);
+                });
+                gameState.matchCount++;
+                gameState.flippedCards = [];
+
+                updateStatsDisplay();
+                updateStatisticsPanel();
+                if (gameState.cards.length <= 100) {
+                    updateHeuristicTable();
+                }
+
+                // Check for win
+                if (gameState.matchCount === gameState.totalGroups) {
+                    setTimeout(showWinMessage, gameState.fastMode ? 100 : 500);
+                }
+            } else {
+                // No match - flip back after delay
+                gameState.isLocked = true;
+                const delay = gameState.fastMode ? 200 : 1200;
+                setTimeout(() => {
+                    flippedCards.forEach(card => {
+                        card.element.classList.remove('flipped');
+                    });
+                    gameState.flippedCards = [];
+                    gameState.isLocked = false;
+                    if (gameState.cards.length <= 100) {
+                        updateHeuristicTable();
+                    }
+                    updateAIRecommendation();
+                }, delay);
+            }
+        }
+
+        // ============================================================
+        // UI UPDATE FUNCTIONS
+        // ============================================================
+
+        function updateStatsDisplay() {
+            document.getElementById('turnCount').textContent = gameState.currentTurn;
+            document.getElementById('moveCount').textContent = gameState.moveCount;
+            document.getElementById('matchCount').textContent = gameState.matchCount;
+            document.getElementById('totalPairs').textContent = gameState.totalGroups;
+        }
+
+        function updateHeuristicTable() {
+            const tbody = document.getElementById('heuristicBody');
+            tbody.innerHTML = '';
+
+            const allScores = calculateAllScores(gameState, HeuristicConfig);
+
+            // Find the best score for highlighting
+            const availableScores = allScores.filter(s => s.status !== 'matched');
+            const bestScore = availableScores.length > 0
+                ? Math.max(...availableScores.map(s => s.finalScore))
+                : 0;
+
+            allScores.forEach((score, index) => {
+                const row = document.createElement('tr');
+
+                // Add row classes
+                if (score.status === 'matched') {
+                    row.classList.add('matched-row');
+                } else if (score.finalScore === bestScore && bestScore > 0) {
+                    row.classList.add('best-choice');
+                }
+
+                // Determine score class
+                let scoreClass = 'score-low';
+                if (score.finalScore > 100) scoreClass = 'score-high';
+                else if (score.finalScore > 20) scoreClass = 'score-medium';
+
+                // Format values
+                const recencyDisplay = score.recencyFactor !== 1
+                    ? score.recencyFactor.toFixed(3)
+                    : '-';
+                const finalScoreDisplay = score.finalScore.toFixed(1);
+
+                row.innerHTML = `
+                    <td><strong>${index + 1}</strong></td>
+                    <td>${score.knownValue}</td>
+                    <td>${score.seenAtTurn}</td>
+                    <td>${score.turnsAgo}</td>
+                    <td>${score.baseScore}</td>
+                    <td>${recencyDisplay}</td>
+                    <td>${score.matchBonus > 0 ? '+' + score.matchBonus : '-'}</td>
+                    <td class="${scoreClass}">${finalScoreDisplay}</td>
+                    <td>${getStatusBadge(score)}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            // Update card highlights
+            updateCardHighlights(allScores, bestScore);
+        }
+
+        function getStatusBadge(score) {
+            if (score.status === 'matched') {
+                return '<span style="color: #27ae60;">Matched</span>';
+            }
+            if (score.hasMatchAvailable) {
+                return '<span class="match-available">Match Ready!</span>';
+            }
+            if (score.status === 'known') {
+                return '<span style="color: #3498db;">Known</span>';
+            }
+            return '<span style="color: #95a5a6;">Unknown</span>';
+        }
+
+        function updateCardHighlights(allScores, bestScore) {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.classList.remove('ai-recommended');
+                const score = allScores[index];
+                if (score.status !== 'matched' &&
+                    score.finalScore === bestScore &&
+                    bestScore > 0 &&
+                    !card.classList.contains('flipped')) {
+                    card.classList.add('ai-recommended');
+                }
+            });
+        }
+
+        function updateAIRecommendation() {
+            const recommendationDiv = document.getElementById('aiRecommendation');
+            const explanationDiv = document.getElementById('aiExplanation');
+
+            if (gameState.matchCount === gameState.totalGroups) {
+                recommendationDiv.innerHTML = "Game complete! Great job!";
+                explanationDiv.innerHTML = "";
+                return;
+            }
+
+            const allScores = calculateAllScores(gameState, HeuristicConfig);
+            const availableScores = allScores.filter(s =>
+                s.status !== 'matched' &&
+                !gameState.flippedCards.some(f => f.position === s.position)
+            );
+
+            if (availableScores.length === 0) {
+                recommendationDiv.innerHTML = "Waiting for cards to flip back...";
+                return;
+            }
+
+            // Sort by score descending
+            availableScores.sort((a, b) => b.finalScore - a.finalScore);
+            const best = availableScores[0];
+
+            // Check if we have a guaranteed match
+            const matchReady = availableScores.filter(s => s.hasMatchAvailable);
+
+            if (matchReady.length >= 2) {
+                const pair = matchReady.slice(0, 2);
+                recommendationDiv.innerHTML = `
+                    <strong>Guaranteed Match Available!</strong><br>
+                    Flip cards at positions <strong>${pair[0].position + 1}</strong> and <strong>${pair[1].position + 1}</strong>
+                    (both are ${pair[0].knownValue})
+                `;
+                explanationDiv.innerHTML = `
+                    The memory heuristic detected that we know both cards of a matching pair.
+                    Score: ${pair[0].finalScore.toFixed(1)} (includes +${HeuristicConfig.MATCH_AVAILABLE_BONUS} match bonus)
+                `;
+            } else if (best.status === 'known') {
+                recommendationDiv.innerHTML = `
+                    <strong>Best Choice: Position ${best.position + 1}</strong> (${best.knownValue})<br>
+                    Heuristic Score: ${best.finalScore.toFixed(1)}
+                `;
+                explanationDiv.innerHTML = `
+                    We know this card (seen ${best.turnsAgo} turns ago).
+                    Recency factor: ${best.recencyFactor.toFixed(3)}
+                    ${best.hasMatchAvailable ? '| Match bonus applied!' : '| Looking for its pair...'}
+                `;
+            } else {
+                recommendationDiv.innerHTML = `
+                    <strong>Explore: Flip an unknown card</strong><br>
+                    All unknown cards have equal base score: ${HeuristicConfig.UNKNOWN_CARD_SCORE}
+                `;
+                explanationDiv.innerHTML = `
+                    No known cards with high confidence. Time to explore and gather information!
+                    ${HeuristicConfig.enableStochastic ?
+                        '(Stochastic mode adds randomness to encourage exploration)' :
+                        ''}
+                `;
+            }
+        }
+
+        function showWinMessage() {
+            const winDiv = document.getElementById('winMessage');
+            let rating = '';
+            const efficiency = (gameState.totalGroups / gameState.moveCount * 100).toFixed(1);
+
+            if (efficiency >= 70) {
+                rating = 'Excellent! Your heuristic strategy was near-optimal!';
+            } else if (efficiency >= 50) {
+                rating = 'Good job! The memory heuristic helped significantly!';
+            } else if (efficiency >= 30) {
+                rating = 'Nice work! Try using the heuristic scores more to improve!';
+            } else {
+                rating = 'Complete! Watch the heuristic table to improve your strategy!';
+            }
+
+            // Determine match type name
+            const matchTypeName = gameState.matchSize === 2 ? 'pairs' :
+                                  gameState.matchSize === 3 ? 'triplets' : 'groups';
+
+            winDiv.innerHTML = `
+                <div class="win-message">
+                    <h3>Congratulations!</h3>
+                    <p>You matched all ${gameState.totalGroups} ${matchTypeName} in <strong>${gameState.moveCount}</strong> moves!</p>
+                    <p>Efficiency: ${efficiency}% | Comparisons: ${formatNumber(gameState.comparisons)}</p>
+                    <p>${rating}</p>
+                </div>
+            `;
+            winDiv.classList.remove('hidden');
+        }
+
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+
+        function updateConfig() {
+            HeuristicConfig.KNOWN_CARD_SCORE = parseFloat(document.getElementById('cfgKnownScore').value) || 100;
+            HeuristicConfig.UNKNOWN_CARD_SCORE = parseFloat(document.getElementById('cfgUnknownScore').value) || 10;
+            HeuristicConfig.MATCH_AVAILABLE_BONUS = parseFloat(document.getElementById('cfgMatchBonus').value) || 500;
+            HeuristicConfig.RECENCY_WEIGHT = parseFloat(document.getElementById('cfgRecencyWeight').value) || 0.9;
+            HeuristicConfig.enableStochastic = document.getElementById('cfgEnableStochastic').checked;
+            HeuristicConfig.RANDOM_NOISE_FACTOR = parseFloat(document.getElementById('cfgNoiseFactor').value) || 0.2;
+            HeuristicConfig.EXPLORATION_RATE = parseFloat(document.getElementById('cfgExplorationRate').value) || 0.1;
+
+            // Refresh displays with new config
+            if (gameState.gameStarted) {
+                updateHeuristicTable();
+                updateAIRecommendation();
+            }
+        }
+
+        // ============================================================
+        // UTILITY FUNCTIONS
+        // ============================================================
+
+        function shuffleArray(array) {
+            // Fisher-Yates shuffle
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function resetGame() {
+            const cardCount = gameState.cards.length || parseInt(document.getElementById('cardCount').value);
+            const matchSize = gameState.matchSize || parseInt(document.getElementById('matchSize').value);
+            initGame(cardCount, matchSize);
+        }
+
+        function showSetup() {
+            document.getElementById('setupSection').classList.remove('hidden');
+            document.getElementById('gameArea').classList.add('hidden');
+            gameState.gameStarted = false;
+        }
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+
+        // Sync config inputs with default values on load
+        window.addEventListener('load', () => {
+            document.getElementById('cfgKnownScore').value = HeuristicConfig.KNOWN_CARD_SCORE;
+            document.getElementById('cfgUnknownScore').value = HeuristicConfig.UNKNOWN_CARD_SCORE;
+            document.getElementById('cfgMatchBonus').value = HeuristicConfig.MATCH_AVAILABLE_BONUS;
+            document.getElementById('cfgRecencyWeight').value = HeuristicConfig.RECENCY_WEIGHT;
+            document.getElementById('cfgEnableStochastic').checked = HeuristicConfig.enableStochastic;
+            document.getElementById('cfgNoiseFactor').value = HeuristicConfig.RANDOM_NOISE_FACTOR;
+            document.getElementById('cfgExplorationRate').value = HeuristicConfig.EXPLORATION_RATE;
+        });
+    </script>
+</body>
+</html>

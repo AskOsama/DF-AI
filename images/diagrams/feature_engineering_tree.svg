@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c5a82;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c5a82;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c6a5b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#229954;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b15c26;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b15c26;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6a3d75;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6a3d75;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a07c1d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a07c1d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa" rx="10"/>
+
+  <!-- Title -->
+  <text x="400" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#14202e">Feature Engineering &amp; Data Preprocessing</text>
+
+  <!-- Root Node: Data Preprocessing -->
+  <rect x="300" y="55" width="200" height="45" rx="22" fill="url(#blueGrad)"/>
+  <text x="400" y="83" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">DATA PREPROCESSING</text>
+  <!-- Database icon -->
+  <circle cx="320" cy="77" r="10" fill="white" opacity="0.3"/>
+  <rect x="315" y="72" width="10" height="10" rx="2" fill="white"/>
+
+  <!-- Connecting lines from root -->
+  <line x1="350" y1="100" x2="200" y2="150" stroke="#bdc3c8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="450" y1="100" x2="600" y2="150" stroke="#bdc3c8" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Branch 1: Missing Value Handling -->
+  <rect x="70" y="150" width="200" height="40" rx="20" fill="url(#greenGrad)"/>
+  <text x="170" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="white">Missing Value Handling</text>
+  <!-- Question mark icon -->
+  <circle cx="95" cy="170" r="8" fill="white" opacity="0.3"/>
+  <text x="95" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">?</text>
+
+  <!-- Sub-branches for Missing Value -->
+  <line x1="120" y1="190" x2="80" y2="235" stroke="#a8d5ba" stroke-width="2"/>
+  <line x1="170" y1="190" x2="170" y2="235" stroke="#a8d5ba" stroke-width="2"/>
+  <line x1="220" y1="190" x2="260" y2="235" stroke="#a8d5ba" stroke-width="2"/>
+
+  <!-- Simple Imputation -->
+  <rect x="20" y="235" width="120" height="55" rx="10" fill="#d4edda"/>
+  <text x="80" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#155724">Simple</text>
+  <text x="80" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">mean/median</text>
+  <text x="80" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">/mode</text>
+
+  <!-- Inference-Based -->
+  <rect x="110" y="235" width="120" height="55" rx="10" fill="#d4edda"/>
+  <text x="170" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#155724">Inference-Based</text>
+  <text x="170" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">logical rules</text>
+  <text x="170" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">&amp; patterns</text>
+
+  <!-- Model-Based -->
+  <rect x="200" y="235" width="120" height="55" rx="10" fill="#d4edda"/>
+  <text x="260" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#155724">Model-Based</text>
+  <text x="260" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">ML predictions</text>
+  <text x="260" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#155724">for gaps</text>
+
+  <!-- Branch 2: Feature Engineering -->
+  <rect x="480" y="150" width="200" height="40" rx="20" fill="url(#purpleGrad)"/>
+  <text x="580" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="white">Feature Engineering</text>
+  <!-- Gear icon -->
+  <circle cx="505" cy="170" r="8" fill="white" opacity="0.3"/>
+  <text x="505" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">⚙</text>
+
+  <!-- Sub-branches for Feature Engineering -->
+  <line x1="510" y1="190" x2="430" y2="235" stroke="#d8bfd8" stroke-width="2"/>
+  <line x1="555" y1="190" x2="540" y2="235" stroke="#d8bfd8" stroke-width="2"/>
+  <line x1="605" y1="190" x2="650" y2="235" stroke="#d8bfd8" stroke-width="2"/>
+  <line x1="650" y1="190" x2="760" y2="235" stroke="#d8bfd8" stroke-width="2"/>
+
+  <!-- Manual FE -->
+  <rect x="370" y="235" width="120" height="55" rx="10" fill="#e8daef"/>
+  <!-- Wrench icon -->
+  <circle cx="400" cy="255" r="10" fill="#6a3d75" opacity="0.3"/>
+  <text x="400" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6a3d75">🔧</text>
+  <text x="430" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#6a3d75">Manual</text>
+  <text x="430" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">human-designed</text>
+  <text x="430" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">transforms</text>
+
+  <!-- Relational FE -->
+  <rect x="480" y="235" width="120" height="55" rx="10" fill="#e8daef"/>
+  <!-- Link icon -->
+  <circle cx="510" cy="255" r="10" fill="#6a3d75" opacity="0.3"/>
+  <text x="510" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6a3d75">🔗</text>
+  <text x="540" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#6a3d75">Relational</text>
+  <text x="540" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">multi-table</text>
+  <text x="540" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">features</text>
+
+  <!-- Automated FE -->
+  <rect x="590" y="235" width="120" height="55" rx="10" fill="#e8daef"/>
+  <!-- Robot icon -->
+  <circle cx="620" cy="255" r="10" fill="#6a3d75" opacity="0.3"/>
+  <text x="620" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6a3d75">🤖</text>
+  <text x="650" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#6a3d75">Automated</text>
+  <text x="650" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">algorithmic</text>
+  <text x="650" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6a3d75">generation</text>
+
+  <!-- Attribute Inference (Privacy) -->
+  <rect x="700" y="235" width="95" height="55" rx="10" fill="#fadbd8"/>
+  <!-- Eye icon -->
+  <circle cx="725" cy="255" r="10" fill="#b15c26" opacity="0.3"/>
+  <text x="725" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#b15c26">👁</text>
+  <text x="747" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#922b21">Attribute</text>
+  <text x="747" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#922b21">Inference</text>
+  <text x="747" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#b15c26">(privacy risk!)</text>
+
+  <!-- Sub-branches under Automated -->
+  <line x1="620" y1="290" x2="580" y2="330" stroke="#d8bfd8" stroke-width="2"/>
+  <line x1="680" y1="290" x2="720" y2="330" stroke="#d8bfd8" stroke-width="2"/>
+
+  <!-- Mathematical Synthesis -->
+  <rect x="510" y="330" width="140" height="50" rx="8" fill="#f5eef8"/>
+  <text x="545" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6a3d75">➗✖️</text>
+  <text x="580" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6a3d75">Mathematical</text>
+  <text x="580" y="372" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#6a3d75">ratios, logs, products</text>
+
+  <!-- Time-Series -->
+  <rect x="650" y="330" width="140" height="50" rx="8" fill="#f5eef8"/>
+  <text x="685" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6a3d75">📈</text>
+  <text x="720" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6a3d75">Time-Series</text>
+  <text x="720" y="372" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#6a3d75">trends, seasonality</text>
+
+  <!-- Legend -->
+  <rect x="20" y="410" width="760" height="80" rx="10" fill="white" stroke="#d6cdb8" stroke-width="1"/>
+  <text x="40" y="435" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#14202e">Legend:</text>
+
+  <!-- Legend items -->
+  <rect x="40" y="445" width="20" height="20" rx="4" fill="url(#greenGrad)"/>
+  <text x="70" y="460" font-family="Arial, sans-serif" font-size="11" fill="#555">Data Cleaning</text>
+
+  <rect x="180" y="445" width="20" height="20" rx="4" fill="url(#purpleGrad)"/>
+  <text x="210" y="460" font-family="Arial, sans-serif" font-size="11" fill="#555">Feature Creation</text>
+
+  <rect x="340" y="445" width="20" height="20" rx="4" fill="#fadbd8" stroke="#b15c26"/>
+  <text x="370" y="460" font-family="Arial, sans-serif" font-size="11" fill="#555">Privacy Risk</text>
+
+  <!-- Icons legend -->
+  <text x="500" y="460" font-family="Arial, sans-serif" font-size="11" fill="#555">🔧 Manual  🔗 Relational  🤖 Automated  👁 Privacy</text>
+</svg>

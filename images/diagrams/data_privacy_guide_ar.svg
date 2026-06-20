@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="shareGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2c6a5b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#388E3C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="privateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F44336;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C62828;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1a1a2e">
+    خصوصية البيانات: ما الذي تشاركه مع الذكاء الاصطناعي
+  </text>
+  <text x="400" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">
+    اتخذ قرارات ذكية حول المعلومات التي ترسلها لنماذج اللغة العامة
+  </text>
+
+  <!-- Right Column: OK to Share -->
+  <g transform="translate(420, 100)">
+    <rect x="0" y="0" width="330" height="340" rx="15" fill="white" stroke="#2c6a5b" stroke-width="3" filter="url(#shadow)"/>
+
+    <rect x="0" y="0" width="330" height="55" rx="15" fill="url(#shareGrad)"/>
+    <rect x="0" y="30" width="330" height="25" fill="url(#shareGrad)"/>
+    <text x="165" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">يُسمح بمشاركته مع LLMs</text>
+
+    <circle cx="290" cy="30" r="18" fill="white"/>
+    <polyline points="280,30 287,37 302,22" fill="none" stroke="#2c6a5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="translate(20, 75)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#E8F5E9"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2E7D32">أسئلة البرمجة العامة</text>
+    </g>
+    <g transform="translate(20, 120)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#E8F5E9"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2E7D32">منطق وهيكل الخوارزميات</text>
+    </g>
+    <g transform="translate(20, 165)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#E8F5E9"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2E7D32">كود الإعدادات غير الحساسة</text>
+    </g>
+    <g transform="translate(20, 210)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#E8F5E9"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2E7D32">أنماط تكامل API العامة</text>
+    </g>
+    <g transform="translate(20, 255)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#E8F5E9"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#2E7D32">استكشاف الأخطاء العام</text>
+    </g>
+    <g transform="translate(20, 300)">
+      <rect x="0" y="0" width="290" height="30" rx="5" fill="#C8E6C9"/>
+      <text x="145" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1B5E20" font-style="italic">هيكل الكود بدون البيانات</text>
+    </g>
+  </g>
+
+  <!-- Left Column: Keep Private -->
+  <g transform="translate(50, 100)">
+    <rect x="0" y="0" width="330" height="340" rx="15" fill="white" stroke="#F44336" stroke-width="3" filter="url(#shadow)"/>
+
+    <rect x="0" y="0" width="330" height="55" rx="15" fill="url(#privateGrad)"/>
+    <rect x="0" y="30" width="330" height="25" fill="url(#privateGrad)"/>
+    <text x="165" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">احتفظ به خاصاً / محلياً</text>
+
+    <circle cx="290" cy="30" r="18" fill="white"/>
+    <rect x="280" y="28" width="20" height="14" rx="2" fill="#F44336"/>
+    <path d="M 283 28 L 283 24 A 7 7 0 0 1 297 24 L 297 28" fill="none" stroke="#F44336" stroke-width="2"/>
+
+    <g transform="translate(20, 75)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#FFEBEE"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#C62828">منطق الأعمال الخاص</text>
+    </g>
+    <g transform="translate(20, 120)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#FFEBEE"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#C62828">البيانات الحساسة (شخصية، مالية، صحية)</text>
+    </g>
+    <g transform="translate(20, 165)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#FFEBEE"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#C62828">مفاتيح API وبيانات المصادقة</text>
+    </g>
+    <g transform="translate(20, 210)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#FFEBEE"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#C62828">معلومات العملاء</text>
+    </g>
+    <g transform="translate(20, 255)">
+      <rect x="0" y="0" width="290" height="35" rx="5" fill="#FFEBEE"/>
+      <text x="145" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#C62828">الأسرار التجارية والخوارزميات الخاصة</text>
+    </g>
+    <g transform="translate(20, 300)">
+      <rect x="0" y="0" width="290" height="30" rx="5" fill="#FFCDD2"/>
+      <text x="145" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#B71C1C" font-style="italic">هياكل الأنظمة الداخلية</text>
+    </g>
+  </g>
+
+  <!-- Bottom tip -->
+  <rect x="80" y="450" width="640" height="45" rx="8" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+  <text x="400" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1565C0">
+    جمال الكود المحلي: عند التشغيل محلياً، بياناتك لا تغادر جهازك. تحتفظ بالسيطرة الكاملة.
+  </text>
+</svg>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <defs>
+    <style>
+      .timeline-line { stroke: #14202e; stroke-width: 4; }
+      .era-box { stroke: #14202e; stroke-width: 2; rx: 8; }
+      .era1 { fill: #2c5a82; }
+      .era2 { fill: #95a5a6; }
+      .era3 { fill: #b15c26; }
+      .era4 { fill: #a07c1d; }
+      .era5 { fill: #6a3d75; }
+      .era6 { fill: #2c6a5b; }
+      .milestone { fill: #b15c26; stroke: #14202e; stroke-width: 2; }
+      .text-title { fill: #14202e; font-family:inherit; font-size: 32px; font-weight: bold; text-anchor: middle; }
+      .text-era { fill: white; font-family:inherit; font-size: 16px; font-weight: bold; text-anchor: middle; }
+      .text-event { fill: #14202e; font-family:inherit; font-size: 12px; }
+      .text-year { fill: #14202e; font-family:inherit; font-size: 14px; font-weight: bold; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="500" y="40" class="text-title">History of Artificial Intelligence</text>
+  <text x="500" y="65" style="fill: #666; font-family:inherit; font-size: 16px; text-anchor: middle; font-style: italic;">Key Milestones 1950-2020s</text>
+
+  <!-- Timeline base line -->
+  <line x1="100" y1="350" x2="900" y2="350" class="timeline-line"/>
+
+  <!-- 1950s: The Birth -->
+  <rect x="80" y="120" width="140" height="200" class="era-box era1"/>
+  <text x="150" y="145" class="text-era">1950s</text>
+  <text x="150" y="165" class="text-era" style="font-size: 14px;">Birth of AI</text>
+  <circle cx="150" cy="350" r="8" class="milestone"/>
+  <text x="90" y="185" class="text-event">• Turing Test (1950)</text>
+  <text x="90" y="205" class="text-event">• "AI" coined (1956)</text>
+  <text x="90" y="225" class="text-event">• Dartmouth Conf.</text>
+  <text x="90" y="245" class="text-event">• Early optimism</text>
+  <text x="90" y="265" class="text-event">• Checkers programs</text>
+
+  <!-- 1960s-70s: First AI Winter -->
+  <rect x="235" y="400" width="140" height="180" class="era-box era2"/>
+  <text x="305" y="425" class="text-era">1960s-70s</text>
+  <text x="305" y="445" class="text-era" style="font-size: 14px;">First Challenges</text>
+  <circle cx="305" cy="350" r="8" class="milestone"/>
+  <text x="245" y="465" class="text-event">• Limited progress</text>
+  <text x="245" y="485" class="text-event">• Underpowered</text>
+  <text x="245" y="505" class="text-event">  computers</text>
+  <text x="245" y="525" class="text-event">• First "AI Winter"</text>
+  <text x="245" y="545" class="text-event">• Reduced funding</text>
+
+  <!-- 1980s: Expert Systems -->
+  <rect x="390" y="120" width="140" height="200" class="era-box era3"/>
+  <text x="460" y="145" class="text-era">1980s</text>
+  <text x="460" y="165" class="text-era" style="font-size: 14px;">Expert Systems</text>
+  <circle cx="460" cy="350" r="8" class="milestone"/>
+  <text x="400" y="185" class="text-event">• MYCIN diagnosis</text>
+  <text x="400" y="205" class="text-event">• IF-THEN rules</text>
+  <text x="400" y="225" class="text-event">• Business interest</text>
+  <text x="400" y="245" class="text-event">• Second AI Winter</text>
+  <text x="400" y="265" class="text-event">  (late 80s)</text>
+
+  <!-- 1990s-2000s: Machine Learning -->
+  <rect x="545" y="400" width="140" height="180" class="era-box era4"/>
+  <text x="615" y="425" class="text-era">1990s-2000s</text>
+  <text x="615" y="445" class="text-era" style="font-size: 14px;">ML Takes Off</text>
+  <circle cx="615" cy="350" r="8" class="milestone"/>
+  <text x="555" y="465" class="text-event">• Deep Blue (1997)</text>
+  <text x="555" y="485" class="text-event">• Learning from data</text>
+  <text x="555" y="505" class="text-event">• More computing</text>
+  <text x="555" y="525" class="text-event">• Internet data</text>
+  <text x="555" y="545" class="text-event">• Practical apps</text>
+
+  <!-- 2010s: Deep Learning Revolution -->
+  <rect x="700" y="120" width="140" height="200" class="era-box era5"/>
+  <text x="770" y="145" class="text-era">2010s</text>
+  <text x="770" y="165" class="text-era" style="font-size: 14px;">DL Revolution</text>
+  <circle cx="770" cy="350" r="8" class="milestone"/>
+  <text x="710" y="185" class="text-event">• ImageNet (2012)</text>
+  <text x="710" y="205" class="text-event">• AlphaGo (2016)</text>
+  <text x="710" y="225" class="text-event">• Self-driving cars</text>
+  <text x="710" y="245" class="text-event">• Voice assistants</text>
+  <text x="710" y="265" class="text-event">• AI mainstream</text>
+
+  <!-- 2020s: Current Era -->
+  <rect x="855" y="400" width="140" height="180" class="era-box era6"/>
+  <text x="925" y="425" class="text-era">2020s</text>
+  <text x="925" y="445" class="text-era" style="font-size: 14px;">Current Era</text>
+  <circle cx="925" cy="350" r="8" class="milestone"/>
+  <text x="865" y="465" class="text-event">• GPT-3 (2020)</text>
+  <text x="865" y="485" class="text-event">• ChatGPT (2022)</text>
+  <text x="865" y="505" class="text-event">• AI art tools</text>
+  <text x="865" y="525" class="text-event">• Ethics concerns</text>
+  <text x="865" y="545" class="text-event">• Rapid progress</text>
+
+  <!-- Key Pattern Box -->
+  <rect x="100" y="620" width="800" height="70" fill="#fff3cd" stroke="#14202e" stroke-width="2" rx="5"/>
+  <text x="500" y="640" style="fill: #14202e; font-family:inherit; font-size: 16px; font-weight: bold; text-anchor: middle;">Pattern: Excitement → Disappointment → New Approach → Progress</text>
+  <text x="500" y="660" style="fill: #14202e; font-family:inherit; font-size: 13px; text-anchor: middle;">Each "winter" taught lessons that led to the next breakthrough</text>
+  <text x="500" y="680" style="fill: #14202e; font-family:inherit; font-size: 13px; text-anchor: middle;">Better technology + More data + New methods = Success</text>
+</svg>

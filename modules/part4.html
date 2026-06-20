@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 (2-hour session): Building in-house AI tools beyond machine learning — constraint satisfaction, optimization, machine learning, knowledge representation & reasoning, topic modelling and search engines, run locally so the evidence never leaves custody. With worked forensic examples, activities, and discussion.">
+    <title>Part 4 — Building In-House AI Tools (Beyond Machine Learning) | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <span>Part 4 — In-House AI Tools</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4</div>
+        <h1>Building In-House AI Tools (Beyond Machine Learning)</h1>
+        <p class="module-lede">
+            Parts 2 and 3 established a hard requirement: the evidence should stay in your custody, and your methods
+            must be explainable enough to defend in court. That points away from sending data to outside LLM services
+            and toward AI you build and run yourself. This part opens the toolbox &mdash; and the toolbox is far larger
+            than machine learning. Constraint solving, optimization, knowledge reasoning, topic modelling and search
+            are all AI, all runnable in-house, and often more defensible than a black-box model. We will take each tool
+            in turn with a worked forensic example, learn how to prepare data so the tools do not lie to us, learn to
+            read machine-learning output as a <em>lead</em> rather than a verdict, and finally chain the tools into a
+            single explainable pipeline.
+        </p>
+    </header>
+
+    <main>
+        <div class="session-agenda">
+            <h4>What we'll cover</h4>
+            <ol>
+                <li><span class="agenda-topic"><strong>Why build in-house</strong> — custody, admissibility and privacy converge</span></li>
+                <li><span class="agenda-topic"><strong>AI is a toolbox</strong> — the six families and the map</span></li>
+                <li><span class="agenda-topic"><strong>Constraint satisfaction &amp; optimization</strong> — timelines and triage (Activity&nbsp;1)</span></li>
+                <li><span class="agenda-topic"><strong>Machine learning</strong> — the decision boundary (Activity&nbsp;2)</span></li>
+                <li><span class="agenda-topic"><strong>Data preparation</strong> — garbage in, garbage out</span></li>
+                <li><span class="agenda-topic"><strong>Evaluating ML</strong> — precision, recall &amp; the false-positive trap</span></li>
+                <li><span class="agenda-topic"><strong>Knowledge reasoning, topic modelling &amp; search</strong> — the explainable trio</span></li>
+                <li><span class="agenda-topic"><strong>Combining tools into a pipeline</strong> — search → topic → classify → CSP → rules</span></li>
+                <li><span class="agenda-topic"><strong>Recap</strong> &amp; bridge to Part&nbsp;5</span></li>
+            </ol>
+        </div>
+
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#why-inhouse">Why build in-house</a></li>
+                <li><a href="#toolbox">AI is a toolbox</a></li>
+                <li><a href="#csp">Constraint satisfaction</a></li>
+                <li><a href="#optimization">Optimization &amp; trade-offs</a></li>
+                <li><a href="#ml">Machine learning</a></li>
+                <li><a href="#data-prep">Data preparation: garbage in, garbage out</a></li>
+                <li><a href="#evaluating">Evaluating ML &amp; the false-positive problem</a></li>
+                <li><a href="#knowledge">Knowledge representation &amp; reasoning</a></li>
+                <li><a href="#topic">Topic modelling</a></li>
+                <li><a href="#search">Search engines</a></li>
+                <li><a href="#pipeline">Combining tools into a pipeline</a></li>
+                <li><a href="#takeaways">Recap &amp; further practice</a></li>
+            </ol>
+        </nav>
+
+        <section id="why-inhouse" class="module-section">
+            <h2>Why build in-house</h2>
+            <p>
+                Three forces from earlier parts converge on the same conclusion. <strong>Custody</strong>: evidence
+                that leaves your control is evidence you may no longer rely on &mdash; the moment a disk image is
+                uploaded to a third party, you have created a copy you cannot fully account for, and a gap in the chain
+                that opposing counsel will probe. <strong>Admissibility</strong>: a method you cannot explain may be
+                inadmissible regardless of accuracy; courts increasingly ask not just <em>what</em> a tool concluded
+                but <em>how</em>, and "the vendor's cloud model decided" is rarely a satisfying answer.
+                <strong>Privacy</strong>: the outside service is itself a collector, and in a forensic case the data is
+                often the most sensitive material imaginable &mdash; intimate images, medical records, the
+                communications of uninvolved third parties. Building your own analysis tools answers all three at once:
+                the data never moves, the logic is inspectable, and there is no third party in the loop.
+            </p>
+            <p>
+                Put the three forces beside each other and notice they are not three separate worries but one worry
+                seen from three angles. Custody is about <em>where the data is</em>; admissibility is about
+                <em>whether you can defend what you did to it</em>; privacy is about <em>who else can now see it</em>.
+                An in-house tool that runs locally on a workstation you control collapses all three into a single,
+                answerable claim: the evidence stayed on this machine, here is the exact code that processed it, and
+                nobody outside the investigation ever touched it.
+            </p>
+            <div class="callout callout-warn">
+                <p>
+                    "In-house" does not mean "primitive". A locally-run constraint solver, search index, or topic model
+                    is mature, fast, and well understood &mdash; much of it is decades-old, battle-tested,
+                    open-source software. The trade you are making is convenience for control &mdash; and in forensic
+                    work, control is the requirement, not a luxury.
+                </p>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Think of one investigative task you would be tempted to hand to a cloud AI service tomorrow. Walk
+                    the three forces in turn: what happens to <em>custody</em> when the data leaves the building? Could
+                    you explain the method to a judge for <em>admissibility</em>? Whose <em>privacy</em>, besides the
+                    suspect's, is riding along in that upload? Which of the three would block the upload first?
+                </p>
+            </div>
+        </section>
+
+        <section id="toolbox" class="module-section">
+            <h2>AI is a toolbox</h2>
+            <p>
+                Each tool below fits a different shape of problem. The skill is matching the question to the tool, and
+                being able to say why. A chatbot is one expression of one of these families; it is not the toolbox.
+                The remaining sections take the tools one at a time, each with a worked forensic example, a one-line
+                rule for when to reach for it and when not to, and a note on how it runs locally. Here is the map:
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Tool</th><th>Good for</th><th>Forensic use</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Constraint satisfaction</td><td>"Find an assignment that satisfies all rules"</td><td>Timeline / alibi consistency checking</td></tr>
+                    <tr><td>Optimization</td><td>"Find the best option under trade-offs"</td><td>Prioritising what to examine first</td></tr>
+                    <tr><td>Machine learning</td><td>"Learn a pattern from examples"</td><td>Classifying files, flagging anomalies</td></tr>
+                    <tr><td>Knowledge &amp; reasoning</td><td>"Apply explicit expert rules"</td><td>Explainable, auditable inference</td></tr>
+                    <tr><td>Topic modelling</td><td>"Find the themes in a big text pile"</td><td>Triaging seized messages/documents</td></tr>
+                    <tr><td>Search engines</td><td>"Index and retrieve fast"</td><td>Querying terabytes of artefacts</td></tr>
+                </tbody>
+            </table>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    Resist the urge to lecture all six families up front &mdash; keep this section to ~10 minutes as a
+                    map, then let each family earn its detail in its own section. If the room is non-technical, the one
+                    sentence that must land is "machine learning is one tool of six, and often not the most defensible
+                    one." If the room is technical, ask which family they reach for by reflex and why &mdash; the
+                    reflex is usually ML, and that is exactly the habit this part is built to widen.
+                </p>
+            </div>
+        </section>
+
+        <section id="csp" class="module-section">
+            <h2>Constraint satisfaction</h2>
+            <p>
+                A <span class="term">constraint satisfaction problem</span> (CSP) is defined by variables, the values
+                they may take, and constraints relating them; the solver finds an assignment that satisfies all
+                constraints (or proves none exists). It is the natural model for <em>consistency</em> questions &mdash;
+                the questions where you do not need the single best answer, you need to know whether any answer is even
+                possible.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/search_problems_overview.svg" alt="Map of search-problem types showing how constraint satisfaction, optimization and path search relate to one another" loading="lazy">
+                <figcaption>The big picture of search problems: a CSP timeline check, an optimization triage ranking and a fast index lookup are all the same family of search dressed for different forensic questions.</figcaption>
+            </figure>
+            <div class="callout callout-story">
+                <p>
+                    Reconstructing a timeline is a CSP. Each event must occur in a window; some events must precede
+                    others; a device cannot be in two places at once. Feed those as constraints and the solver tells
+                    you which orderings are <em>possible</em> &mdash; and, powerfully, which proposed sequence of
+                    events is <em>impossible</em>, contradicting an alibi.
+                </p>
+            </div>
+            <p>
+                <strong>Worked example.</strong> A suspect claims he was at home (call it cell tower A) from 9:00 to
+                11:00 pm. The evidence offers four fixed facts: a text sent from his phone hit tower B at 9:40; a CCTV
+                still timestamped 10:05 shows his car near a shop served by tower C; tower B and tower C are 12 km
+                apart; and home (tower A) is 9 km from B. Model each timestamped observation as a variable whose value
+                is a (location, time) pair, and add the physical constraints &mdash; you cannot travel 12 km in the
+                gaps available, you cannot register on two towers at once. The solver does not "decide" the suspect is
+                lying; it reports that <em>no</em> assignment satisfies "at home all evening" together with the
+                tower-B text and the CCTV still. The alibi is not weakened by opinion &mdash; it is contradicted by
+                geometry, and you can point to the exact constraint that did it.
+            </p>
+            <p>
+                CSPs are fully explainable: the answer is a concrete assignment and you can trace which constraint
+                ruled out every alternative. That auditability is exactly what admissibility rewards.
+            </p>
+            <p>
+                <strong>When to use / when NOT:</strong> reach for a CSP when the question is "is this consistent?" with
+                hard rules and a finite set of options; do <em>not</em> use it when the rules are soft preferences or
+                fuzzy probabilities (that is optimization or ML), because a CSP forced to express "probably" loses its
+                clean, defensible answer.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> mature open-source solvers (constraint libraries shipped with
+                common programming languages, or standalone solvers) run entirely on your workstation. You hand them a
+                plain-text model of variables and constraints; nothing about the case leaves the machine, and the model
+                file itself becomes a documented, reproducible artefact you can disclose.
+            </p>
+            <div class="callout callout-activity">
+                <h4>Activity 1 — Model a timeline as a CSP on paper (in pairs)</h4>
+                <p>
+                    Take the worked example above. On paper, list the <em>variables</em> (one per timestamped
+                    observation), the <em>values</em> each could take (which tower, which time window), and the
+                    <em>constraints</em> (travel time between towers, "one tower at a time", the suspect's claimed
+                    window). Then, by hand, try to find <em>any</em> assignment that keeps him home all evening.
+                </p>
+                <p>
+                    When you fail, write the single sentence you would say in court: "These two observations cannot both
+                    be true if he never left, because&hellip;". That sentence &mdash; naming the exact constraint that
+                    breaks &mdash; is what makes a CSP admissible where a black box would not be.
+                </p>
+            </div>
+        </section>
+
+        <section id="optimization" class="module-section">
+            <h2>Optimization &amp; trade-offs</h2>
+            <p>
+                Optimization searches for the <em>best</em> option under an <span class="term">objective function</span>
+                &mdash; a single number that scores how good a choice is. Most real decisions trade off competing
+                objectives (speed vs. thoroughness, coverage vs. cost), giving not one best answer but a
+                <span class="term">Pareto front</span> of defensible compromises.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/pareto_front.svg" alt="Pareto front plotting speed against cost, with non-dominated triage options on the frontier curve" loading="lazy">
+                <figcaption>Speed versus cost on a Pareto front: each device-triage order on the frontier is a defensible compromise, and shifting the case's priorities slides which point you can justify examining first.</figcaption>
+            </figure>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Try it:</strong> the
+                    <a href="../demos/objective_function_demo.html">objective-function demo</a> lets you shape a scoring
+                    function and watch the "best" choice move as priorities change &mdash; the everyday face of every
+                    triage decision an investigator makes.
+                </p>
+            </div>
+            <p>
+                <strong>Worked example.</strong> A raid seizes nine devices and you have two analysts for one day. Each
+                device has an estimated value (how likely it carries decisive evidence, from intelligence and device
+                type) and a cost (hours to image and examine). Encode "expected evidence per analyst-hour" as the
+                objective and let the optimiser rank the devices. It might tell you to start with the suspect's phone
+                and a single laptop &mdash; high value, modest cost &mdash; and defer a 4&nbsp;TB NAS whose payoff is
+                uncertain and whose cost is enormous. Crucially, when you change the objective (say the case turns and
+                images now matter more than messages), the ranking shifts, and you can show <em>why</em> your order of
+                examination was rational at the time you chose it. Optimization here is not finding "the answer"; it is
+                making triage a defensible, written decision instead of a gut feeling.
+            </p>
+            <div class="callout callout-activity">
+                <h4>Activity 2 — Race the strategies, then weigh the cost</h4>
+                <p>
+                    Open the <a href="../demos/heuristic_demo.html">heuristic-search demo</a> and run the same puzzle
+                    under each strategy in turn: <em>greedy</em>, <em>epsilon-greedy</em>, <em>random</em>, and
+                    <em>brute-force</em>. Note how many steps each takes and whether it finds the best answer.
+                </p>
+                <ul>
+                    <li>Which strategy reaches a good answer fastest? Which is guaranteed to find the best but slowest?</li>
+                    <li>The <strong>cost-of-heuristic trade-off</strong>: a clever heuristic saves search steps, but
+                        computing the heuristic itself costs something. Find the case where a cheaper, dumber strategy
+                        wins overall because the smart one spends more thinking than it saves.</li>
+                </ul>
+                <p>
+                    Write one sentence connecting this to triage: when is it worth building an elaborate scoring model,
+                    and when should you just start imaging the obvious phone?
+                </p>
+            </div>
+            <p>
+                <strong>When to use / when NOT:</strong> use optimization when you must choose among options with
+                measurable trade-offs and limited resources; do <em>not</em> use it when the "score" is not honestly
+                quantifiable &mdash; a fabricated objective function launders a guess into a number and is worse than
+                admitting you guessed.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> optimisation routines are ordinary code over your own spreadsheet
+                of devices and estimates. No evidence content is needed &mdash; only your value and cost estimates
+                &mdash; so this is among the easiest tools to run on an isolated machine and to disclose in full.
+            </p>
+        </section>
+
+        <section id="ml" class="module-section">
+            <h2>Machine learning</h2>
+            <p>
+                Machine learning learns a pattern from labelled examples (supervised), groups unlabelled data
+                (unsupervised), or improves from feedback (reinforcement). For forensics it shines at scale tasks:
+                classifying file types, detecting known illicit images, clustering similar artefacts, and flagging
+                statistical anomalies in logs.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/gradient_descent.svg" alt="Gradient-descent curve showing successive steps rolling downhill towards the minimum-error point" loading="lazy">
+                <figcaption>Gradient descent finding the minimum error: the model tunes its parameters step by step to fit the labelled examples &mdash; a process whose training data and stopping point must themselves become disclosable artefacts.</figcaption>
+            </figure>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>See the boundary:</strong> the
+                    <a href="../demos/ml-viz-v2.html">ML visualisation</a> and
+                    <a href="../demos/classification_demo.html">classification demo</a> show how a model draws a
+                    decision boundary between classes, and the
+                    <a href="../demos/activation_functions_demo.html">activation-functions demo</a> opens the neuron
+                    that makes a neural network bend that boundary.
+                </p>
+            </div>
+            <p>
+                <strong>Worked example.</strong> You have 200,000 images from a seized drive and need to surface the
+                few that show, say, firearms. A supervised classifier trained on labelled examples scores every image
+                and returns the 1,800 it judges most likely. That is a genuine time-saver &mdash; an analyst now
+                reviews 1,800 instead of 200,000. But notice what the model has and has not done: it has produced a
+                <em>ranked list of candidates</em>, not a finding. Some of those 1,800 will be power drills and toy
+                guns; some real firearms will sit below the cut-off. The model's job ends at "look here first"; a human
+                makes every actual determination, and the explainable record is the analyst's review, not the model's
+                confidence score.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/neural_network.svg" alt="Artificial neural network with an input layer, hidden layers and an output layer of connected neurons" loading="lazy">
+                <figcaption>An artificial neural network bends the decision boundary through layers of weighted neurons &mdash; powerful at scale, but a tangle the court cannot read, which is why its output stays a lead to verify rather than a verdict.</figcaption>
+            </figure>
+            <div class="callout callout-activity">
+                <h4>Activity 3 — Find (and move) the decision boundary</h4>
+                <p>
+                    In the <a href="../demos/ml-viz-v2.html">ML visualisation</a> or the
+                    <a href="../demos/classification_demo.html">classification demo</a>, add a few points and watch the
+                    boundary the model draws. Now drag a point across the line, or add an outlier, and see the boundary
+                    bend. Ask: how many mislabelled training points would it take to push the boundary somewhere
+                    misleading? That fragility is why ML output is a lead to verify, never a verdict.
+                </p>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Use ML with eyes open.</strong> A model can be confidently wrong, and "the classifier said
+                    so" is not an explanation a court accepts. Treat ML output as a <em>lead to verify</em>, not a
+                    verdict &mdash; and keep a human and an explainable check in the loop.
+                </p>
+            </div>
+            <p>
+                <strong>When to use / when NOT:</strong> use ML to triage and rank at a scale humans cannot reach by
+                hand; do <em>not</em> use its output as a standalone finding, and do not deploy a model you cannot
+                describe, validate on held-out data, and bound the error of.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> models train and run on your own hardware against your own corpus
+                &mdash; no cloud inference, no uploading evidence to score it. The trained model, its training data
+                provenance, and its evaluation numbers all become disclosable artefacts.
+            </p>
+        </section>
+
+        <section id="data-prep" class="module-section">
+            <h2>Data preparation: garbage in, garbage out</h2>
+            <p>
+                Before any of these tools earns its keep, someone has to prepare the data &mdash; and this unglamorous
+                step is where most failures are actually born. A classifier is only as good as the examples it learned
+                from; a CSP is only as sound as the timestamps you fed it; a search index is only as complete as the
+                files you remembered to ingest. The slogan from data science applies in full force here:
+                <em>garbage in, garbage out.</em>
+            </p>
+            <p>
+                Two jobs hide inside "preparation". The first is <strong>cleaning</strong>: are timestamps all in the
+                same time zone, or is one device silently recording UTC while another records local time? Are there
+                duplicate files that will double-count, or a log that rotated and lost a day? Did a deduplication step
+                quietly merge two suspects who happened to share a hash collision? The second is <strong>feature
+                engineering</strong>: deciding <em>which</em> measurable properties of each item the tool actually sees.
+                A file is not handed to a classifier as a file; it is handed as a list of features &mdash; size, entropy,
+                header bytes, creation time, path depth. Choose poor features and even a perfect algorithm learns
+                nothing useful. Choose features that accidentally encode the answer (a folder named "evidence") and the
+                model learns a shortcut that will not generalise.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/feature_engineering_tree.svg" alt="Taxonomy tree branching the features extracted from a file into categories such as size, entropy, timestamps and path properties" loading="lazy">
+                <figcaption>A feature-engineering taxonomy: a file reaches the tool only as the measurable properties you choose to expose, so a careless choice here &mdash; like a feature that secretly encodes the answer &mdash; quietly decides what the model can ever learn.</figcaption>
+            </figure>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    This is the section to slow down on for a forensic audience, because it is where their existing
+                    instincts transfer directly. "Where did this come from, is it complete, could it have been altered"
+                    &mdash; the chain-of-custody questions from Part&nbsp;2 &mdash; <em>are</em> data preparation. Make
+                    that link explicit: a sloppy timestamp normalisation is not a data-science footnote, it is a
+                    custody-grade error that can produce a confident, wrong timeline. Spend the time here; it pays off
+                    in every later section.
+                </p>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    A colleague proudly reports a model that flags "suspicious" files with 99% accuracy. Before you
+                    trust it, what do you need to know about the <em>data it learned from</em>? List the questions:
+                    where did the labels come from, who decided what "suspicious" meant, was the test data truly held
+                    out, and what single feature might the model be secretly leaning on? How many of these are really
+                    chain-of-custody questions wearing a different hat?
+                </p>
+            </div>
+        </section>
+
+        <section id="evaluating" class="module-section">
+            <h2>Evaluating ML &amp; the false-positive problem</h2>
+            <p>
+                Suppose your firearm classifier is, by the numbers, "95% accurate". That single figure is almost
+                useless on its own, and trusting it is one of the most common and most dangerous mistakes in applied
+                forensics. To read a model honestly you need two plainer ideas.
+            </p>
+            <div class="compare">
+                <div>
+                    <h4>Precision</h4>
+                    <p>Of the items the model <em>flagged</em>, how many were actually right? Low precision means a pile
+                    of false alarms &mdash; analyst time wasted chasing innocent files.</p>
+                </div>
+                <div>
+                    <h4>Recall</h4>
+                    <p>Of the items that <em>truly</em> matter, how many did the model <em>catch</em>? Low recall means
+                    things slipped through &mdash; evidence missed entirely.</p>
+                </div>
+            </div>
+            <p>
+                These two pull against each other. Crank the model to flag everything and recall hits 100% but precision
+                collapses; make it cautious and precision soars while real evidence slips past. Which way you lean is a
+                <em>forensic</em> decision, not a technical one: missing illicit material and drowning analysts in false
+                alarms are different harms, and you must choose with eyes open.
+            </p>
+            <p>
+                <strong>The base-rate trap.</strong> Here is the trap that catches even careful people. Imagine a tool
+                that detects a rare illicit-image signature, and it is genuinely good: 99% true-positive rate, and only
+                a 1% false-positive rate. You scan a drive of 1,000,000 images of which, say, 100 are truly illicit.
+                The model correctly flags 99 of the 100 &mdash; excellent. But that 1% false-positive rate, applied to
+                the 999,900 innocent images, throws up about 9,999 <em>false</em> alarms. So of roughly 10,098 flagged
+                images, only 99 are real: barely <strong>1% of the model's flags are correct</strong>, even though the
+                model is 99% accurate by its own measures. Because the thing you are hunting is <em>rare</em>, the
+                false positives swamp the true ones. This is precisely why ML output is a lead to verify, not a verdict:
+                walk into court on the strength of "the model flagged it" and you are 99 times out of 100 pointing at an
+                innocent file.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    In the base-rate example, what would you tell an analyst about how to spend their day &mdash; and
+                    what would you tell a prosecutor about what a single flag does and does not prove? Now flip it: if
+                    the target were <em>common</em> rather than rare, how would the picture change, and why does the
+                    rarity of what you are hunting matter so much to how you read the output?
+                </p>
+            </div>
+        </section>
+
+        <section id="knowledge" class="module-section">
+            <h2>Knowledge representation &amp; reasoning</h2>
+            <p>
+                Where ML learns implicit patterns, <span class="term">knowledge-based systems</span> encode explicit
+                rules and facts, then reason over them. The appeal for forensics is transparency: every conclusion
+                traces back to the specific rules and facts that produced it &mdash; an auditable chain, not a
+                probability.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/kbs_unified_architecture.svg" alt="Knowledge-based system architecture showing a fact base and rule base feeding an inference engine that derives conclusions" loading="lazy">
+                <figcaption>A knowledge-based system architecture: raw facts and an explicit rule base meet in an inference engine, so every linkage conclusion arrives with the exact rule and fact that produced it &mdash; a sentence for the defence, not a similarity score.</figcaption>
+            </figure>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Inference in action:</strong> the
+                    <a href="../demos/family_inference_demo.html">family-inference demo</a> derives relationships that
+                    were never stated outright by applying simple rules &mdash; the same mechanism by which an
+                    investigator (or an adversary) infers facts <em>beyond</em> the data formally collected.
+                </p>
+            </div>
+            <p>
+                <strong>Worked example.</strong> Encode a small rulebook for account linkage: "if two accounts share a
+                recovery phone number, they are linked"; "if two accounts are linked and one is linked to a third, all
+                three are linked"; "if an account posts from the same device fingerprint as a known suspect account,
+                flag it for review". Feed in the raw facts &mdash; phone numbers, device fingerprints, login records
+                &mdash; and the system derives a linkage that nobody stated outright. Unlike an ML clustering of the
+                same data, every link comes with its justification: <em>this</em> account joins the cluster because of
+                <em>that</em> shared recovery number, by <em>this</em> rule. When the defence asks why account X was
+                tied to the suspect, you have a sentence, not a similarity score.
+            </p>
+            <p>
+                Rule-based reasoning pairs well with ML: let the model surface candidates at scale, then let an
+                explainable rule system justify or reject each one.
+            </p>
+            <p>
+                <strong>When to use / when NOT:</strong> use rule-based reasoning when expert knowledge can be written
+                as clear rules and you need every conclusion auditable; do <em>not</em> use it when the relationships
+                are genuinely fuzzy, exception-ridden, or unknown &mdash; hand-writing a thousand brittle rules to
+                imitate a pattern is a job for ML instead.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> the rulebook is a plain-text file and the reasoner is lightweight
+                code; both run on your workstation and both are disclosable in full. The rules <em>are</em> the
+                documentation &mdash; an opposing expert can read exactly what your system believes.
+            </p>
+        </section>
+
+        <section id="topic" class="module-section">
+            <h2>Topic modelling</h2>
+            <p>
+                <span class="term">Topic modelling</span> discovers the latent themes running through a large body of
+                text without anyone labelling it first. Point it at a seizure of tens of thousands of messages or
+                documents and it returns the handful of subjects that dominate &mdash; turning an unreadable pile into
+                a ranked set of threads to pull.
+            </p>
+            <p>
+                <strong>Worked example.</strong> A seizure yields 80,000 chat messages across two years. Reading them
+                is impossible; searching them requires knowing what to search for. A topic model, run over the cleaned
+                text, returns perhaps a dozen themes &mdash; one cluster heavy with shipping and payment vocabulary,
+                another about a sports league, another about family logistics, another dense with coded terms and
+                burner-phone references. Now the investigator has a triage map: ignore the sports and family clusters
+                for now, pull hard on the shipping-and-payment thread and the coded-terms thread. The model did not
+                read the case for you; it sorted the haystack into a few labelled stacks so you know which to search
+                first. Each topic comes with its most representative messages, so you can sanity-check that the cluster
+                means what its keywords suggest before you act on it.
+            </p>
+            <p>
+                Because it runs locally over your own corpus, topic modelling is a model citizen of in-house analysis:
+                no data leaves custody, and the output (topic &rarr; representative documents) is inspectable and
+                reproducible.
+            </p>
+            <p>
+                <strong>When to use / when NOT:</strong> use topic modelling to get an unfamiliar text pile under
+                control when you do not yet know what to search for; do <em>not</em> treat the topics as conclusions
+                &mdash; they are an unsupervised summary that can merge or split themes oddly, so always verify against
+                the representative documents.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> topic models are standard open-source libraries that ingest your
+                text corpus on the local machine and emit topics as word lists and document rankings. Nothing is sent
+                out; the topic assignments are saved alongside the case as a reproducible artefact.
+            </p>
+        </section>
+
+        <section id="search" class="module-section">
+            <h2>Search engines</h2>
+            <p>
+                Underneath much of forensics is plain <em>search</em>: build an index, then retrieve fast. The same
+                techniques that power web search &mdash; inverted indexes, ranking, and heuristic search over large
+                state spaces &mdash; let you query terabytes of artefacts in seconds instead of scanning them linearly.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/greedy_decision_flow.svg" alt="Decision-flow chart of a greedy heuristic choosing the locally best next step at each branch of a search" loading="lazy">
+                <figcaption>A greedy heuristic's decision flow: taking the locally best next step usually reaches a good hit fast, until the cost of computing the heuristic outweighs the saving &mdash; the trade-off at the heart of any in-house search tool.</figcaption>
+            </figure>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Watch search strategies race:</strong> the
+                    <a href="../demos/heuristic_demo.html">heuristic-search demo</a> pits greedy, epsilon-greedy,
+                    random and brute-force strategies against the same puzzle. The heuristic usually wins &mdash; until
+                    the cost of computing it outweighs the saving. That trade-off is the heart of designing any
+                    in-house search tool.
+                </p>
+            </div>
+            <p>
+                <strong>Worked example.</strong> You ingest a 3&nbsp;TB collection &mdash; emails, documents, chat
+                exports, file metadata &mdash; and build an inverted index once, up front. Now a query for a phone
+                number, a bank-account string, or a code word returns the matching artefacts across all 3&nbsp;TB in
+                seconds, ranked by relevance, with every hit traceable to its source file and offset. Without the index
+                each query would mean a linear scan of the whole collection; with it, an investigator can follow a
+                lead, see the results, refine the query, and follow the next lead at the speed of thought. Search is
+                the quiet workhorse the other tools sit on top of: the topic model needs the text extracted, the
+                classifier needs the files enumerated, and search is what makes both fast enough to be worth doing.
+            </p>
+            <p>
+                <strong>When to use / when NOT:</strong> use search whenever you can name (even roughly) what you are
+                looking for and need to find it across a large collection fast; do <em>not</em> expect it to surface
+                what you cannot name &mdash; for the "I don't know what I'm looking for" problem, reach for topic
+                modelling or clustering first, then search within the promising cluster.
+            </p>
+            <p>
+                <strong>Running it locally:</strong> indexing engines run as a service on your own machine or isolated
+                network. You point them at the evidence store, the index lives beside the case, and queries never leave
+                the building. The index build is itself logged and reproducible.
+            </p>
+        </section>
+
+        <section id="pipeline" class="module-section">
+            <h2>Combining tools into a pipeline</h2>
+            <p>
+                No single tool cracks a case; the power is in chaining them, and the discipline is keeping every link
+                explainable. Picture one seized phone with 80,000 messages and 200,000 images, and watch the tools hand
+                off to one another:
+            </p>
+            <ol>
+                <li><strong>Search</strong> indexes everything, so every later step is fast and every hit is traceable
+                    to its source artefact.</li>
+                <li><strong>Topic modelling</strong> sorts the 80,000 messages into a dozen themes, and you pull the two
+                    or three that matter &mdash; shipping, payments, coded terms.</li>
+                <li><strong>A classifier</strong> ranks the 200,000 images so an analyst reviews 1,800 candidates rather
+                    than the whole drive &mdash; remembering, after the section above, that these are leads to verify.</li>
+                <li><strong>A CSP</strong> takes the timestamps surfaced by the first three steps and checks whether the
+                    suspect's claimed timeline is even possible, reporting the exact constraint if it is not.</li>
+                <li><strong>A rule-based check</strong> applies your explicit policy &mdash; account-linkage rules,
+                    jurisdiction rules, escalation rules &mdash; and every conclusion arrives with the rule that fired.</li>
+            </ol>
+            <p>
+                The point is not that the pipeline is automatic &mdash; it is that each stage is <em>separately</em>
+                explainable. You can stand up in court and account for every link: search found it, the topic model
+                grouped it, a human verified the classifier's lead, the CSP showed the alibi was impossible by this
+                constraint, and the rule system flagged it by that rule. Compare this with handing the whole phone to a
+                single cloud model and reporting only its verdict. The pipeline is more work, and it is the work that
+                keeps the answer defensible. Notice, too, the order from Part&nbsp;1: forensics sets the constraints
+                first, data science decides what is worth asking, and only then do the tools run.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Take a case shape from your own work and sketch a three-to-five-stage pipeline of the tools in this
+                    part. For each stage, name the one sentence you would say in court to justify it. Where in your
+                    pipeline does a human have to step in &mdash; and what goes wrong if they don't? Which single stage
+                    would be the hardest to defend, and could you swap a black-box step for an explainable one?
+                </p>
+            </div>
+            <div class="callout callout-note">
+                <h4>Instructor note — running the 2 hours</h4>
+                <p>
+                    The three activities and three discussion prompts are the pacing backbone. If you are short on time,
+                    keep Activity&nbsp;1 (the paper CSP) and the base-rate trap in the evaluation section &mdash; those
+                    two land the part's two big ideas: explainable tools win for court, and ML output is a lead, not a
+                    verdict. The take-away you want in the room by the end is that each of the six tools, and the
+                    pipeline that chains them, can be run locally and defended link by link. Test it by asking the
+                    closing discussion question and listening for whether people reach for an explainable tool unprompted.
+                </p>
+            </div>
+        </section>
+
+        <section id="takeaways" class="module-section">
+            <h2>Recap &amp; further practice</h2>
+            <ul>
+                <li>Build <strong>in-house</strong> so custody, admissibility and privacy are all satisfied at once &mdash; one worry seen from three angles, answered by keeping the data on a machine you control.</li>
+                <li>AI is a <strong>toolbox</strong>: CSP, optimization, ML, knowledge reasoning, topic modelling and search each fit a different question, and each runs locally over your own evidence.</li>
+                <li><strong>Prepare the data first</strong> &mdash; garbage in, garbage out. Cleaning and feature engineering are chain-of-custody questions wearing a data-science hat.</li>
+                <li>Read ML output through <strong>precision and recall</strong>, and beware the <strong>base-rate trap</strong>: when the target is rare, even an accurate model's flags are mostly false. ML is a lead to verify, not a verdict.</li>
+                <li>Prefer <strong>explainable</strong> tools (CSP, rules, search) for anything that must reach a court, and chain tools into a <strong>pipeline</strong> where every link can be justified separately.</li>
+                <li>Every tool here becomes an instrument the agent in Part&nbsp;5 can call &mdash; which is exactly why each one must be defensible on its own first.</li>
+            </ul>
+            <p><strong>Further practice before Part 5:</strong> pick a small text or file collection you can legally
+            handle and walk it through just two stages &mdash; search, then either a topic model or a simple classifier.
+            For each stage, write the one sentence you would say to justify it in court, and note where a human had to
+            verify a machine's lead. You will hand exactly these tools to an agent in Part&nbsp;5, so the more
+            defensible each one is now, the safer the agent is later.</p>
+        </section>
+
+        <nav class="module-nav" aria-label="Part navigation">
+            <a href="part3.html" class="prev">
+                <span class="nav-label">← Previous</span>
+                <span class="nav-title">Part 3 — Privacy &amp; Admissibility</span>
+            </a>
+            <a href="part5.html" class="next">
+                <span class="nav-label">Next →</span>
+                <span class="nav-title">Part 5 — Agentic Solutions</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this part</h3>
+                <p>Part 4 of <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+    <script src="../js/drawing-tool.js"></script>
+    <script src="../js/drawing-tool-init.js"></script>
+</body>
+</html>

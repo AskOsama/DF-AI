@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 600" width="700" height="600">
+  <defs>
+    <style>
+      .quad-box { stroke: #14202e; stroke-width: 3; }
+      .quad1 { fill: #2c5a82; }
+      .quad2 { fill: #2c6a5b; }
+      .quad3 { fill: #b15c26; }
+      .quad4 { fill: #a07c1d; }
+      .text-white { fill: white; font-family:inherit; font-weight: bold; text-anchor: middle; }
+      .text-dark { fill: #14202e; font-family:inherit; text-anchor: middle; }
+      .text-label { fill: #14202e; font-family:inherit; font-size: 18px; font-weight: bold; }
+      .axis-line { stroke: #14202e; stroke-width: 4; }
+      .example-text { fill: white; font-family:inherit; font-size: 13px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="350" y="35" class="text-dark" style="font-size: 26px; font-weight: bold;">Four Perspectives on AI</text>
+  <text x="350" y="55" class="text-dark" style="font-size: 14px; font-style: italic;">(Russell &amp; Norvig Framework)</text>
+
+  <!-- Vertical axis -->
+  <line x1="350" y1="100" x2="350" y2="540" class="axis-line"/>
+
+  <!-- Horizontal axis -->
+  <line x1="80" y1="320" x2="620" y2="320" class="axis-line"/>
+
+  <!-- Axis labels -->
+  <text x="350" y="90" class="text-label">Thinking</text>
+  <text x="350" y="565" class="text-label">Acting</text>
+  <text x="60" y="325" class="text-label">Human</text>
+  <text x="640" y="325" class="text-label">Rational</text>
+
+  <!-- Quadrant 1: Thinking Humanly (top-left) -->
+  <rect x="85" y="105" width="260" height="210" class="quad-box quad1" rx="8"/>
+  <text x="215" y="140" class="text-white" style="font-size: 20px;">Thinking Humanly</text>
+  <text x="215" y="170" class="example-text">Cognitive Science</text>
+  <text x="215" y="195" class="example-text">Example: Modeling how the</text>
+  <text x="215" y="215" class="example-text">human brain recognizes faces,</text>
+  <text x="215" y="235" class="example-text">then making AI do it the</text>
+  <text x="215" y="255" class="example-text">same way</text>
+  <text x="215" y="285" class="text-white" style="font-size: 14px; font-style: italic;">Understanding human cognition</text>
+
+  <!-- Quadrant 2: Thinking Rationally (top-right) -->
+  <rect x="355" y="105" width="260" height="210" class="quad-box quad2" rx="8"/>
+  <text x="485" y="140" class="text-white" style="font-size: 20px;">Thinking Rationally</text>
+  <text x="485" y="170" class="example-text">Logic &amp; Reasoning</text>
+  <text x="485" y="195" class="example-text">Example: Medical diagnosis</text>
+  <text x="485" y="215" class="example-text">system using logical rules:</text>
+  <text x="485" y="235" class="example-text">"IF fever AND cough</text>
+  <text x="485" y="255" class="example-text">THEN check for flu"</text>
+  <text x="485" y="285" class="text-white" style="font-size: 14px; font-style: italic;">Laws of thought</text>
+
+  <!-- Quadrant 3: Acting Humanly (bottom-left) -->
+  <rect x="85" y="325" width="260" height="210" class="quad-box quad3" rx="8"/>
+  <text x="215" y="360" class="text-white" style="font-size: 20px;">Acting Humanly</text>
+  <text x="215" y="390" class="example-text">The Turing Test</text>
+  <text x="215" y="415" class="example-text">Example: A chatbot that</text>
+  <text x="215" y="435" class="example-text">converses so naturally you</text>
+  <text x="215" y="455" class="example-text">can't tell if it's human</text>
+  <text x="215" y="475" class="example-text">or machine</text>
+  <text x="215" y="505" class="text-white" style="font-size: 14px; font-style: italic;">Behaving like humans</text>
+
+  <!-- Quadrant 4: Acting Rationally (bottom-right) -->
+  <rect x="355" y="325" width="260" height="210" class="quad-box quad4" rx="8"/>
+  <text x="485" y="360" class="text-white" style="font-size: 20px;">Acting Rationally</text>
+  <text x="485" y="390" class="example-text">Rational Agents</text>
+  <text x="485" y="415" class="example-text">Example: Chess AI that plays</text>
+  <text x="485" y="435" class="example-text">to win, choosing moves that</text>
+  <text x="485" y="455" class="example-text">maximize winning chances</text>
+  <text x="485" y="480" class="text-white" style="font-size: 16px; font-weight: bold;">★ Modern AI Focus ★</text>
+  <text x="485" y="505" class="text-white" style="font-size: 14px; font-style: italic;">Achieving goals effectively</text>
+
+  <!-- Bottom note -->
+  <text x="350" y="590" class="text-dark" style="font-size: 12px; font-style: italic;">The modern approach focuses on building rational agents that achieve their goals effectively</text>
+</svg>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 550">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1976D2;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="550" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1a1a2e">
+    Phase 2: Planning &amp; Architecture
+  </text>
+  <text x="400" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">
+    Answer these critical questions before writing any code
+  </text>
+
+  <!-- Question 1: Code Location -->
+  <g transform="translate(50, 100)">
+    <rect x="0" y="0" width="340" height="180" rx="10" fill="white" stroke="#2196F3" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="340" height="45" rx="10" fill="url(#blueGrad)"/>
+    <rect x="0" y="25" width="340" height="20" fill="url(#blueGrad)"/>
+    <text x="25" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">1. Code Location &amp; Environment</text>
+
+    <text x="20" y="70" font-family="Arial, sans-serif" font-size="12" fill="#333">Where will we write the code?</text>
+    <text x="20" y="90" font-family="Arial, sans-serif" font-size="12" fill="#333">What development environment?</text>
+    <text x="20" y="110" font-family="Arial, sans-serif" font-size="12" fill="#333">Where will the solution run?</text>
+
+    <!-- Icons for options -->
+    <g transform="translate(15, 125)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="50" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Google Colab</text>
+    </g>
+    <g transform="translate(120, 125)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="50" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Local Machine</text>
+    </g>
+    <g transform="translate(225, 125)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="50" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Cloud Platform</text>
+    </g>
+  </g>
+
+  <!-- Question 2: Data Flow -->
+  <g transform="translate(410, 100)">
+    <rect x="0" y="0" width="340" height="180" rx="10" fill="white" stroke="#2196F3" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="340" height="45" rx="10" fill="url(#blueGrad)"/>
+    <rect x="0" y="25" width="340" height="20" fill="url(#blueGrad)"/>
+    <text x="25" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">2. Data Flow &amp; File Management</text>
+
+    <text x="20" y="70" font-family="Arial, sans-serif" font-size="12" fill="#333">What files will be processed?</text>
+    <text x="20" y="90" font-family="Arial, sans-serif" font-size="12" fill="#333">What outputs will be produced?</text>
+    <text x="20" y="110" font-family="Arial, sans-serif" font-size="12" fill="#333">Where to download from/upload to?</text>
+
+    <!-- Flow diagram -->
+    <g transform="translate(30, 125)">
+      <rect x="0" y="5" width="60" height="30" rx="3" fill="#BBDEFB"/>
+      <text x="30" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Input</text>
+      <line x1="65" y1="20" x2="95" y2="20" stroke="#2196F3" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <rect x="100" y="5" width="60" height="30" rx="3" fill="#64B5F6"/>
+      <text x="130" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">Process</text>
+      <line x1="165" y1="20" x2="195" y2="20" stroke="#2196F3" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <rect x="200" y="5" width="60" height="30" rx="3" fill="#BBDEFB"/>
+      <text x="230" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Output</text>
+    </g>
+  </g>
+
+  <!-- Question 3: Verification Strategy -->
+  <g transform="translate(50, 300)">
+    <rect x="0" y="0" width="340" height="180" rx="10" fill="white" stroke="#2196F3" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="340" height="45" rx="10" fill="url(#blueGrad)"/>
+    <rect x="0" y="25" width="340" height="20" fill="url(#blueGrad)"/>
+    <text x="25" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">3. Verification Strategy</text>
+
+    <text x="20" y="70" font-family="Arial, sans-serif" font-size="12" fill="#333">How to verify program correctness?</text>
+    <text x="20" y="90" font-family="Arial, sans-serif" font-size="12" fill="#333">Build monolithic or modular?</text>
+    <text x="20" y="110" font-family="Arial, sans-serif" font-size="12" fill="#333">How to communicate with components?</text>
+
+    <!-- Modular vs Monolithic -->
+    <g transform="translate(20, 120)">
+      <rect x="0" y="0" width="130" height="45" rx="5" fill="#FFCDD2" stroke="#F44336" stroke-width="1"/>
+      <text x="65" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#C62828">Monolithic</text>
+      <text x="65" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Harder to test</text>
+    </g>
+    <g transform="translate(160, 120)">
+      <rect x="0" y="0" width="130" height="45" rx="5" fill="#C8E6C9" stroke="#2c6a5b" stroke-width="1"/>
+      <text x="65" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#2E7D32">Modular (Better!)</text>
+      <text x="65" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Easy to test parts</text>
+    </g>
+  </g>
+
+  <!-- Question 4: Testing Architecture -->
+  <g transform="translate(410, 300)">
+    <rect x="0" y="0" width="340" height="180" rx="10" fill="white" stroke="#2196F3" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="340" height="45" rx="10" fill="url(#blueGrad)"/>
+    <rect x="0" y="25" width="340" height="20" fill="url(#blueGrad)"/>
+    <text x="25" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">4. Testing Architecture</text>
+
+    <text x="20" y="70" font-family="Arial, sans-serif" font-size="12" fill="#333">How will we perform testing?</text>
+    <text x="20" y="90" font-family="Arial, sans-serif" font-size="12" fill="#333">Direct testing or automated?</text>
+    <text x="20" y="110" font-family="Arial, sans-serif" font-size="12" fill="#333">How to verify at each stage?</text>
+
+    <!-- Testing types -->
+    <g transform="translate(20, 120)">
+      <rect x="0" y="0" width="95" height="45" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="48" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Manual</text>
+      <text x="48" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">User testing</text>
+    </g>
+    <g transform="translate(120, 120)">
+      <rect x="0" y="0" width="95" height="45" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="48" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Automated</text>
+      <text x="48" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">Script testing</text>
+    </g>
+    <g transform="translate(220, 120)">
+      <rect x="0" y="0" width="95" height="45" rx="5" fill="#E3F2FD" stroke="#2196F3" stroke-width="1"/>
+      <text x="48" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#1976D2">Continuous</text>
+      <text x="48" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#666">CI/CD pipeline</text>
+    </g>
+  </g>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2196F3"/>
+    </marker>
+  </defs>
+
+  <!-- Key Principle -->
+  <rect x="50" y="500" width="700" height="40" rx="5" fill="#2196F3"/>
+  <text x="400" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+    Planning Outputs: Development roadmap, Testing strategy, Data flow diagrams, Component breakdown
+  </text>
+</svg>

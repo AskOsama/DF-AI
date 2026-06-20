@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activation Functions Demo | Interactive Explorer</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #1f2937;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --accent-sigmoid: #3498db;
+            --accent-relu: #27ae60;
+            --accent-tanh: #9b59b6;
+            --accent-leaky: #e74c3c;
+            --accent-softmax: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .demo-header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .demo-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .intro-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .intro-section h2 {
+            margin-bottom: 0.5rem;
+            color: var(--accent-sigmoid);
+        }
+
+        .intro-section p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .controls-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .control-group input[type="range"] {
+            width: 200px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--bg-card);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-sigmoid);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .input-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-sigmoid);
+            text-align: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            min-width: 100px;
+        }
+
+        .function-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .function-btn {
+            padding: 0.6rem 1rem;
+            border: 2px solid;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .function-btn.sigmoid { border-color: var(--accent-sigmoid); }
+        .function-btn.relu { border-color: var(--accent-relu); }
+        .function-btn.tanh { border-color: var(--accent-tanh); }
+        .function-btn.leaky { border-color: var(--accent-leaky); }
+
+        .function-btn.active {
+            color: var(--bg-primary);
+        }
+
+        .function-btn.sigmoid.active { background: var(--accent-sigmoid); }
+        .function-btn.relu.active { background: var(--accent-relu); }
+        .function-btn.tanh.active { background: var(--accent-tanh); }
+        .function-btn.leaky.active { background: var(--accent-leaky); }
+
+        .function-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .viz-container {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .viz-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .viz-title .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .axis-line {
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 1;
+        }
+
+        .grid-line {
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 1;
+        }
+
+        .function-curve {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .function-curve.sigmoid { stroke: var(--accent-sigmoid); }
+        .function-curve.relu { stroke: var(--accent-relu); }
+        .function-curve.tanh { stroke: var(--accent-tanh); }
+        .function-curve.leaky { stroke: var(--accent-leaky); }
+
+        .input-marker {
+            fill: #f1c40f;
+            stroke: #fff;
+            stroke-width: 2;
+        }
+
+        .output-marker {
+            stroke: #f1c40f;
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+        }
+
+        .axis-label {
+            fill: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .tick-label {
+            fill: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .output-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .output-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid;
+        }
+
+        .output-card.sigmoid { border-color: var(--accent-sigmoid); }
+        .output-card.relu { border-color: var(--accent-relu); }
+        .output-card.tanh { border-color: var(--accent-tanh); }
+        .output-card.leaky { border-color: var(--accent-leaky); }
+
+        .output-card .function-name {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .output-card .output-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .output-card.sigmoid .output-value { color: var(--accent-sigmoid); }
+        .output-card.relu .output-value { color: var(--accent-relu); }
+        .output-card.tanh .output-value { color: var(--accent-tanh); }
+        .output-card.leaky .output-value { color: var(--accent-leaky); }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-top: 4px solid;
+        }
+
+        .info-card.sigmoid { border-color: var(--accent-sigmoid); }
+        .info-card.relu { border-color: var(--accent-relu); }
+        .info-card.tanh { border-color: var(--accent-tanh); }
+        .info-card.leaky { border-color: var(--accent-leaky); }
+
+        .info-card h3 {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-card.sigmoid h3 { color: var(--accent-sigmoid); }
+        .info-card.relu h3 { color: var(--accent-relu); }
+        .info-card.tanh h3 { color: var(--accent-tanh); }
+        .info-card.leaky h3 { color: var(--accent-leaky); }
+
+        .info-card .formula {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .info-card .range {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .info-card .use-case {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: var(--accent-sigmoid);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .comparison-chart {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .comparison-chart h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-line.sigmoid { background: var(--accent-sigmoid); }
+        .legend-line.relu { background: var(--accent-relu); }
+        .legend-line.tanh { background: var(--accent-tanh); }
+        .legend-line.leaky { background: var(--accent-leaky); }
+
+        @media (max-width: 768px) {
+            .controls-panel {
+                flex-direction: column;
+            }
+
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="demo-header">
+        <h1>Activation Functions Explorer</h1>
+        <p>See how different activation functions transform inputs in neural networks</p>
+    </header>
+
+    <div class="demo-container">
+        <div class="intro-section">
+            <h2>Why Activation Functions Matter</h2>
+            <p>Activation functions introduce <strong>non-linearity</strong> into neural networks. Without them, no matter how many layers you stack, the network would just be a linear model. These functions allow neural networks to learn complex patterns like curves, shapes, and abstract features.</p>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <label>Input Value (x): <span id="inputDisplay">0.0</span></label>
+                <input type="range" id="inputSlider" min="-5" max="5" step="0.1" value="0">
+            </div>
+            <div class="input-value" id="inputValue">x = 0.0</div>
+        </div>
+
+        <!-- Output Cards -->
+        <div class="output-panel">
+            <div class="output-card sigmoid">
+                <div class="function-name">Sigmoid</div>
+                <div class="output-value" id="sigmoidOutput">0.500</div>
+            </div>
+            <div class="output-card relu">
+                <div class="function-name">ReLU</div>
+                <div class="output-value" id="reluOutput">0.000</div>
+            </div>
+            <div class="output-card tanh">
+                <div class="function-name">Tanh</div>
+                <div class="output-value" id="tanhOutput">0.000</div>
+            </div>
+            <div class="output-card leaky">
+                <div class="function-name">Leaky ReLU</div>
+                <div class="output-value" id="leakyOutput">0.000</div>
+            </div>
+        </div>
+
+        <!-- Comparison Chart -->
+        <div class="comparison-chart">
+            <h2>All Functions Comparison</h2>
+            <div class="chart-container">
+                <svg class="chart-svg" id="comparisonChart"></svg>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-line sigmoid"></div> Sigmoid</div>
+                <div class="legend-item"><div class="legend-line relu"></div> ReLU</div>
+                <div class="legend-item"><div class="legend-line tanh"></div> Tanh</div>
+                <div class="legend-item"><div class="legend-line leaky"></div> Leaky ReLU</div>
+            </div>
+        </div>
+
+        <!-- Individual Charts -->
+        <div class="viz-grid">
+            <div class="viz-container">
+                <div class="viz-title">
+                    <div class="color-dot" style="background: var(--accent-sigmoid)"></div>
+                    Sigmoid Function
+                </div>
+                <div class="chart-container">
+                    <svg class="chart-svg" id="sigmoidChart"></svg>
+                </div>
+            </div>
+            <div class="viz-container">
+                <div class="viz-title">
+                    <div class="color-dot" style="background: var(--accent-relu)"></div>
+                    ReLU Function
+                </div>
+                <div class="chart-container">
+                    <svg class="chart-svg" id="reluChart"></svg>
+                </div>
+            </div>
+            <div class="viz-container">
+                <div class="viz-title">
+                    <div class="color-dot" style="background: var(--accent-tanh)"></div>
+                    Tanh Function
+                </div>
+                <div class="chart-container">
+                    <svg class="chart-svg" id="tanhChart"></svg>
+                </div>
+            </div>
+            <div class="viz-container">
+                <div class="viz-title">
+                    <div class="color-dot" style="background: var(--accent-leaky)"></div>
+                    Leaky ReLU Function
+                </div>
+                <div class="chart-container">
+                    <svg class="chart-svg" id="leakyChart"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-cards">
+            <div class="info-card sigmoid">
+                <h3>Sigmoid</h3>
+                <div class="formula">f(x) = 1 / (1 + e^(-x))</div>
+                <div class="range">Output Range: (0, 1)</div>
+                <div class="use-case"><strong>Best for:</strong> Binary classification output layer. Outputs can be interpreted as probabilities.</div>
+            </div>
+            <div class="info-card relu">
+                <h3>ReLU (Rectified Linear Unit)</h3>
+                <div class="formula">f(x) = max(0, x)</div>
+                <div class="range">Output Range: [0, infinity)</div>
+                <div class="use-case"><strong>Best for:</strong> Hidden layers in deep networks. Fast to compute, reduces vanishing gradient problem.</div>
+            </div>
+            <div class="info-card tanh">
+                <h3>Tanh (Hyperbolic Tangent)</h3>
+                <div class="formula">f(x) = (e^x - e^(-x)) / (e^x + e^(-x))</div>
+                <div class="range">Output Range: (-1, 1)</div>
+                <div class="use-case"><strong>Best for:</strong> Hidden layers when you need zero-centered outputs. Common in RNNs.</div>
+            </div>
+            <div class="info-card leaky">
+                <h3>Leaky ReLU</h3>
+                <div class="formula">f(x) = x if x > 0, else 0.01x</div>
+                <div class="range">Output Range: (-infinity, infinity)</div>
+                <div class="use-case"><strong>Best for:</strong> Avoiding "dying ReLU" problem where neurons stop learning.</div>
+            </div>
+        </div>
+
+        <a href="../index.html" class="back-link">&larr; Back to Lesson</a>
+    </div>
+
+    <script>
+        // Activation Functions
+        const activations = {
+            sigmoid: x => 1 / (1 + Math.exp(-x)),
+            relu: x => Math.max(0, x),
+            tanh: x => Math.tanh(x),
+            leaky: x => x > 0 ? x : 0.01 * x
+        };
+
+        // State
+        let currentInput = 0;
+
+        // DOM Elements
+        const elements = {
+            inputSlider: document.getElementById('inputSlider'),
+            inputDisplay: document.getElementById('inputDisplay'),
+            inputValue: document.getElementById('inputValue'),
+            sigmoidOutput: document.getElementById('sigmoidOutput'),
+            reluOutput: document.getElementById('reluOutput'),
+            tanhOutput: document.getElementById('tanhOutput'),
+            leakyOutput: document.getElementById('leakyOutput'),
+            comparisonChart: document.getElementById('comparisonChart'),
+            sigmoidChart: document.getElementById('sigmoidChart'),
+            reluChart: document.getElementById('reluChart'),
+            tanhChart: document.getElementById('tanhChart'),
+            leakyChart: document.getElementById('leakyChart')
+        };
+
+        // Chart configuration
+        const chartConfig = {
+            padding: { left: 50, right: 20, top: 20, bottom: 40 },
+            xRange: [-5, 5],
+            yRange: [-2, 2]
+        };
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+            drawAllCharts();
+            updateOutputs();
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            elements.inputSlider.addEventListener('input', (e) => {
+                currentInput = parseFloat(e.target.value);
+                elements.inputDisplay.textContent = currentInput.toFixed(1);
+                elements.inputValue.textContent = `x = ${currentInput.toFixed(1)}`;
+                updateOutputs();
+                drawAllCharts();
+            });
+        }
+
+        // Update output values
+        function updateOutputs() {
+            elements.sigmoidOutput.textContent = activations.sigmoid(currentInput).toFixed(3);
+            elements.reluOutput.textContent = activations.relu(currentInput).toFixed(3);
+            elements.tanhOutput.textContent = activations.tanh(currentInput).toFixed(3);
+            elements.leakyOutput.textContent = activations.leaky(currentInput).toFixed(3);
+        }
+
+        // Draw all charts
+        function drawAllCharts() {
+            drawComparisonChart();
+            drawSingleChart(elements.sigmoidChart, 'sigmoid', activations.sigmoid, '#3498db');
+            drawSingleChart(elements.reluChart, 'relu', activations.relu, '#27ae60');
+            drawSingleChart(elements.tanhChart, 'tanh', activations.tanh, '#9b59b6');
+            drawSingleChart(elements.leakyChart, 'leaky', activations.leaky, '#e74c3c');
+        }
+
+        // Draw comparison chart
+        function drawComparisonChart() {
+            const svg = elements.comparisonChart;
+            const width = svg.clientWidth || 500;
+            const height = svg.clientHeight || 300;
+
+            svg.innerHTML = '';
+
+            const { padding, xRange, yRange } = chartConfig;
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            // Scale functions
+            const xScale = x => padding.left + (x - xRange[0]) / (xRange[1] - xRange[0]) * plotWidth;
+            const yScale = y => padding.top + (yRange[1] - y) / (yRange[1] - yRange[0]) * plotHeight;
+
+            // Draw grid
+            for (let x = -4; x <= 4; x += 2) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', xScale(x));
+                line.setAttribute('y1', padding.top);
+                line.setAttribute('x2', xScale(x));
+                line.setAttribute('y2', height - padding.bottom);
+                line.setAttribute('class', 'grid-line');
+                svg.appendChild(line);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', xScale(x));
+                label.setAttribute('y', height - padding.bottom + 15);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'tick-label');
+                label.textContent = x;
+                svg.appendChild(label);
+            }
+
+            for (let y = -1; y <= 1; y += 0.5) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padding.left);
+                line.setAttribute('y1', yScale(y));
+                line.setAttribute('x2', width - padding.right);
+                line.setAttribute('y2', yScale(y));
+                line.setAttribute('class', 'grid-line');
+                svg.appendChild(line);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', padding.left - 10);
+                label.setAttribute('y', yScale(y) + 4);
+                label.setAttribute('text-anchor', 'end');
+                label.setAttribute('class', 'tick-label');
+                label.textContent = y.toFixed(1);
+                svg.appendChild(label);
+            }
+
+            // Draw axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', padding.left);
+            xAxis.setAttribute('y1', yScale(0));
+            xAxis.setAttribute('x2', width - padding.right);
+            xAxis.setAttribute('y2', yScale(0));
+            xAxis.setAttribute('class', 'axis-line');
+            svg.appendChild(xAxis);
+
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', xScale(0));
+            yAxis.setAttribute('y1', padding.top);
+            yAxis.setAttribute('x2', xScale(0));
+            yAxis.setAttribute('y2', height - padding.bottom);
+            yAxis.setAttribute('class', 'axis-line');
+            svg.appendChild(yAxis);
+
+            // Draw curves
+            const colors = {
+                sigmoid: '#3498db',
+                relu: '#27ae60',
+                tanh: '#9b59b6',
+                leaky: '#e74c3c'
+            };
+
+            Object.entries(activations).forEach(([name, fn]) => {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                let d = '';
+
+                for (let x = xRange[0]; x <= xRange[1]; x += 0.1) {
+                    const y = Math.max(yRange[0], Math.min(yRange[1], fn(x)));
+                    const px = xScale(x);
+                    const py = yScale(y);
+
+                    if (d === '') {
+                        d = `M ${px} ${py}`;
+                    } else {
+                        d += ` L ${px} ${py}`;
+                    }
+                }
+
+                path.setAttribute('d', d);
+                path.setAttribute('class', `function-curve ${name}`);
+                svg.appendChild(path);
+            });
+
+            // Draw input marker
+            const inputX = xScale(currentInput);
+
+            Object.entries(activations).forEach(([name, fn]) => {
+                const outputY = fn(currentInput);
+                const clampedY = Math.max(yRange[0], Math.min(yRange[1], outputY));
+
+                // Horizontal line to curve
+                const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hLine.setAttribute('x1', xScale(0));
+                hLine.setAttribute('y1', yScale(clampedY));
+                hLine.setAttribute('x2', inputX);
+                hLine.setAttribute('y2', yScale(clampedY));
+                hLine.setAttribute('class', 'output-marker');
+                hLine.setAttribute('stroke', colors[name]);
+                hLine.setAttribute('opacity', '0.5');
+                svg.appendChild(hLine);
+            });
+
+            // Vertical input line
+            const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            vLine.setAttribute('x1', inputX);
+            vLine.setAttribute('y1', padding.top);
+            vLine.setAttribute('x2', inputX);
+            vLine.setAttribute('y2', height - padding.bottom);
+            vLine.setAttribute('stroke', '#f1c40f');
+            vLine.setAttribute('stroke-width', '2');
+            vLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(vLine);
+
+            // Input point markers on each curve
+            Object.entries(activations).forEach(([name, fn]) => {
+                const outputY = fn(currentInput);
+                const clampedY = Math.max(yRange[0], Math.min(yRange[1], outputY));
+
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                marker.setAttribute('cx', inputX);
+                marker.setAttribute('cy', yScale(clampedY));
+                marker.setAttribute('r', '6');
+                marker.setAttribute('fill', colors[name]);
+                marker.setAttribute('stroke', '#fff');
+                marker.setAttribute('stroke-width', '2');
+                svg.appendChild(marker);
+            });
+        }
+
+        // Draw single function chart
+        function drawSingleChart(svg, name, fn, color) {
+            const width = svg.clientWidth || 500;
+            const height = svg.clientHeight || 300;
+
+            svg.innerHTML = '';
+
+            const { padding, xRange, yRange } = chartConfig;
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            const xScale = x => padding.left + (x - xRange[0]) / (xRange[1] - xRange[0]) * plotWidth;
+            const yScale = y => padding.top + (yRange[1] - y) / (yRange[1] - yRange[0]) * plotHeight;
+
+            // Draw grid
+            for (let x = -4; x <= 4; x += 2) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', xScale(x));
+                line.setAttribute('y1', padding.top);
+                line.setAttribute('x2', xScale(x));
+                line.setAttribute('y2', height - padding.bottom);
+                line.setAttribute('class', 'grid-line');
+                svg.appendChild(line);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', xScale(x));
+                label.setAttribute('y', height - padding.bottom + 15);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'tick-label');
+                label.textContent = x;
+                svg.appendChild(label);
+            }
+
+            for (let y = -1; y <= 1; y += 0.5) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padding.left);
+                line.setAttribute('y1', yScale(y));
+                line.setAttribute('x2', width - padding.right);
+                line.setAttribute('y2', yScale(y));
+                line.setAttribute('class', 'grid-line');
+                svg.appendChild(line);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', padding.left - 10);
+                label.setAttribute('y', yScale(y) + 4);
+                label.setAttribute('text-anchor', 'end');
+                label.setAttribute('class', 'tick-label');
+                label.textContent = y.toFixed(1);
+                svg.appendChild(label);
+            }
+
+            // Draw axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', padding.left);
+            xAxis.setAttribute('y1', yScale(0));
+            xAxis.setAttribute('x2', width - padding.right);
+            xAxis.setAttribute('y2', yScale(0));
+            xAxis.setAttribute('class', 'axis-line');
+            svg.appendChild(xAxis);
+
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', xScale(0));
+            yAxis.setAttribute('y1', padding.top);
+            yAxis.setAttribute('x2', xScale(0));
+            yAxis.setAttribute('y2', height - padding.bottom);
+            yAxis.setAttribute('class', 'axis-line');
+            svg.appendChild(yAxis);
+
+            // Draw curve
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
+
+            for (let x = xRange[0]; x <= xRange[1]; x += 0.1) {
+                const y = Math.max(yRange[0], Math.min(yRange[1], fn(x)));
+                const px = xScale(x);
+                const py = yScale(y);
+
+                if (d === '') {
+                    d = `M ${px} ${py}`;
+                } else {
+                    d += ` L ${px} ${py}`;
+                }
+            }
+
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', color);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+
+            // Draw input/output markers
+            const inputX = xScale(currentInput);
+            const outputY = fn(currentInput);
+            const clampedY = Math.max(yRange[0], Math.min(yRange[1], outputY));
+            const outputYPos = yScale(clampedY);
+
+            // Vertical line from x-axis to point
+            const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            vLine.setAttribute('x1', inputX);
+            vLine.setAttribute('y1', yScale(0));
+            vLine.setAttribute('x2', inputX);
+            vLine.setAttribute('y2', outputYPos);
+            vLine.setAttribute('stroke', '#f1c40f');
+            vLine.setAttribute('stroke-width', '2');
+            vLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(vLine);
+
+            // Horizontal line from point to y-axis
+            const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            hLine.setAttribute('x1', xScale(0));
+            hLine.setAttribute('y1', outputYPos);
+            hLine.setAttribute('x2', inputX);
+            hLine.setAttribute('y2', outputYPos);
+            hLine.setAttribute('stroke', '#f1c40f');
+            hLine.setAttribute('stroke-width', '2');
+            hLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(hLine);
+
+            // Point marker
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            marker.setAttribute('cx', inputX);
+            marker.setAttribute('cy', outputYPos);
+            marker.setAttribute('r', '8');
+            marker.setAttribute('class', 'input-marker');
+            svg.appendChild(marker);
+
+            // Output label
+            const outputLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            outputLabel.setAttribute('x', inputX + 15);
+            outputLabel.setAttribute('y', outputYPos - 10);
+            outputLabel.setAttribute('fill', '#f1c40f');
+            outputLabel.setAttribute('font-size', '12px');
+            outputLabel.setAttribute('font-weight', 'bold');
+            outputLabel.textContent = `(${currentInput.toFixed(1)}, ${outputY.toFixed(2)})`;
+            svg.appendChild(outputLabel);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', drawAllCharts);
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

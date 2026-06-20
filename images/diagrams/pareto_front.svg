@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 500" width="700" height="500">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#14202e"/>
+    </marker>
+    <style>
+      .title { font-family:inherit; font-size: 20px; font-weight: bold; fill: #14202e; }
+      .subtitle { font-family:inherit; font-size: 14px; fill: #7f8c8d; }
+      .axis-label { font-family:inherit; font-size: 14px; font-weight: bold; fill: #14202e; }
+      .tick-label { font-family:inherit; font-size: 11px; fill: #7f8c8d; }
+      .point-label { font-family:inherit; font-size: 11px; fill: #14202e; }
+      .legend-text { font-family:inherit; font-size: 12px; fill: #14202e; }
+      .annotation { font-family:inherit; font-size: 11px; fill: #7f8c8d; font-style: italic; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="350" y="35" text-anchor="middle" class="title">Pareto Front: Speed vs Cost Trade-off</text>
+  <text x="350" y="55" text-anchor="middle" class="subtitle">Multi-Objective Optimization Example</text>
+
+  <!-- Axes -->
+  <line x1="100" y1="400" x2="600" y2="400" stroke="#14202e" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="100" y1="400" x2="100" y2="80" stroke="#14202e" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- X-axis label and ticks -->
+  <text x="350" y="450" text-anchor="middle" class="axis-label">Cost</text>
+  <text x="150" y="420" text-anchor="middle" class="tick-label">$20k</text>
+  <line x1="150" y1="400" x2="150" y2="405" stroke="#14202e" stroke-width="1"/>
+  <text x="250" y="420" text-anchor="middle" class="tick-label">$40k</text>
+  <line x1="250" y1="400" x2="250" y2="405" stroke="#14202e" stroke-width="1"/>
+  <text x="350" y="420" text-anchor="middle" class="tick-label">$60k</text>
+  <line x1="350" y1="400" x2="350" y2="405" stroke="#14202e" stroke-width="1"/>
+  <text x="450" y="420" text-anchor="middle" class="tick-label">$80k</text>
+  <line x1="450" y1="400" x2="450" y2="405" stroke="#14202e" stroke-width="1"/>
+  <text x="550" y="420" text-anchor="middle" class="tick-label">$100k</text>
+  <line x1="550" y1="400" x2="550" y2="405" stroke="#14202e" stroke-width="1"/>
+
+  <!-- Y-axis label and ticks -->
+  <text x="50" y="240" text-anchor="middle" class="axis-label" transform="rotate(-90, 50, 240)">Speed</text>
+  <text x="85" y="350" text-anchor="end" class="tick-label">40</text>
+  <line x1="95" y1="350" x2="100" y2="350" stroke="#14202e" stroke-width="1"/>
+  <text x="85" y="290" text-anchor="end" class="tick-label">60</text>
+  <line x1="95" y1="290" x2="100" y2="290" stroke="#14202e" stroke-width="1"/>
+  <text x="85" y="230" text-anchor="end" class="tick-label">80</text>
+  <line x1="95" y1="230" x2="100" y2="230" stroke="#14202e" stroke-width="1"/>
+  <text x="85" y="170" text-anchor="end" class="tick-label">100</text>
+  <line x1="95" y1="170" x2="100" y2="170" stroke="#14202e" stroke-width="1"/>
+
+  <!-- Pareto Front Curve -->
+  <path d="M 450 130 Q 350 180, 280 220 Q 220 270, 180 330 Q 160 360, 150 380"
+        stroke="#b15c26" stroke-width="3" fill="none" stroke-dasharray="8,4"/>
+
+  <!-- Pareto Optimal Points (Stars) -->
+  <!-- Sports Car: High Speed, High Cost -->
+  <polygon points="450,130 455,145 472,145 458,155 464,172 450,162 436,172 442,155 428,145 445,145" fill="#f1c40f" stroke="#a07c1d" stroke-width="1"/>
+  <text x="460" y="120" class="point-label">Sports Car ($80k)</text>
+
+  <!-- Luxury: Medium-High Speed, Medium-High Cost -->
+  <polygon points="350,180 355,195 372,195 358,205 364,222 350,212 336,222 342,205 328,195 345,195" fill="#f1c40f" stroke="#a07c1d" stroke-width="1"/>
+  <text x="360" y="170" class="point-label">Luxury ($50k)</text>
+
+  <!-- Mid-range: Medium Speed, Medium Cost -->
+  <polygon points="250,260 255,275 272,275 258,285 264,302 250,292 236,302 242,285 228,275 245,275" fill="#f1c40f" stroke="#a07c1d" stroke-width="1"/>
+  <text x="260" y="250" class="point-label">Mid-range ($30k)</text>
+
+  <!-- Economy: Low Speed, Low Cost -->
+  <polygon points="170,340 175,355 192,355 178,365 184,382 170,372 156,382 162,365 148,355 165,355" fill="#f1c40f" stroke="#a07c1d" stroke-width="1"/>
+  <text x="180" y="330" class="point-label">Economy ($15k)</text>
+
+  <!-- Dominated Points (X markers) -->
+  <!-- Dominated 1 -->
+  <g transform="translate(300, 320)">
+    <line x1="-8" y1="-8" x2="8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+    <line x1="8" y1="-8" x2="-8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+  </g>
+  <text x="320" y="325" class="annotation">Dominated</text>
+
+  <!-- Dominated 2 -->
+  <g transform="translate(220, 350)">
+    <line x1="-8" y1="-8" x2="8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+    <line x1="8" y1="-8" x2="-8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+  </g>
+
+  <!-- Dominated 3 -->
+  <g transform="translate(380, 300)">
+    <line x1="-8" y1="-8" x2="8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+    <line x1="8" y1="-8" x2="-8" y2="8" stroke="#95a5a6" stroke-width="3"/>
+  </g>
+
+  <!-- Legend -->
+  <rect x="480" y="380" width="180" height="70" rx="5" fill="#f8f9fa" stroke="#ddd"/>
+  <polygon points="500,400 503,408 513,408 505,413 508,423 500,418 492,423 495,413 487,408 497,408" fill="#f1c40f" stroke="#a07c1d" stroke-width="1"/>
+  <text x="525" y="415" class="legend-text">Pareto Optimal</text>
+
+  <g transform="translate(500, 435)">
+    <line x1="-6" y1="-6" x2="6" y2="6" stroke="#95a5a6" stroke-width="2"/>
+    <line x1="6" y1="-6" x2="-6" y2="6" stroke="#95a5a6" stroke-width="2"/>
+  </g>
+  <text x="525" y="438" class="legend-text">Dominated (not optimal)</text>
+
+  <!-- Annotation -->
+  <text x="520" y="160" class="annotation">PARETO FRONT</text>
+  <path d="M 490 155 L 460 145" stroke="#b15c26" stroke-width="1" fill="none" marker-end="url(#arrowhead)"/>
+</svg>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض التصنيف — إيجاد أفضل حدّ قرار | DS-AI 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* Embedded classification demo (extracted from session3_week4_ar in the parent course) */
+        .demo-container { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; margin: 2rem 0; color: #fff; }
+        .demo-controls {
+            display: flex; flex-wrap: wrap; gap: 1.5rem;
+            justify-content: center; align-items: center;
+            margin-bottom: 1.5rem; background: #16213e; padding: 1rem; border-radius: 8px;
+        }
+        .demo-control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .demo-control-group label { font-size: 0.75rem; color: #9ca3af; font-weight: bold; }
+        .demo-control-group input[type="range"] { width: 120px; }
+        .demo-control-group select { padding: 0.4rem; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #fff; }
+        .demo-btn-group { display: flex; gap: 0.5rem; }
+        .demo-btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .demo-btn-primary { background: #3498db; color: white; }
+        .demo-btn-primary:hover { background: #2980b9; transform: translateY(-2px); }
+        .demo-btn-secondary { background: #1f2937; color: #fff; border: 2px solid #374151; }
+        .demo-btn-success { background: #27ae60; color: white; }
+        .demo-btn-success:hover { background: #219a52; }
+        .demo-metrics { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; background: #1f2937; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .demo-metric { text-align: center; }
+        .demo-metric .value { font-size: 1.4rem; font-weight: bold; }
+        .demo-metric .label { font-size: 0.7rem; color: #9ca3af; }
+        .demo-metric.equation .value { font-family: 'Courier New', monospace; color: #f1c40f; direction: ltr; }
+        .demo-metric.accuracy .value { color: #27ae60; }
+        .demo-metric.errors .value { color: #e74c3c; }
+        .demo-metric.loss .value { color: #f97316; }
+        .demo-plot-container { position: relative; width: 100%; height: 400px; background: #1f2937; border-radius: 8px; overflow: hidden; }
+        .demo-plot { position: relative; width: 100%; height: 100%; direction: ltr; }
+        .demo-axis-label { position: absolute; font-size: 0.75rem; color: #9ca3af; }
+        .demo-axis-label.x-axis { bottom: 8px; left: 50%; transform: translateX(-50%); }
+        .demo-axis-label.y-axis { left: 8px; top: 50%; transform: rotate(-90deg) translateX(-50%); transform-origin: left center; }
+        .demo-point { position: absolute; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); transition: all 0.3s; cursor: pointer; }
+        .demo-point.class-a { background: #3498db; border: 2px solid #2980b9; }
+        .demo-point.class-b { background: #e74c3c; border: 2px solid #c0392b; }
+        .demo-point.misclassified { box-shadow: 0 0 8px #f1c40f; }
+        .demo-point:hover { transform: translate(-50%, -50%) scale(1.3); z-index: 20; }
+        .demo-decision-line { position: absolute; background: #f1c40f; height: 3px; transform-origin: left center; pointer-events: none; z-index: 5; }
+        .demo-grid-line { position: absolute; background: rgba(255, 255, 255, 0.05); }
+        .demo-grid-line.horizontal { width: 100%; height: 1px; }
+        .demo-grid-line.vertical { width: 1px; height: 100%; }
+        .demo-tick { position: absolute; font-size: 0.65rem; color: #6b7280; }
+        .demo-legend { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; flex-wrap: wrap; }
+        .demo-legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+        .demo-legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .demo-legend-dot.class-a { background: #3498db; }
+        .demo-legend-dot.class-b { background: #e74c3c; }
+        .demo-legend-dot.line { background: #f1c40f; width: 20px; height: 3px; border-radius: 0; }
+        .demo-tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 0.4rem 0.6rem; border-radius: 4px; font-size: 0.75rem; pointer-events: none; display: none; z-index: 30; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>عرض التصنيف</h1>
+        <p>إيجاد أفضل حدّ قرار &mdash; مرافقٌ تفاعليٌّ لـ <a href="../modules/part4_ar.html">الوحدة 4: كيف يفكّر الذكاء الاصطناعي</a>.</p>
+        <p>اضبط الميل والتقاطع لرسم خطٍّ يفصل الفئتين. راقب <strong>الدقّة</strong> و<strong>عدد الأخطاء</strong> و<strong>الخسارة</strong> تتغيّر لحظيًّا. اضغط <em>خطوة</em> لاتّخاذ خطوة انحدار تدرّجي واحدة نحو خطٍّ أفضل، أو <em>تلقائي</em> لتدع النظام يُضبطه.</p>
+
+        <p><a href="../index_ar.html">→ العودة إلى الرئيسية</a> · <a href="classification_demo.html">English</a></p>
+    </header>
+
+    <main>
+        <div class="demo-container" id="classificationDemo">
+            <div class="demo-controls">
+                <div class="demo-control-group">
+                    <label>الصعوبة</label>
+                    <select id="demoDifficulty">
+                        <option value="easy">سهلة (فصل واضح)</option>
+                        <option value="medium" selected>متوسّطة</option>
+                        <option value="hard">صعبة (تداخل)</option>
+                    </select>
+                </div>
+                <div class="demo-control-group">
+                    <label>الميل (m): <span id="slopeValue">0.0</span></label>
+                    <input type="range" id="demoSlope" min="-3" max="3" step="0.1" value="0">
+                </div>
+                <div class="demo-control-group">
+                    <label>التقاطع (c): <span id="interceptValue">2.0</span></label>
+                    <input type="range" id="demoIntercept" min="-5" max="5" step="0.1" value="2">
+                </div>
+                <div class="demo-control-group">
+                    <label>معدّل التعلّم</label>
+                    <input type="range" id="demoLR" min="0.001" max="0.1" step="0.001" value="0.01">
+                </div>
+                <div class="demo-btn-group">
+                    <button class="demo-btn demo-btn-secondary" id="demoGenerate">بيانات جديدة</button>
+                    <button class="demo-btn demo-btn-primary" id="demoStep">خطوة</button>
+                    <button class="demo-btn demo-btn-success" id="demoAutoFit">تلقائي</button>
+                    <button class="demo-btn demo-btn-secondary" id="demoReset">إعادة</button>
+                </div>
+            </div>
+
+            <div class="demo-metrics">
+                <div class="demo-metric equation">
+                    <div class="value" id="demoEquation">y = 0.0x + 2.0</div>
+                    <div class="label">حدود القرار</div>
+                </div>
+                <div class="demo-metric accuracy">
+                    <div class="value" id="demoAccuracy">50٪</div>
+                    <div class="label">الدقّة</div>
+                </div>
+                <div class="demo-metric errors">
+                    <div class="value" id="demoErrors">25/50</div>
+                    <div class="label">أخطاء التصنيف</div>
+                </div>
+                <div class="demo-metric loss">
+                    <div class="value" id="demoLoss">0.693</div>
+                    <div class="label">الخسارة (MSE)</div>
+                </div>
+            </div>
+
+            <div class="demo-plot-container">
+                <div class="demo-plot" id="demoPlot">
+                    <div class="demo-axis-label x-axis">الميزة X1</div>
+                    <div class="demo-axis-label y-axis">الميزة X2</div>
+                    <div class="demo-tooltip" id="demoTooltip"></div>
+                </div>
+            </div>
+
+            <div class="demo-legend">
+                <div class="demo-legend-item"><div class="demo-legend-dot class-a"></div> الفئة أ (أزرق)</div>
+                <div class="demo-legend-item"><div class="demo-legend-dot class-b"></div> الفئة ب (أحمر)</div>
+                <div class="demo-legend-item"><div class="demo-legend-dot line"></div> حدود القرار</div>
+            </div>
+        </div>
+
+        <p style="margin-top: 1.5rem;"><strong>الفكرة الأساسية:</strong> تعلّم الآلة في جوهره <em>مسألة تحسين</em>. نبحث عن المعاملات (m وc) التي تُقلِّل الأخطاء وتُعظِّم الدقّة. هذه هي <strong>دالة الهدف</strong> أثناء العمل &mdash; الفكرة نفسها التي رأيتها في الوحدة 4 مع حدّ باريتو والنزول التدرجي.</p>
+    </main>
+
+    <script>
+        const demoState = {
+            points: [], m: 0.0, c: 2.0, learningRate: 0.01,
+            isRunning: false, difficulty: 'medium', numPoints: 60
+        };
+
+        const demoElements = {
+            plot: document.getElementById('demoPlot'),
+            difficulty: document.getElementById('demoDifficulty'),
+            slope: document.getElementById('demoSlope'),
+            slopeValue: document.getElementById('slopeValue'),
+            intercept: document.getElementById('demoIntercept'),
+            interceptValue: document.getElementById('interceptValue'),
+            lr: document.getElementById('demoLR'),
+            equation: document.getElementById('demoEquation'),
+            accuracy: document.getElementById('demoAccuracy'),
+            errors: document.getElementById('demoErrors'),
+            loss: document.getElementById('demoLoss'),
+            tooltip: document.getElementById('demoTooltip'),
+            btnGenerate: document.getElementById('demoGenerate'),
+            btnStep: document.getElementById('demoStep'),
+            btnAutoFit: document.getElementById('demoAutoFit'),
+            btnReset: document.getElementById('demoReset')
+        };
+
+        function initDemo() { generateData(); setupDemoListeners(); }
+
+        function generateData() {
+            demoState.points = [];
+            const separation = { 'easy': 2.5, 'medium': 1.5, 'hard': 0.8 }[demoElements.difficulty.value];
+            for (let i = 0; i < demoState.numPoints / 2; i++) {
+                const x = Math.random() * 8 - 4;
+                const y = x + separation + (Math.random() - 0.5) * 2;
+                demoState.points.push({ x, y, class: 'a' });
+            }
+            for (let i = 0; i < demoState.numPoints / 2; i++) {
+                const x = Math.random() * 8 - 4;
+                const y = x - separation + (Math.random() - 0.5) * 2;
+                demoState.points.push({ x, y, class: 'b' });
+            }
+            renderDemo();
+        }
+
+        function setupDemoListeners() {
+            demoElements.difficulty.addEventListener('change', generateData);
+            demoElements.slope.addEventListener('input', e => {
+                demoState.m = parseFloat(e.target.value);
+                demoElements.slopeValue.textContent = demoState.m.toFixed(1);
+                renderDemo();
+            });
+            demoElements.intercept.addEventListener('input', e => {
+                demoState.c = parseFloat(e.target.value);
+                demoElements.interceptValue.textContent = demoState.c.toFixed(1);
+                renderDemo();
+            });
+            demoElements.lr.addEventListener('input', e => {
+                demoState.learningRate = parseFloat(e.target.value);
+            });
+            demoElements.btnGenerate.addEventListener('click', generateData);
+            demoElements.btnStep.addEventListener('click', gradientStep);
+            demoElements.btnAutoFit.addEventListener('click', toggleAutoFit);
+            demoElements.btnReset.addEventListener('click', resetDemo);
+        }
+
+        function renderDemo() {
+            const existing = demoElements.plot.querySelectorAll('.demo-point, .demo-decision-line, .demo-grid-line, .demo-tick');
+            existing.forEach(el => el.remove());
+
+            const plotWidth = demoElements.plot.clientWidth;
+            const plotHeight = demoElements.plot.clientHeight;
+            const padding = { left: 50, right: 20, top: 20, bottom: 40 };
+            const xMin = -5, xMax = 5, yMin = -5, yMax = 5;
+
+            const xScale = x => padding.left + (x - xMin) / (xMax - xMin) * (plotWidth - padding.left - padding.right);
+            const yScale = y => plotHeight - padding.bottom - (y - yMin) / (yMax - yMin) * (plotHeight - padding.top - padding.bottom);
+
+            for (let x = -4; x <= 4; x += 2) {
+                const line = document.createElement('div');
+                line.className = 'demo-grid-line vertical';
+                line.style.left = xScale(x) + 'px';
+                line.style.top = padding.top + 'px';
+                line.style.height = (plotHeight - padding.top - padding.bottom) + 'px';
+                demoElements.plot.appendChild(line);
+
+                const tick = document.createElement('div');
+                tick.className = 'demo-tick';
+                tick.style.left = xScale(x) + 'px';
+                tick.style.bottom = (padding.bottom - 18) + 'px';
+                tick.style.transform = 'translateX(-50%)';
+                tick.textContent = x;
+                demoElements.plot.appendChild(tick);
+            }
+            for (let y = -4; y <= 4; y += 2) {
+                const line = document.createElement('div');
+                line.className = 'demo-grid-line horizontal';
+                line.style.left = padding.left + 'px';
+                line.style.top = yScale(y) + 'px';
+                line.style.width = (plotWidth - padding.left - padding.right) + 'px';
+                demoElements.plot.appendChild(line);
+
+                const tick = document.createElement('div');
+                tick.className = 'demo-tick';
+                tick.style.left = (padding.left - 25) + 'px';
+                tick.style.top = yScale(y) + 'px';
+                tick.style.transform = 'translateY(-50%)';
+                tick.textContent = y;
+                demoElements.plot.appendChild(tick);
+            }
+
+            const x1 = xMin, x2 = xMax;
+            const y1 = demoState.m * x1 + demoState.c;
+            const y2 = demoState.m * x2 + demoState.c;
+            const lineX1 = xScale(x1), lineY1 = yScale(y1);
+            const lineX2 = xScale(x2), lineY2 = yScale(y2);
+            const lineLength = Math.sqrt(Math.pow(lineX2 - lineX1, 2) + Math.pow(lineY2 - lineY1, 2));
+            const lineAngle = Math.atan2(lineY1 - lineY2, lineX2 - lineX1);
+
+            const decisionLine = document.createElement('div');
+            decisionLine.className = 'demo-decision-line';
+            decisionLine.style.left = lineX1 + 'px';
+            decisionLine.style.top = lineY1 + 'px';
+            decisionLine.style.width = lineLength + 'px';
+            decisionLine.style.transform = `rotate(${-lineAngle}rad)`;
+            demoElements.plot.appendChild(decisionLine);
+
+            let errors = 0;
+            let totalLoss = 0;
+
+            demoState.points.forEach(point => {
+                const predictedY = demoState.m * point.x + demoState.c;
+                const predictedClass = point.y > predictedY ? 'a' : 'b';
+                const isMisclassified = predictedClass !== point.class;
+                if (isMisclassified) errors++;
+                const distance = Math.abs(point.y - predictedY);
+                totalLoss += distance * distance;
+
+                const pointEl = document.createElement('div');
+                pointEl.className = 'demo-point class-' + point.class;
+                if (isMisclassified) pointEl.classList.add('misclassified');
+                pointEl.style.left = xScale(point.x) + 'px';
+                pointEl.style.top = yScale(point.y) + 'px';
+
+                pointEl.addEventListener('mouseenter', () => {
+                    demoElements.tooltip.style.display = 'block';
+                    const cls = point.class === 'a' ? 'أ' : 'ب';
+                    demoElements.tooltip.innerHTML = `الفئة ${cls}<br>x: ${point.x.toFixed(2)}<br>y: ${point.y.toFixed(2)}`;
+                    demoElements.tooltip.style.left = (xScale(point.x) + 15) + 'px';
+                    demoElements.tooltip.style.top = (yScale(point.y) - 10) + 'px';
+                });
+                pointEl.addEventListener('mouseleave', () => { demoElements.tooltip.style.display = 'none'; });
+
+                demoElements.plot.appendChild(pointEl);
+            });
+
+            const accuracy = ((demoState.numPoints - errors) / demoState.numPoints * 100).toFixed(1);
+            const mse = (totalLoss / demoState.numPoints).toFixed(3);
+
+            demoElements.equation.textContent = `y = ${demoState.m.toFixed(2)}x + ${demoState.c.toFixed(2)}`;
+            demoElements.accuracy.textContent = accuracy + '٪';
+            demoElements.errors.textContent = errors + '/' + demoState.numPoints;
+            demoElements.loss.textContent = mse;
+        }
+
+        function gradientStep() {
+            let dm = 0, dc = 0;
+            const n = demoState.points.length;
+            demoState.points.forEach(point => {
+                const predicted = demoState.m * point.x + demoState.c;
+                const target = point.class === 'a' ? point.y + 0.5 : point.y - 0.5;
+                const error = predicted - target;
+                dm += (2/n) * point.x * error;
+                dc += (2/n) * error;
+            });
+            demoState.m -= demoState.learningRate * dm * 10;
+            demoState.c -= demoState.learningRate * dc * 10;
+            demoState.m = Math.max(-3, Math.min(3, demoState.m));
+            demoState.c = Math.max(-5, Math.min(5, demoState.c));
+            demoElements.slope.value = demoState.m;
+            demoElements.slopeValue.textContent = demoState.m.toFixed(1);
+            demoElements.intercept.value = demoState.c;
+            demoElements.interceptValue.textContent = demoState.c.toFixed(1);
+            renderDemo();
+        }
+
+        function toggleAutoFit() {
+            if (demoState.isRunning) {
+                demoState.isRunning = false;
+                demoElements.btnAutoFit.textContent = 'تلقائي';
+            } else {
+                demoState.isRunning = true;
+                demoElements.btnAutoFit.textContent = 'إيقاف';
+                autoFitLoop();
+            }
+        }
+
+        function autoFitLoop() {
+            if (!demoState.isRunning) return;
+            gradientStep();
+            const currentErrors = parseInt(demoElements.errors.textContent.split('/')[0]);
+            if (currentErrors <= 2) {
+                demoState.isRunning = false;
+                demoElements.btnAutoFit.textContent = 'تلقائي';
+                return;
+            }
+            setTimeout(autoFitLoop, 100);
+        }
+
+        function resetDemo() {
+            demoState.m = 0.0; demoState.c = 2.0; demoState.isRunning = false;
+            demoElements.slope.value = 0.0;
+            demoElements.slopeValue.textContent = '0.0';
+            demoElements.intercept.value = 2.0;
+            demoElements.interceptValue.textContent = '2.0';
+            demoElements.btnAutoFit.textContent = 'تلقائي';
+            renderDemo();
+        }
+
+        window.addEventListener('resize', renderDemo);
+        document.addEventListener('DOMContentLoaded', initDemo);
+    </script>
+    <script src="../js/drawing-tool.js"></script>
+    <script src="../js/drawing-tool-init.js"></script>
+</body>
+</html>

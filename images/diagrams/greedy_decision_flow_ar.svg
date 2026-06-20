@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 0 670 450" width="670" height="450">
+  <defs>
+    <marker id="flowArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+    <linearGradient id="yesGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#27ae60"/>
+      <stop offset="100%" style="stop-color:#1e8449"/>
+    </linearGradient>
+    <linearGradient id="noGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498db"/>
+      <stop offset="100%" style="stop-color:#2980b9"/>
+    </linearGradient>
+    <style>
+      .title { font-family: 'Cairo', Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #2c3e50; direction: rtl; }
+      .decision-text { font-family: 'Cairo', Arial, sans-serif; font-size: 12px; fill: #2c3e50; text-anchor: middle; direction: rtl; }
+      .action-text { font-family: 'Cairo', Arial, sans-serif; font-size: 13px; font-weight: bold; fill: white; text-anchor: middle; direction: rtl; }
+      .label { font-family: 'Cairo', Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #27ae60; direction: rtl; }
+      .label-no { font-family: 'Cairo', Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #e74c3c; direction: rtl; }
+      .subtitle { font-family: 'Cairo', Arial, sans-serif; font-size: 12px; fill: #7f8c8d; direction: rtl; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" class="title">تدفق قرار الدالة الجشعة</text>
+  <text x="300" y="50" text-anchor="middle" class="subtitle">اختر دائماً أفضل خيار فوري</text>
+
+  <!-- Start -->
+  <ellipse cx="300" cy="90" rx="60" ry="25" fill="#9b59b6" stroke="#8e44ad" stroke-width="2"/>
+  <text x="300" y="95" class="action-text">بداية الدور</text>
+
+  <!-- Arrow to Decision -->
+  <line x1="300" y1="115" x2="300" y2="145" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+
+  <!-- Decision Diamond -->
+  <polygon points="300,160 420,230 300,300 180,230" fill="#fff3cd" stroke="#f39c12" stroke-width="2"/>
+  <text x="300" y="215" class="decision-text">هل أعرف زوجاً</text>
+  <text x="300" y="232" class="decision-text">متطابقاً</text>
+  <text x="300" y="249" class="decision-text">في الذاكرة؟</text>
+
+  <!-- YES Branch (RTL: right side) -->
+  <line x1="420" y1="230" x2="500" y2="230" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="500" y1="230" x2="500" y2="340" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+  <text x="470" y="220" class="label">نعم</text>
+
+  <!-- YES Action Box -->
+  <rect x="430" y="355" width="140" height="50" rx="8" fill="url(#yesGrad)" stroke="#1e8449" stroke-width="2"/>
+  <text x="500" y="375" class="action-text">طابقهم!</text>
+  <text x="500" y="392" class="action-text">فوز مضمون</text>
+
+  <!-- NO Branch (RTL: left side) -->
+  <line x1="180" y1="230" x2="100" y2="230" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="100" y1="230" x2="100" y2="280" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+  <text x="130" y="220" class="label-no">لا</text>
+
+  <!-- NO Action Box 1 -->
+  <rect x="30" y="295" width="140" height="40" rx="8" fill="url(#noGrad)" stroke="#2980b9" stroke-width="2"/>
+  <text x="100" y="320" class="action-text">اقلب بطاقة مجهولة</text>
+
+  <!-- Arrow down -->
+  <line x1="100" y1="335" x2="100" y2="360" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+
+  <!-- Sub-decision -->
+  <polygon points="100,375 160,405 100,435 40,405" fill="#e8f8f5" stroke="#27ae60" stroke-width="2"/>
+  <text x="100" y="400" class="decision-text" style="font-size:10px">تطابق في</text>
+  <text x="100" y="412" class="decision-text" style="font-size:10px">الذاكرة؟</text>
+
+  <!-- Sub YES -->
+  <line x1="160" y1="405" x2="240" y2="405" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+  <text x="200" y="395" class="label" style="font-size:11px">نعم</text>
+  <rect x="250" y="385" width="100" height="35" rx="5" fill="url(#yesGrad)"/>
+  <text x="300" y="407" class="action-text" style="font-size:11px">طابقها!</text>
+
+  <!-- Sub NO -->
+  <line x1="40" y1="405" x2="-10" y2="405" stroke="#2c3e50" stroke-width="2" marker-end="url(#flowArrow)"/>
+  <text x="15" y="395" class="label-no" style="font-size:11px">لا</text>
+
+  <!-- Loop back indicator -->
+  <path d="M -10 405 Q -40 405, -40 350 Q -40 300, 10 295" stroke="#7f8c8d" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/>
+  <text x="-50" y="350" class="subtitle" style="font-size:10px">تعلم</text>
+  <text x="-50" y="362" class="subtitle" style="font-size:10px">وتابع</text>
+</svg>

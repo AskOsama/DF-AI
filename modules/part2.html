@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 2 (2-hour session): The Data. Where forensic data is generated and stored, its lifecycle, the order of volatility, the four ownership layers (host, network, ISP/telco, cloud), and how to lawfully obtain data from the parties that hold it.">
+    <title>Part 2 — The Data: Generation, Location, Volatility &amp; Ownership | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-2">
+    <div class="language-switcher">
+        <a href="part2_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <span>Part 2 — The Data</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 2</div>
+        <h1>The Data: Generation, Location, Volatility &amp; Ownership</h1>
+        <p class="module-lede">
+            Before any analysis, you must understand the material you are analysing. This part follows forensic data
+            itself: how and where it is generated, where it physically lives, how long it survives, who owns it, and
+            how you lawfully obtain it from the parties that hold it. These facts decide what evidence even exists by
+            the time you arrive &mdash; and which legal door you must knock on to reach it. Get the geography of the
+            data wrong and the cleverest AI in Part&nbsp;4 will have nothing trustworthy to work on.
+        </p>
+    </header>
+
+    <main>
+        <div class="session-agenda">
+            <h4>What we'll cover</h4>
+            <ol>
+                <li><span class="agenda-topic"><strong>Follow the data</strong> — why location and lifespan come before analysis</span></li>
+                <li><span class="agenda-topic"><strong>Generation &amp; location</strong> — the four source groups, with concrete examples</span></li>
+                <li><span class="agenda-topic"><strong>The data lifecycle</strong> — slack, journals, caches, backups; deletion is not destruction</span></li>
+                <li><span class="agenda-topic"><strong>Order of volatility</strong> — RFC&nbsp;3227, live vs dead acquisition (Activity&nbsp;1)</span></li>
+                <li><span class="agenda-topic"><strong>The four ownership layers</strong> — host, network, ISP/telco, cloud (Activity&nbsp;2)</span></li>
+                <li><span class="agenda-topic"><strong>Obtaining data from other parties</strong> — routes, retention vs lead time</span></li>
+                <li><span class="agenda-topic"><strong>Recap</strong> &amp; bridge to Part&nbsp;3</span></li>
+            </ol>
+        </div>
+
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#follow">Follow the data</a></li>
+                <li><a href="#generation">Where data is generated &amp; stored</a></li>
+                <li><a href="#lifecycle">The data lifecycle</a></li>
+                <li><a href="#volatility">Order of volatility</a></li>
+                <li><a href="#layers">The four ownership layers</a></li>
+                <li><a href="#obtaining">Obtaining data from other parties</a></li>
+                <li><a href="#recap">Recap &amp; further practice</a></li>
+            </ol>
+        </nav>
+
+        <section id="follow" class="module-section">
+            <h2>Follow the data</h2>
+            <p>
+                Every digital action leaves traces in more than one place. A single message sent from a phone exists,
+                at least briefly, in the phone's memory, in its storage, on the cellular and Wi-Fi networks it crossed,
+                in the messaging provider's servers, and possibly in a cloud backup. Each copy has a different owner, a
+                different lifespan, and a different legal path to reach it. The investigator's first job is not
+                analysis &mdash; it is to map <em>where the data is</em> and <em>how long it will last</em>.
+            </p>
+            <p>
+                This ordering is deliberate, and it is the spine of the whole session. In Part&nbsp;1 we said that
+                forensic data carries constraints &mdash; lawful acquisition, integrity, admissibility. Here we make
+                those constraints concrete by asking the most physical question imaginable: <em>where, exactly, are
+                the bytes?</em> The answer is almost never "in one place". It is a scatter of copies across devices you
+                hold, networks you do not, and servers in jurisdictions you may never visit. Treat the case as a map
+                before you treat it as a puzzle.
+            </p>
+            <div class="callout callout-story">
+                <p>
+                    Think of a footprint in three surfaces: wet sand at the tide line, dry sand higher up, and a
+                    concrete path. The same step is recorded in all three, but the tide will erase one within minutes,
+                    the wind will blur another over hours, and the third may last for years. Digital evidence behaves
+                    the same way &mdash; and you collect the wet-sand copy first.
+                </p>
+            </div>
+            <p>
+                Two questions therefore run through everything that follows, and it is worth writing them on the board:
+                <strong>how long will this copy survive?</strong> (the volatility question) and <strong>who controls
+                it, and under what law?</strong> (the ownership question). The first decides the <em>order</em> in
+                which you act; the second decides the <em>door</em> you must go through. Most beginner mistakes come
+                from answering one and forgetting the other &mdash; imaging a disk perfectly while the volatile memory
+                you needed evaporates, or chasing a cloud account for months while a local copy sat in an evidence bag
+                all along.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Pick a routine action &mdash; sending a photo to a group chat last night at 9&nbsp;pm. Off the top
+                    of your head, in how many distinct places does a trace of that one action now exist? Compare counts
+                    around the room. Most people undercount; the gap between their first guess and the real number is
+                    exactly the instinct this part is trying to build.
+                </p>
+            </div>
+        </section>
+
+        <section id="generation" class="module-section">
+            <h2>Where data is generated &amp; stored</h2>
+            <p>
+                Forensic data is generated almost everywhere a device or service touches a person's activity. It is
+                useful to group sources by who generates them &mdash; because the generator is usually also the holder,
+                and the holder, as we will see, is who you must lawfully approach. Each group below comes with one
+                concrete example so the abstraction stays grounded:
+            </p>
+            <ul>
+                <li><strong>The user's own devices</strong> &mdash; phones, laptops, wearables, vehicles, IoT
+                    sensors. Rich, personal, and usually the first thing seized. <em>Example:</em> a fitness watch logs
+                    a heart-rate spike and a GPS track that places its wearer at a location at 9:04&nbsp;pm.</li>
+                <li><strong>Organisations the user interacts with</strong> &mdash; employers, banks, hospitals,
+                    schools. They generate records <em>about</em> the user as a by-product of providing a service.
+                    <em>Example:</em> a bank's transaction log shows a card payment at a petrol station two minutes
+                    before that GPS point.</li>
+                <li><strong>Service and infrastructure providers</strong> &mdash; ISPs, telecoms, hosting and cloud
+                    companies. They see connections, traffic metadata, and stored content. <em>Example:</em> a mobile
+                    carrier's records show which cell tower the phone was attached to during the same window.</li>
+                <li><strong>Commercial platforms</strong> &mdash; social media, e-commerce, advertising networks.
+                    Often the largest and most detailed behavioural records that exist about a person. <em>Example:</em>
+                    a social app holds the message itself, its delivery timestamps, and the device fingerprint that
+                    sent it.</li>
+            </ul>
+            <figure class="diagram">
+                <img src="../images/diagrams/explicit_implicit_data.svg" alt="Diagram contrasting explicit data deliberately created by a user (messages, documents, photos) with implicit data generated automatically by devices and services (timestamps, location logs, metadata, device fingerprints)." loading="lazy">
+                <figcaption>The two kinds of forensic data a source generates: explicit content the user knowingly creates, and the far larger trail of implicit metadata produced automatically &mdash; the latter is often where the most reliable, uncoordinated corroboration is found.</figcaption>
+            </figure>
+            <p>
+                Notice that most of this data is held by someone <em>other</em> than the person it describes. That
+                single fact &mdash; ownership sits with the holder, not the subject &mdash; drives everything in the
+                rest of this part. Notice too how the four examples above corroborate one another: the watch, the bank,
+                the carrier and the app independently triangulate the same 9&nbsp;pm event. Multiple weak sources that
+                agree are often stronger evidence than one rich source that stands alone, because each was generated by
+                a different party with no motive to coordinate.
+            </p>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    Spend no more than 20&nbsp;minutes here; it is a mapping exercise, not a catalogue. The single
+                    point to land is "the holder is rarely the subject". A fast way to test it: ask the room to name,
+                    for their own phone right now, one record about them sitting on a server they have never logged into.
+                    Someone will say the carrier's location log within seconds &mdash; build on that.
+                </p>
+            </div>
+        </section>
+
+        <section id="lifecycle" class="module-section">
+            <h2>The data lifecycle</h2>
+            <p>
+                Data moves through a predictable lifecycle, and evidence can be captured &mdash; or lost &mdash; at any
+                stage:
+            </p>
+            <figure class="diagram">
+                <svg viewBox="0 0 760 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data lifecycle: Creation, Storage, Transmission/Use, Archival, Deletion — followed by Residual traces that may persist after deletion.">
+                    <g font-family="sans-serif" font-size="13" fill="#14242e" text-anchor="middle">
+                        <rect x="10"  y="35" width="120" height="44" rx="5" fill="#2e7d8a" fill-opacity="0.16" stroke="#2e7d8a"/>
+                        <text x="70"  y="62">Creation</text>
+                        <rect x="160" y="35" width="120" height="44" rx="5" fill="#2e7d8a" fill-opacity="0.16" stroke="#2e7d8a"/>
+                        <text x="220" y="62">Storage</text>
+                        <rect x="310" y="35" width="120" height="44" rx="5" fill="#2e7d8a" fill-opacity="0.16" stroke="#2e7d8a"/>
+                        <text x="370" y="58">Transmission</text>
+                        <text x="370" y="72">/ Use</text>
+                        <rect x="460" y="35" width="120" height="44" rx="5" fill="#2e7d8a" fill-opacity="0.16" stroke="#2e7d8a"/>
+                        <text x="520" y="62">Archival</text>
+                        <rect x="610" y="35" width="120" height="44" rx="5" fill="#2e7d8a" fill-opacity="0.16" stroke="#2e7d8a"/>
+                        <text x="670" y="62">Deletion</text>
+                        <text x="670" y="105" font-size="11" fill="#a23b34">↳ residual traces persist</text>
+                    </g>
+                    <g stroke="#2e7d8a" stroke-width="1.5" fill="none">
+                        <path d="M130,57 L160,57"/><path d="M280,57 L310,57"/><path d="M430,57 L460,57"/><path d="M580,57 L610,57"/>
+                    </g>
+                </svg>
+                <figcaption>The lifecycle of a piece of data. "Deletion" rarely means destruction &mdash; residual traces in slack space, journals, caches and backups are a forensic mainstay.</figcaption>
+            </figure>
+            <p>
+                The forensic insight is that <strong>deletion is not destruction</strong>. Removing a file usually
+                only unlinks it; the operating system marks its space as available, but the bytes themselves survive
+                until something else is written on top of them. Until that overwrite happens &mdash; which may be
+                seconds or may be months &mdash; the data is fully recoverable. Much of forensics is recovering data
+                that someone believed was gone.
+            </p>
+            <p>
+                It helps to know <em>where</em> those surviving copies hide, because each is a place an analyst will
+                look and a place an adversary forgets to wipe:
+            </p>
+            <ul>
+                <li><strong>Slack space</strong> &mdash; the leftover at the end of a disk cluster. If a 6&nbsp;KB file
+                    lands in an 8&nbsp;KB cluster, the trailing 2&nbsp;KB may still hold fragments of whatever occupied
+                    that cluster before. Deleting the new file does nothing to the old fragment.</li>
+                <li><strong>File-system journals</strong> &mdash; modern file systems record pending changes in a
+                    journal so they can recover from a crash. That journal can preserve the names, sizes and timestamps
+                    of files that have since been removed from the visible directory.</li>
+                <li><strong>Caches &amp; temporary copies</strong> &mdash; thumbnail databases, browser caches,
+                    application temp files and previews routinely keep their own copy of content. A "deleted" photo
+                    often survives as a thumbnail long after the original is gone.</li>
+                <li><strong>Backups</strong> &mdash; the most reliable resurrection of all. A file deleted today may sit
+                    intact in last week's cloud or local backup, entirely outside the suspect's reach to delete.</li>
+            </ul>
+            <div class="callout callout-story">
+                <p>
+                    A suspect empties the recycle bin, reformats a USB stick, and believes the chat export is gone. The
+                    visible file system is indeed clean. But the thumbnail cache still holds a preview of the image
+                    attachment, the file-system journal still lists the original filename and its deletion time, and a
+                    cloud backup taken the night before holds the export untouched. Three independent residual traces,
+                    none of which the suspect knew to address. "I deleted it" is rarely the end of the story.
+                </p>
+            </div>
+            <p>
+                The lifecycle view also explains <em>when</em> evidence is strongest. Data at the creation and storage
+                stages is fresh and complete; once it reaches deletion, you are racing the overwrite. This is the same
+                logic as the order of volatility &mdash; we are simply looking at it through the life of one file
+                rather than the perishability of one medium. Both point the same way: the earlier you reach the data,
+                the more of it you get.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Where would <em>you</em> look first for a file a suspect swears they destroyed &mdash; the device
+                    in front of you, or somewhere the suspect never controlled in the first place? What does your
+                    answer tell you about who the most useful witness in a case often is?
+                </p>
+            </div>
+        </section>
+
+        <section id="volatility" class="module-section">
+            <h2>Order of volatility</h2>
+            <p>
+                Some data evaporates in seconds; some persists for years. The <span class="term">order of
+                volatility</span> ranks data from most to least perishable, and gives the collection rule that follows
+                from it: <strong>capture the most volatile evidence first</strong>, because waiting destroys it. This
+                is not folklore &mdash; it is codified guidance. <span class="term">RFC&nbsp;3227</span>, the IETF's
+                "Guidelines for Evidence Collection and Archiving", states the order of volatility explicitly and tells
+                responders to collect from most volatile to least.
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Rank</th><th>Data</th><th>Typical lifespan</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1 (most volatile)</td><td>CPU registers, cache</td><td>Nanoseconds</td></tr>
+                    <tr><td>2</td><td>RAM: running processes, open network connections, decrypted keys</td><td>Until power off</td></tr>
+                    <tr><td>3</td><td>Network state, routing &amp; ARP tables, live traffic</td><td>Seconds to minutes</td></tr>
+                    <tr><td>4</td><td>Disk: files, swap, unallocated space, slack</td><td>Until overwritten</td></tr>
+                    <tr><td>5</td><td>Remote logs, provider records, archives</td><td>Days to years (per retention policy)</td></tr>
+                    <tr><td>6 (least volatile)</td><td>Backups, printouts, physical configuration</td><td>Years</td></tr>
+                </tbody>
+            </table>
+            <p>
+                This table maps directly onto a single, consequential decision: <strong>live acquisition versus dead
+                acquisition</strong>. <em>Live acquisition</em> captures a running system &mdash; above all a
+                <span class="term">memory capture</span> of RAM (ranks 1&ndash;3) while the machine is still powered on,
+                preserving running processes, open connections, and, critically, encryption keys that exist
+                <em>only</em> in memory. <em>Dead acquisition</em> is the classic disk image (rank&nbsp;4): power the
+                machine down, attach a write-blocker, and image the storage bit-for-bit. Dead acquisition is cleaner
+                and easier to defend in court &mdash; but it can be taken at any time later, whereas a live capture
+                cannot.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/file_vs_memory.svg" alt="Diagram comparing volatile RAM, which holds running processes, open network connections and decrypted encryption keys but is lost when power is cut, with the persistent file system on disk, which survives a power-off but can be imaged at any later time." loading="lazy">
+                <figcaption>Where data physically lives decides the order you collect it: the volatile RAM copy (live acquisition) must be captured before power is cut, while the persistent disk copy (dead acquisition) can wait for a write-blocked image.</figcaption>
+            </figure>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Why pulling the plug can destroy the best evidence.</strong> A live-memory capture &mdash;
+                    decrypted keys, running processes, active chats &mdash; cannot be re-taken later. If the disk is
+                    encrypted and the only copy of the key is in RAM, cutting power converts a readable machine into an
+                    inaccessible brick. The instinct to "pull the plug to image the disk safely" is, in that case,
+                    exactly backwards: it preserves the least valuable layer and erases the most valuable one in the
+                    room. Decide live-vs-dead <em>before</em> you touch the power button.
+                </p>
+            </div>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    This is the conceptual heart of the session &mdash; give it the full 25&nbsp;minutes and run
+                    Activity&nbsp;1 inside it. If the room is non-technical, anchor the live-vs-dead idea with the
+                    encryption-key example above; it lands faster than any taxonomy. Resist diving into specific imaging
+                    tools (that is Part&nbsp;4's territory); keep the focus on <em>order</em> and <em>irreversibility</em>.
+                </p>
+            </div>
+            <div class="callout callout-activity">
+                <h4>Activity 1 — Build a volatility-ordered acquisition plan (in pairs)</h4>
+                <p>
+                    You arrive at a desk. The laptop is <em>powered on and unlocked</em>, with an encrypted disk, a
+                    messaging app open, and an active VPN connection. On the desk sit a phone (locked), a USB stick,
+                    and a router blinking under the monitor. The user is not present.
+                </p>
+                <p>
+                    Write the order in which you would acquire from each source, and for each one note: is this live or
+                    dead acquisition, and what is lost if you wait? Be ready to defend why the powered-on laptop's
+                    memory comes before its disk &mdash; and what single wrong move (hint: the power button) would
+                    collapse the whole plan.
+                </p>
+            </div>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    The RFC tells you to collect most-volatile-first. But live acquisition changes the running system
+                    slightly just by observing it, while dead acquisition is pristine. How do you weigh "capture more,
+                    but touch the system" against "capture less, but stay clean"? Part&nbsp;3 will turn this exact
+                    tension into a question of admissibility.
+                </p>
+            </div>
+        </section>
+
+        <section id="layers" class="module-section">
+            <h2>The four ownership layers</h2>
+            <p>
+                Where data physically sits determines who owns it and which legal instrument you need to reach it. It
+                is useful to think in four layers, moving outward from the suspect's own device to a foreign cloud. The
+                table below is the summary; the subsections after it walk each layer with a realistic example and the
+                legal instrument that opens it.
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Layer</th><th>Examples</th><th>Typical owner</th><th>Usual legal path</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Host / Local</strong></td>
+                        <td>Phone, laptop, USB, on-device storage &amp; RAM</td>
+                        <td>The device owner / suspect</td>
+                        <td>Lawful seizure, search warrant, or owner consent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Network</strong></td>
+                        <td>Router, firewall &amp; IDS logs, corporate Wi-Fi, NetFlow</td>
+                        <td>The organisation running the network</td>
+                        <td>Internal authorisation; warrant for third parties</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ISP / Telco</strong></td>
+                        <td>Subscriber identity, CDRs, connection &amp; location records</td>
+                        <td>Internet / telecom service provider</td>
+                        <td>Court order or regulator-sanctioned request; data-retention law</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud / Remote</strong></td>
+                        <td>Email, social media, SaaS, object storage, backups</td>
+                        <td>Cloud provider (often in another jurisdiction)</td>
+                        <td>Provider legal process; cross-border MLAT where data is abroad</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Host / Local — the device in your hand</h3>
+            <p>
+                The innermost layer is the suspect's own hardware: the seized phone, the laptop, the USB stick, the
+                on-device storage and the RAM. <em>Example:</em> the messaging app's local database on a seized phone
+                still holds the 9&nbsp;pm message, its read receipts, and attachment thumbnails. This is the layer you
+                control most directly &mdash; once you have lawfully seized the device, you can image it on your own
+                timetable. The <strong>legal instrument</strong> is a lawful seizure, a search warrant covering the
+                device, or the owner's consent. The catch is access, not law: encryption and locked screens can put
+                data you legally own beyond technical reach.
+            </p>
+
+            <h3>Network — the organisation in the middle</h3>
+            <p>
+                One step out is the network the activity crossed: routers, firewalls, intrusion-detection logs,
+                corporate Wi-Fi association records, NetFlow. <em>Example:</em> the company Wi-Fi controller logs that
+                the suspect's phone associated with the office access point from 8:50 to 9:15&nbsp;pm, placing the
+                device in the building during the message. The <strong>owner</strong> is the organisation running the
+                network, so the <strong>legal instrument</strong> is internal authorisation when it is your own
+                organisation, or a warrant when the network belongs to a third party. These logs are often short-lived
+                &mdash; rotated in days &mdash; so they belong near the top of your acquisition list.
+            </p>
+
+            <h3>ISP / Telco — the carrier you cannot see into</h3>
+            <p>
+                Further out sit the internet and telecom providers: subscriber identity, call-detail records (CDRs),
+                connection logs, and cell-site location records. <em>Example:</em> the mobile carrier's CDRs show the
+                phone attached to a specific cell tower at 9:04&nbsp;pm, independently corroborating the Wi-Fi log. You
+                have no direct access here at all. The <strong>legal instrument</strong> is a court order or a
+                regulator-sanctioned request, often resting on <strong>data-retention law</strong> that requires the
+                carrier to hold such records for a fixed period. That retention window is finite, which is why this
+                layer is where the clock starts ticking against you.
+            </p>
+
+            <h3>Cloud / Remote — the data in another country</h3>
+            <p>
+                The outermost layer is the cloud: email, social media, SaaS applications, object storage, and backups
+                &mdash; frequently hosted in a different jurisdiction from your investigation. <em>Example:</em> the
+                full message thread, its server-side delivery timestamps, and a synced backup live on the messaging
+                provider's servers abroad. The <strong>legal instrument</strong> is the provider's own legal process
+                and, where the data sits overseas, a cross-border <strong>MLAT</strong> (mutual legal assistance
+                treaty) request. This is the slowest door of all, and the one most likely to be shut by a retention
+                window before you get through it.
+            </p>
+
+            <p>
+                The further out you go, the less you control and the more process you need. A local disk you have
+                lawfully seized is yours to image now; a chat log on a foreign cloud may take months of mutual legal
+                assistance to obtain &mdash; by which time retention windows may have closed. The four layers are not
+                just a map of where data lives; they are a map of how much friction stands between you and it.
+            </p>
+            <div class="callout callout-activity">
+                <h4>Activity 2 — Map a 9 pm message across the four layers (small groups)</h4>
+                <p>
+                    Take the running example: a single message sent at 9&nbsp;pm from a suspect's phone. For
+                    <em>each</em> of the four ownership layers, write down (a) one concrete artefact that would carry
+                    evidence of that message, (b) who owns it, and (c) the legal instrument you would need to obtain
+                    it.
+                </p>
+                <p>
+                    Then rank your four entries by how quickly each could disappear. Where does the volatility order
+                    and the ownership order disagree &mdash; that is, where is the most perishable evidence also the
+                    hardest to reach legally? That clash is the planning problem the next section is about.
+                </p>
+            </div>
+        </section>
+
+        <section id="obtaining" class="module-section">
+            <h2>Obtaining data from other parties</h2>
+            <p>
+                Because most data is held by someone other than the subject, much of forensic practice is
+                <em>acquisition from third parties</em> &mdash; commercial websites, organisations, and governments.
+                The legitimate routes, from lightest to heaviest, are roughly:
+            </p>
+            <ul>
+                <li><strong>Open / published sources</strong> &mdash; anything lawfully public. <em>Scenario:</em> a
+                    suspect's public social-media post timestamps them at a venue. Cheap and fast, but verify
+                    provenance before relying on it.</li>
+                <li><strong>Subject consent</strong> &mdash; the data subject grants access. <em>Scenario:</em> a
+                    victim voluntarily hands over their own account export containing the threatening messages. Clean,
+                    but limited to willing parties.</li>
+                <li><strong>Provider request under their terms</strong> &mdash; many platforms publish a
+                    law-enforcement or data-request process. <em>Scenario:</em> you submit a preservation-and-disclosure
+                    request through a platform's law-enforcement portal; they release only what their policy and the
+                    law allow.</li>
+                <li><strong>Court order / warrant</strong> &mdash; compels disclosure of stored content or records a
+                    provider will not release voluntarily. <em>Scenario:</em> a judge orders an email provider to hand
+                    over the contents of a named account.</li>
+                <li><strong>Regulatory channels &amp; data-retention law</strong> &mdash; telecoms and ISPs are often
+                    required to retain certain records and disclose them through a sanctioned request. <em>Scenario:</em>
+                    a carrier produces cell-site records it was legally obliged to retain.</li>
+                <li><strong>Mutual Legal Assistance (MLAT)</strong> &mdash; the cross-border mechanism used when the
+                    data, or the company, sits in another country. <em>Scenario:</em> your authority asks a foreign
+                    government to compel a cloud provider headquartered abroad to disclose an account.</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>The clock is the enemy.</strong> Each route has a lead time, and retention windows are
+                    finite. The two run in opposite directions: the heavier the legal route, the longer it takes &mdash;
+                    yet the data it reaches is often held under a retention policy that is already counting down.
+                </p>
+            </div>
+            <div class="compare">
+                <div>
+                    <h4>The retention window</h4>
+                    <p>Suppose a provider keeps connection logs for <strong>90 days</strong>. From the moment the
+                    log is created, you have at most three months before it is purged on schedule. The shelf empties
+                    whether or not your paperwork has arrived.</p>
+                </div>
+                <div>
+                    <h4>The lead time</h4>
+                    <p>Now suppose the only lawful route to that log is an <strong>MLAT request that takes 6
+                    months</strong>. Do the arithmetic: the request lands four months after the record was already
+                    deleted. You followed every rule and still reached an empty shelf.</p>
+                </div>
+            </div>
+            <p>
+                The practical defence against this arithmetic is the <strong>preservation request</strong> &mdash; a
+                fast, lightweight notice that asks the holder to <em>freeze</em> the relevant records while the slower
+                legal process catches up. It does not give you the data; it stops the clock. Knowing which holders will
+                honour a preservation request, and sending it on day one, is often what separates a recoverable case
+                from a lost one. The lesson of this whole part, compressed: <em>identify the volatile, far-flung copies
+                first, and freeze them before you can read them.</em>
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Given the 90-day-vs-6-month clash above, what could you have done on <em>day one</em> to still have
+                    the evidence by the time the MLAT cleared? Walk the timeline backwards from "data in hand" and find
+                    the latest moment each step had to start. Part&nbsp;3 takes up the matching question: even when you
+                    <em>can</em> obtain data this way, what may you lawfully do with it, and will it be admissible?
+                </p>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Try it:</strong> the
+                    <a href="../demos/forensic_process_demo.html">six-step investigation demo</a> walks a single case
+                    from identification to court presentation. Watch the early steps in particular &mdash; identifying
+                    and preserving sources &mdash; and notice how much of the case is decided before any analysis
+                    begins, by whether the right copies were frozen in time.
+                </p>
+            </div>
+        </section>
+
+        <section id="recap" class="module-section">
+            <h2>Recap &amp; further practice</h2>
+            <ul>
+                <li>Every action leaves traces in <strong>several places at once</strong>, each with a different owner and lifespan.</li>
+                <li>Data is generated by <strong>four source groups</strong> &mdash; user devices, organisations, providers, commercial platforms &mdash; and the holder is rarely the subject.</li>
+                <li><strong>Deletion is not destruction</strong> &mdash; slack space, journals, caches and backups keep residual traces until overwritten.</li>
+                <li>The <strong>order of volatility</strong> (RFC&nbsp;3227) dictates collection order: most perishable first. It forces the <strong>live-vs-dead acquisition</strong> choice &mdash; and pulling the plug can erase the best evidence.</li>
+                <li>The <strong>four ownership layers</strong> (host, network, ISP/telco, cloud) map each source to an owner and a legal path; friction grows the further out you go.</li>
+                <li>Obtaining third-party data ranges from open sources to <strong>MLAT</strong>; <strong>retention windows vs lead times</strong> make timing critical, and a preservation request stops the clock.</li>
+            </ul>
+            <div class="callout callout-note">
+                <h4>Instructor note — running the 2 hours</h4>
+                <p>
+                    The two activities and three discussion prompts are the pacing backbone. If you are short on time,
+                    keep Activity&nbsp;1 (the acquisition plan) and the retention-vs-lead-time arithmetic, and trim the
+                    per-layer subsections to the table plus the two outermost layers. The deliberate take-away you want
+                    in the room by the end is the pairing of <em>volatility</em> (act in the right order) with
+                    <em>ownership</em> (knock on the right door, early) &mdash; test it by asking the closing discussion
+                    question and listening for whether people reach for a preservation request unprompted.
+                </p>
+            </div>
+            <p><strong>Further practice before Part 3:</strong> take the one piece of evidence you mapped at the end of
+            Part&nbsp;1 and now place it in the four-layer model &mdash; where does it physically live, who owns it,
+            and what would you have to do, and how fast, to obtain it before it expires? Carry that example into
+            Part&nbsp;3, where the question shifts from <em>can you get it</em> to <em>may you use it</em>.</p>
+        </section>
+
+        <nav class="module-nav" aria-label="Part navigation">
+            <a href="part1.html" class="prev">
+                <span class="nav-label">← Previous</span>
+                <span class="nav-title">Part 1 — Foundations</span>
+            </a>
+            <a href="part3.html" class="next">
+                <span class="nav-label">Next →</span>
+                <span class="nav-title">Part 3 — Privacy &amp; Admissibility</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this part</h3>
+                <p>Part 2 of <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html"><strong>Part 2 — The Data</strong></a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+    <script src="../js/drawing-tool.js"></script>
+    <script src="../js/drawing-tool-init.js"></script>
+</body>
+</html>

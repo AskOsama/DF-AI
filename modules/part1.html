@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 1 (2-hour session): Foundations. Data science studies the data, AI is the algorithms that handle it, and digital forensics is the evidence-grade data we analyse — with examples, activities, and discussion.">
+    <title>Part 1 — Foundations: AI, Data Science &amp; Digital Forensics | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-1">
+    <div class="language-switcher">
+        <a href="part1_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <span>Part 1 — Foundations</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 1</div>
+        <h1>Foundations: AI, Data Science &amp; Digital Forensics</h1>
+        <p class="module-lede">
+            Three words get used together so often in this course that it is worth being precise about each before we
+            go any further. <strong>Data science</strong> is the field that studies data. <strong>Artificial
+            intelligence</strong> is the set of algorithms and approaches we use to handle it. <strong>Digital
+            forensics</strong> is the particular kind of data we are here to analyse &mdash; data that may one day
+            stand as evidence. This session defines the three, shows how they fit together, and explains why
+            processing forensic data with AI is now a practical necessity rather than a novelty.
+        </p>
+    </header>
+
+    <main>
+        <div class="session-agenda">
+            <h4>What we'll cover</h4>
+            <ol>
+                <li><span class="agenda-topic"><strong>Welcome &amp; the volume problem</strong> — why a forensics course needs AI at all</span></li>
+                <li><span class="agenda-topic"><strong>Three words, three jobs</strong> — the Venn, plus warm-up Activity&nbsp;1</span></li>
+                <li><span class="agenda-topic"><strong>Data science</strong> — the field that studies data; the working cycle</span></li>
+                <li><span class="agenda-topic"><strong>AI as a toolbox</strong> — a short history, and the six tool families</span></li>
+                <li><span class="agenda-topic"><strong>Digital forensics</strong> — evidence-grade data &amp; evidence types (Activity&nbsp;2)</span></li>
+                <li><span class="agenda-topic"><strong>How the three fit</strong> — the one-seized-phone worked example</span></li>
+                <li><span class="agenda-topic"><strong>Recap</strong> &amp; bridge to Part&nbsp;2</span></li>
+            </ol>
+        </div>
+
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#three-words">Three words, three jobs</a></li>
+                <li><a href="#data-science">Data science: the field that studies data</a></li>
+                <li><a href="#ai">AI: the algorithms that handle data</a></li>
+                <li><a href="#perspectives">Four perspectives on "intelligent"</a></li>
+                <li><a href="#history">A short history, so "AI" stops moving</a></li>
+                <li><a href="#forensics">Digital forensics: evidence-grade data</a></li>
+                <li><a href="#evidence-types">A working taxonomy of digital evidence</a></li>
+                <li><a href="#fit">How the three fit together</a></li>
+                <li><a href="#why-ai">Why AI, and why now</a></li>
+                <li><a href="#recap">Recap &amp; further practice</a></li>
+            </ol>
+        </nav>
+
+        <section id="three-words" class="module-section">
+            <h2>Three words, three jobs</h2>
+            <p>
+                It is tempting to treat "AI", "data science" and "digital forensics" as interchangeable
+                buzzwords. They are not. Each names a different job. Keeping them separate is what lets you say
+                clearly <em>what</em> you are analysing, <em>with which</em> technique, and <em>to what end</em>. Get
+                the words straight now and every later part becomes easier; blur them and you will keep mistaking a
+                tool for a goal.
+            </p>
+
+            <figure class="diagram">
+                <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three overlapping circles: Data Science (the field that studies data), Artificial Intelligence (the algorithms that handle it), and Digital Forensics (the evidence-grade data), overlapping at the centre as Forensic Data Analysis with AI.">
+                    <circle cx="270" cy="150" r="135" fill="#1a3a4a" fill-opacity="0.14" stroke="#1a3a4a" stroke-width="2"/>
+                    <circle cx="450" cy="150" r="135" fill="#9c6b1e" fill-opacity="0.14" stroke="#9c6b1e" stroke-width="2"/>
+                    <circle cx="360" cy="255" r="135" fill="#a23b34" fill-opacity="0.13" stroke="#a23b34" stroke-width="2"/>
+                    <text x="200" y="120" text-anchor="middle" font-family="Georgia, serif" font-size="19" fill="#14242e" font-weight="bold">Data Science</text>
+                    <text x="200" y="142" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#36505b">studies the data</text>
+                    <text x="520" y="120" text-anchor="middle" font-family="Georgia, serif" font-size="19" fill="#14242e" font-weight="bold">AI</text>
+                    <text x="520" y="142" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#36505b">handles the data</text>
+                    <text x="360" y="320" text-anchor="middle" font-family="Georgia, serif" font-size="19" fill="#14242e" font-weight="bold">Digital Forensics</text>
+                    <text x="360" y="340" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#36505b">the evidence-grade data</text>
+                    <text x="360" y="178" text-anchor="middle" font-family="sans-serif" font-size="12.5" fill="#14242e" font-weight="bold">this course</text>
+                </svg>
+                <figcaption>Three fields, one overlap. This course lives where all three meet: applying AI techniques, in a data-science frame of mind, to evidence-grade forensic data.</figcaption>
+            </figure>
+
+            <div class="callout callout-activity">
+                <h4>Activity 1 — Name the job (in pairs)</h4>
+                <p>
+                    Here are five statements. For each, decide whether it is mainly a <em>data science</em>,
+                    <em>AI</em>, or <em>digital forensics</em> task &mdash; and say why in one sentence:
+                </p>
+                <ol>
+                    <li>"Is this dataset complete, or are timestamps missing for the night of the incident?"</li>
+                    <li>"Rank these 40,000 photos so the analyst sees the most likely matches first."</li>
+                    <li>"Hash the disk image so we can prove it wasn't altered after seizure."</li>
+                    <li>"Cluster these chat messages into topics without labelling them first."</li>
+                    <li>"What can we honestly conclude from a sample of only 12 records?"</li>
+                </ol>
+                <p>Expect disagreement on a couple of them &mdash; that is the point. Many real tasks sit in the overlap.</p>
+            </div>
+        </section>
+
+        <section id="data-science" class="module-section">
+            <h2>Data science: the field that studies data</h2>
+            <p>
+                Data science is the discipline concerned with extracting reliable knowledge from data. It asks where
+                data comes from, how it is structured, how clean and complete it is, and what can honestly be
+                concluded from it. Crucially, data science is not a single algorithm &mdash; it is a
+                <em>way of working</em>. The cycle, in five moves:
+            </p>
+            <ol>
+                <li><strong>Frame</strong> the question precisely enough that an answer would be recognisable.</li>
+                <li><strong>Gather</strong> the data that actually bears on it &mdash; and note what is missing.</li>
+                <li><strong>Examine &amp; clean</strong>: check ranges, duplicates, gaps, and obvious errors.</li>
+                <li><strong>Model or summarise</strong>: count, compare, correlate, or fit a model.</li>
+                <li><strong>Communicate</strong> the finding <em>with its uncertainty attached</em>.</li>
+            </ol>
+            <div class="callout callout-story">
+                <p>
+                    For a forensic investigator, the data-science mindset is already familiar under another name.
+                    "Where did this come from? Is it complete? Could it have been altered? What can I responsibly
+                    conclude?" are exactly the questions data science formalises. The difference is vocabulary, not
+                    instinct.
+                </p>
+            </div>
+            <p>
+                The single most common failure in practice is skipping straight from "gather" to "model" &mdash;
+                running a clever analysis on data nobody examined. A timestamp column silently recorded in the wrong
+                time zone, a log that rotated and lost a day, a deduplication that quietly merged two suspects: each
+                produces a confident, wrong answer. Throughout the course the data-science questions sit underneath
+                everything, because a clever AI result on untrustworthy data is worse than no result &mdash; it is
+                persuasive and wrong.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Where does "data science" end and "AI" begin? Is computing an average AI? Is ranking 40,000 photos
+                    by similarity AI? Push on the boundary &mdash; you will find it is fuzzy, and that the useful
+                    distinction is <em>job</em> (study the data) versus <em>tool</em> (an algorithm that handles it).
+                </p>
+            </div>
+        </section>
+
+        <section id="ai" class="module-section">
+            <h2>AI: the algorithms that handle data</h2>
+            <p>
+                Artificial intelligence is the family of <em>algorithms and approaches</em> that let a machine
+                perform tasks we would call intelligent if a person did them &mdash; searching, reasoning, deciding,
+                recognising patterns, generating language. The single most important correction this course makes is
+                this: <strong>AI is much larger than machine learning, and far larger than chatbots.</strong>
+            </p>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Common misconception.</strong> Many people now hear "AI" and picture a large language
+                    model like ChatGPT. That is one corner of one sub-field. Constraint solvers, optimisation,
+                    search engines, knowledge-based reasoning and topic models are all AI too &mdash; and, as
+                    Part&nbsp;4 argues, they are often the <em>better</em> tools for forensic work because you can run
+                    them in-house and explain exactly how they reached an answer.
+                </p>
+            </div>
+            <p>
+                We will treat AI as a <em>toolbox</em>. It helps to meet the six families now, in one breath, so the
+                rest of the course has hooks to hang detail on. You will build these in Part&nbsp;4 and hand them to
+                an agent in Part&nbsp;5:
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Family</th><th>The question it answers</th><th>A forensic taste</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Search</td><td>"Find it fast in a huge space"</td><td>Query terabytes of artefacts</td></tr>
+                    <tr><td>Optimization</td><td>"Find the best option under trade-offs"</td><td>What to examine first</td></tr>
+                    <tr><td>Constraint satisfaction</td><td>"Find an assignment that fits all the rules"</td><td>Timeline / alibi consistency</td></tr>
+                    <tr><td>Knowledge &amp; reasoning</td><td>"Apply explicit expert rules"</td><td>Auditable inference</td></tr>
+                    <tr><td>Machine learning</td><td>"Learn a pattern from examples"</td><td>Classify files, flag anomalies</td></tr>
+                    <tr><td>Language &amp; topics</td><td>"Make sense of a pile of text"</td><td>Triage seized messages</td></tr>
+                </tbody>
+            </table>
+            <p>
+                Picking the right tool for an evidence-grade task &mdash; and being able to defend that choice
+                &mdash; is a skill this course builds deliberately. Notice the chatbot is just one expression of the
+                last family; it is not the whole toolbox, and for a lot of forensic work it is the wrong tool.
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/ml_types.svg" alt="The three main types of machine learning: supervised, unsupervised, and reinforcement learning." loading="lazy">
+                <figcaption>Machine learning is just one family in the toolbox &mdash; and it splits three ways (supervised, unsupervised, reinforcement). We return to it in Part&nbsp;4.</figcaption>
+            </figure>
+        </section>
+
+        <section id="perspectives" class="module-section">
+            <h2>Four perspectives on what "intelligent" means</h2>
+            <p>
+                People argue about AI partly because they are quietly using different definitions of "intelligent". The
+                classic framing gives four, along two axes &mdash; <em>thinking vs. acting</em>, and <em>like a human
+                vs. rationally</em>:
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/four_perspectives.svg" alt="Four perspectives on AI on two axes: thinking vs acting, and human-like vs rational — giving acting humanly, thinking humanly, thinking rationally, acting rationally." loading="lazy">
+                <figcaption>The four perspectives on a two-by-two grid. For forensics, the two <em>rational</em> quadrants matter most &mdash; sound beats merely persuasive.</figcaption>
+            </figure>
+            <div class="compare">
+                <div>
+                    <h4>Acting humanly</h4>
+                    <p>Behaving so a person cannot tell machine from human &mdash; the Turing test. A chatbot that
+                    "sounds right" lives here. Persuasive, but not necessarily correct.</p>
+                </div>
+                <div>
+                    <h4>Thinking humanly</h4>
+                    <p>Modelling how people actually reason &mdash; cognitive science. Useful for explaining behaviour,
+                    less so for raw throughput.</p>
+                </div>
+                <div>
+                    <h4>Thinking rationally</h4>
+                    <p>Following the laws of logic to reach sound conclusions &mdash; the roots of knowledge-based
+                    reasoning and constraint solving in Part&nbsp;4.</p>
+                </div>
+                <div>
+                    <h4>Acting rationally</h4>
+                    <p>Taking the action that best achieves a goal given the evidence &mdash; the <em>rational agent</em>,
+                    the lens behind Part&nbsp;5.</p>
+                </div>
+            </div>
+            <p>
+                The fault line that matters for forensics runs between <em>acting humanly</em> and the two
+                <em>rational</em> quadrants. A system that merely sounds convincing (acting humanly) is exactly the
+                wrong thing to put in front of a court; a system that reaches a sound, explainable conclusion (thinking
+                or acting rationally) is what evidence work needs. When you hear "the AI said so", your first question
+                should be: <em>which kind of intelligent &mdash; persuasive, or sound?</em>
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    A large language model is squarely in the "acting humanly" quadrant &mdash; it is optimised to
+                    produce fluent, plausible text. For which forensic tasks is that genuinely useful, and for which is
+                    it a liability? Try to name one of each.
+                </p>
+            </div>
+        </section>
+
+        <section id="history" class="module-section">
+            <h2>A short history, so "AI" stops moving</h2>
+            <p>
+                Part of why "AI" feels slippery is that the label keeps moving to whatever is newest. A quick tour of
+                the eras shows the toolbox was assembled over decades &mdash; today's chatbots are the latest layer,
+                not the foundation:
+            </p>
+            <figure class="diagram">
+                <img src="../images/diagrams/ai_timeline.svg" alt="Timeline of AI milestones from the 1950s to the 2020s, across symbolic AI, expert systems, statistical learning, deep learning, and generative AI." loading="lazy">
+                <figcaption>Six decades of AI. Every era left a usable tool behind &mdash; and the older, explainable ones never stopped being right for evidence work.</figcaption>
+            </figure>
+            <ul>
+                <li><strong>1950s — the question.</strong> Turing asks whether machines can think; the field is named.</li>
+                <li><strong>1960s–70s — symbolic AI.</strong> Search and logic: solving puzzles, proving theorems. (The roots of Part&nbsp;4's search and constraint solving.)</li>
+                <li><strong>1980s — expert systems.</strong> Hand-written rules encode specialists' knowledge. (The roots of knowledge-based reasoning.)</li>
+                <li><strong>1990s–2000s — statistical learning.</strong> Cheaper data and compute make machine learning practical.</li>
+                <li><strong>2010s — deep learning.</strong> Neural networks crack vision and speech.</li>
+                <li><strong>2020s — generative AI &amp; agents.</strong> Large language models, and systems that string tools together to act. (Part&nbsp;5.)</li>
+            </ul>
+            <p>
+                The point for a forensics audience is not the dates but the shape: every era left a usable tool
+                behind, and the older, explainable tools never stopped being the right answer for evidence work.
+            </p>
+            <div class="callout callout-note">
+                <h4>Instructor note</h4>
+                <p>
+                    Keep this section to ~8 minutes &mdash; it is orientation, not a history lecture. If the room is
+                    technical, ask "which era is ChatGPT?" and use the disagreement to make the toolbox point. If the
+                    room is legal/managerial, stress that "explainable" tools predate the hype and are court-friendly.
+                </p>
+            </div>
+        </section>
+
+        <section id="forensics" class="module-section">
+            <h2>Digital forensics: evidence-grade data</h2>
+            <p>
+                Digital forensics is the practice of identifying, preserving, analysing and presenting digital data so
+                that it can be relied upon &mdash; often in a legal proceeding. For our purposes, the defining feature
+                is the <em>kind of data</em> involved and the constraints it carries. Forensic data is not just "data";
+                it is data that must remain trustworthy enough to act on, and sometimes to put before a court.
+            </p>
+            <div class="compare">
+                <div>
+                    <h4>Ordinary data</h4>
+                    <p>Collected for convenience. Can be copied, cleaned, reshaped and discarded freely. Nobody asks
+                    who touched it or whether it was altered.</p>
+                </div>
+                <div>
+                    <h4>Forensic (evidence-grade) data</h4>
+                    <p>Must be obtained lawfully, preserved without alteration, handled through a documented
+                    <span class="term">chain of custody</span>, and shown to be <span class="term">admissible</span>.
+                    Every step has to be reproducible and defensible.</p>
+                </div>
+            </div>
+            <p>
+                These constraints &mdash; lawful acquisition, integrity, admissibility &mdash; are the spine of
+                Parts&nbsp;2 and&nbsp;3. They also shape which AI tools are acceptable: a technique you cannot explain,
+                or that requires shipping the evidence to an outside service, may be unusable no matter how accurate.
+                A useful slogan for the whole course: <em>in forensics, how you got the answer is part of the
+                answer.</em>
+            </p>
+        </section>
+
+        <section id="evidence-types" class="module-section">
+            <h2>A working taxonomy of digital evidence</h2>
+            <p>
+                "Digital evidence" is a big tent. Sorting it into a few families now will make Part&nbsp;2's discussion
+                of where data lives, and Part&nbsp;3's discussion of what is admissible, much sharper:
+            </p>
+            <ul>
+                <li><strong>Stored content</strong> — files, photos, documents, databases, app data. What people
+                    usually picture as "evidence".</li>
+                <li><strong>Communications</strong> — messages, email, call records, social media. Often the heart of
+                    a case, and usually held by a third party.</li>
+                <li><strong>Metadata</strong> — timestamps, geolocation, device IDs, file system records. Small,
+                    easily overlooked, and frequently decisive (Part&nbsp;3 shows metadata alone can re-identify people).</li>
+                <li><strong>System &amp; log artefacts</strong> — event logs, browser history, caches, registry,
+                    unallocated space and file slack. The traces of activity, including activity someone tried to delete.</li>
+                <li><strong>Volatile state</strong> — running processes, open connections, decrypted keys held only in
+                    memory. Gone the moment the power is cut (Part&nbsp;2's order of volatility).</li>
+            </ul>
+            <div class="callout callout-activity">
+                <h4>Activity 2 — Ordinary or evidence-grade?</h4>
+                <p>
+                    Take this list and split it two ways: first into the five evidence families above, then mark which
+                    items would need <em>evidence-grade</em> handling in an investigation:
+                </p>
+                <p>
+                    a screenshot pasted into a report · a phone's "deleted" photos still in unallocated space ·
+                    a marketing CSV downloaded from a public site · the suspect's laptop RAM at the moment of seizure ·
+                    a Wi-Fi router's connection log · a chatbot summary of a chat export.
+                </p>
+                <p>
+                    The last one is a trap worth dwelling on: producing it may have <em>broken</em> custody. Hold that
+                    thought &mdash; Part&nbsp;3 returns to it.
+                </p>
+            </div>
+        </section>
+
+        <section id="fit" class="module-section">
+            <h2>How the three fit together</h2>
+            <p>
+                Read the three definitions as a sentence: <em>digital forensics</em> supplies the data and the rules
+                it must obey; <em>data science</em> supplies the disciplined way of reasoning about that data; and
+                <em>AI</em> supplies the algorithms that do the heavy lifting at a scale no human could match. This
+                course is the intersection &mdash; using AI techniques, in a data-science frame of mind, on
+                evidence-grade forensic data.
+            </p>
+            <div class="callout callout-story">
+                <p>
+                    One seized phone. <strong>Digital forensics</strong> says: image it without altering a byte, log
+                    who touched it, and stay within the warrant. <strong>Data science</strong> asks: which of the
+                    100,000 messages are even in scope, what is missing, and what can we honestly claim?
+                    <strong>AI</strong> does the lifting: search indexes the lot, a topic model groups the threads, a
+                    classifier flags the images, and a timeline solver checks the alibi. Three jobs, one device.
+                </p>
+            </div>
+            <p>
+                Notice the order matters. Forensics sets the constraints first; data science decides what is worth
+                asking; only then does AI run. Teams that invert this &mdash; "let's run the model and see" &mdash;
+                tend to produce impressive output that cannot survive a single question about where it came from.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Try it:</strong> the
+                    <a href="../demos/forensic_process_demo.html">six-step investigation demo</a> walks a single case
+                    from identification to court presentation. Watch how each step is about preserving trust in the
+                    data &mdash; the constraint that will govern every AI choice we make later.
+                </p>
+            </div>
+        </section>
+
+        <section id="why-ai" class="module-section">
+            <h2>Why AI, and why now</h2>
+            <p>
+                The reason this course exists is volume. A single seized phone can hold a hundred thousand messages,
+                photos, and location points; a corporate case can span terabytes of logs across dozens of systems. No
+                investigator reads all of that. AI is what makes the haystack searchable: ranking what to look at
+                first, clustering related artefacts, flagging anomalies, and surfacing the few items that matter.
+            </p>
+            <p>
+                But scale cuts both ways, and this is the tension the whole course is built around. The same
+                techniques that find a needle can also re-identify "anonymous" people, and the convenient cloud
+                services that offer them are themselves data collectors. So we pair every capability with its
+                constraint: what you <em>can</em> do, next to what you <em>may</em> do. That pairing is the
+                through-line from here to Part&nbsp;5 &mdash; capability on one page, constraint on the facing page,
+                every time.
+            </p>
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Think of one task in your own work that is drowning in volume. Which of the six tool families
+                    might help? And what is the matching constraint &mdash; privacy, admissibility, or custody &mdash;
+                    that you would have to respect while using it?
+                </p>
+            </div>
+        </section>
+
+        <section id="recap" class="module-section">
+            <h2>Recap &amp; further practice</h2>
+            <ul>
+                <li><strong>Data science</strong> studies the data; <strong>AI</strong> is the algorithms that handle it; <strong>digital forensics</strong> is the evidence-grade data we analyse.</li>
+                <li>AI is a <strong>toolbox</strong> of six families, much larger than machine learning or chatbots &mdash; assembled over decades.</li>
+                <li>Forensic data carries constraints &mdash; lawful acquisition, integrity, admissibility &mdash; that shape which tools are acceptable. <em>How you got the answer is part of the answer.</em></li>
+                <li>Digital evidence sorts into stored content, communications, metadata, system/log artefacts, and volatile state.</li>
+                <li>AI is necessary because of <strong>volume</strong>; but every capability comes paired with a constraint.</li>
+            </ul>
+            <div class="callout callout-note">
+                <h4>Instructor note — running the 2 hours</h4>
+                <p>
+                    The two activities and three discussion prompts are the pacing backbone; if you are short on time,
+                    keep Activity&nbsp;2 and the one-seized-phone story and trim the history tour. The deliberate
+                    take-away you want in the room by the end is the <em>capability ↔ constraint</em> pairing &mdash;
+                    test it by asking the closing discussion question and listening for whether people name a
+                    constraint unprompted.
+                </p>
+            </div>
+            <p><strong>Further practice before Part 2:</strong> pick a recent case (real or hypothetical) and list,
+            for one piece of evidence, which of the five evidence families it belongs to and which constraints apply.
+            You will extend exactly this in Part&nbsp;2 by asking <em>where</em> that evidence physically lives.</p>
+        </section>
+
+        <nav class="module-nav" aria-label="Part navigation">
+            <a href="../index.html" class="prev">
+                <span class="nav-label">← Home</span>
+                <span class="nav-title">Course overview</span>
+            </a>
+            <a href="part2.html" class="next">
+                <span class="nav-label">Next →</span>
+                <span class="nav-title">Part 2 — The Data</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this part</h3>
+                <p>Part 1 of <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html"><strong>Part 1 — Foundations</strong></a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+    <script src="../js/drawing-tool.js"></script>
+    <script src="../js/drawing-tool-init.js"></script>
+</body>
+</html>

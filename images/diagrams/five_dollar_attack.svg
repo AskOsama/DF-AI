@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300">
+  <defs>
+    <linearGradient id="alertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b15c26;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b15c26;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="300" fill="#f8f9fa" rx="10"/>
+
+  <!-- Warning frame -->
+  <rect x="5" y="5" width="690" height="290" rx="12" fill="none" stroke="#b15c26" stroke-width="3"/>
+
+  <!-- Title -->
+  <text x="350" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#b15c26">The "$20 Attack" - Re-identification Made Easy</text>
+
+  <!-- Dataset A: Anonymous Hospital Data -->
+  <rect x="30" y="60" width="140" height="130" rx="10" fill="#e3f2fd" stroke="#2c5a82" stroke-width="2"/>
+  <text x="100" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#14202e">Dataset A</text>
+  <text x="100" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="28">🏥</text>
+  <text x="100" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">"Anonymous"</text>
+  <text x="100" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">Hospital Records</text>
+  <!-- Data fields -->
+  <text x="45" y="165" font-family="Arial, sans-serif" font-size="8" fill="#777">ZIP: 90210</text>
+  <text x="45" y="178" font-family="Arial, sans-serif" font-size="8" fill="#777">DOB: Jan 15</text>
+
+  <!-- Plus sign 1 -->
+  <text x="190" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#7f8c8d">+</text>
+
+  <!-- Dataset B: Public Voter Records -->
+  <rect x="220" y="60" width="140" height="130" rx="10" fill="#d4edda" stroke="#2c6a5b" stroke-width="2"/>
+  <text x="290" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#14202e">Dataset B</text>
+  <text x="290" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="28">🗳️</text>
+  <text x="290" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">Public</text>
+  <text x="290" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">Voter Records</text>
+  <!-- Data fields -->
+  <text x="235" y="165" font-family="Arial, sans-serif" font-size="8" fill="#777">Name: John Doe</text>
+  <text x="235" y="178" font-family="Arial, sans-serif" font-size="8" fill="#777">ZIP: 90210, DOB...</text>
+
+  <!-- Plus sign 2 -->
+  <text x="380" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#7f8c8d">+</text>
+
+  <!-- $5 -->
+  <rect x="410" y="80" width="80" height="90" rx="10" fill="#fff3cd" stroke="#a07c1d" stroke-width="3"/>
+  <text x="450" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#856404">$20</text>
+  <text x="450" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#856404">to buy data</text>
+
+  <!-- Equals sign -->
+  <text x="520" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#7f8c8d">=</text>
+
+  <!-- Result: Identified Person -->
+  <rect x="550" y="60" width="130" height="130" rx="10" fill="url(#alertGrad)"/>
+  <text x="615" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="40">👤</text>
+  <text x="615" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">IDENTIFIED!</text>
+  <text x="615" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">John Doe</text>
+  <text x="615" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">90210</text>
+  <text x="615" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">+ Medical History</text>
+
+  <!-- Bottom explanation -->
+  <rect x="30" y="210" width="640" height="75" rx="8" fill="white" stroke="#b15c26" stroke-width="2"/>
+
+  <text x="50" y="235" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#b15c26">How it works:</text>
+
+  <text x="50" y="255" font-family="Arial, sans-serif" font-size="11" fill="#555">1. Hospital removes names from records (de-identification)</text>
+  <text x="50" y="270" font-family="Arial, sans-serif" font-size="11" fill="#555">2. Attacker buys public voter registration data (~$20)</text>
+
+  <text x="400" y="255" font-family="Arial, sans-serif" font-size="11" fill="#555">3. Match on ZIP + birthdate + gender</text>
+  <text x="400" y="270" font-family="Arial, sans-serif" font-size="11" fill="#b15c26" font-weight="bold">4. Identity + medical records exposed!</text>
+
+  <!-- Warning icon -->
+  <text x="660" y="250" font-family="Arial, sans-serif" font-size="30">⚠️</text>
+</svg>

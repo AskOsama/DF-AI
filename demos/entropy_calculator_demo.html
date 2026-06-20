@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Entropy Calculator | حاسبة إنتروبيا المعلومات</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .calculator-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .probability-input {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .probability-input label {
+            min-width: 120px;
+            font-weight: bold;
+        }
+
+        .probability-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 10px;
+        }
+
+        .probability-input .value-display {
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .add-remove-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .metric-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 10px 0;
+        }
+
+        .metric-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .visualization {
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .bar-label {
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .bar-container {
+            flex: 1;
+            background: #e9ecef;
+            border-radius: 4px;
+            height: 30px;
+            position: relative;
+            margin: 0 10px;
+        }
+
+        .bar-fill {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-value {
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .preset-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .preset-btn:hover {
+            background: #5a6268;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            color: #856404;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .formula {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-container {
+                padding: 10px;
+            }
+
+            .probability-input {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .probability-input input {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="language-toggle btn-primary" onclick="toggleLanguage()">
+        <span id="langToggleText">عربي</span>
+    </button>
+
+    <div class="calculator-container">
+        <h1 id="mainTitle">Information Entropy Calculator</h1>
+        <p id="subtitle">Calculate Shannon entropy, mutual information, and privacy metrics</p>
+
+        <!-- Theory Section -->
+        <div class="info-box">
+            <h3 id="theoryTitle">Shannon Entropy Formula</h3>
+            <div class="formula">
+                H(X) = -∑ p(x) × log₂(p(x))
+            </div>
+            <p id="theoryDesc">
+                Entropy measures the uncertainty or "surprise" in a random variable.
+                Higher entropy means more unpredictable outcomes.
+                It's measured in bits when using log base 2.
+            </p>
+        </div>
+
+        <!-- Presets -->
+        <div class="input-section">
+            <h3 id="presetsTitle">Quick Presets</h3>
+            <div class="presets">
+                <button class="preset-btn" onclick="loadPreset('fair_coin')">Fair Coin</button>
+                <button class="preset-btn" onclick="loadPreset('biased_coin')">Biased Coin (90/10)</button>
+                <button class="preset-btn" onclick="loadPreset('fair_die')">Fair Die (6 sides)</button>
+                <button class="preset-btn" onclick="loadPreset('disease')">Disease (1% prevalence)</button>
+                <button class="preset-btn" onclick="loadPreset('uniform')">Uniform (4 outcomes)</button>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <h3 id="inputTitle">Probability Distribution</h3>
+            <p id="inputDesc">Enter probabilities for each outcome (must sum to 1.0)</p>
+
+            <div id="probabilityInputs">
+                <!-- Dynamic inputs will be added here -->
+            </div>
+
+            <div class="add-remove-buttons">
+                <button class="btn-success" onclick="addOutcome()">+ Add Outcome</button>
+                <button class="btn-danger" onclick="removeOutcome()">- Remove Outcome</button>
+            </div>
+
+            <div id="sumWarning" class="warning" style="display: none;">
+                ⚠️ Probabilities must sum to 1.0! Current sum: <span id="currentSum">0</span>
+            </div>
+
+            <button class="btn-primary" onclick="calculate()" style="width: 100%; margin-top: 15px; padding: 15px; font-size: 16px;">
+                Calculate Entropy
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h2 id="resultsTitle">Results</h2>
+
+            <div class="metric-card">
+                <div class="metric-title" id="entropyTitle">Shannon Entropy (H)</div>
+                <div class="metric-value" id="entropyValue">0.000 bits</div>
+                <div class="metric-description" id="entropyDesc">
+                    Measures the average information content. Maximum entropy occurs with uniform distribution.
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title" id="maxEntropyTitle">Maximum Possible Entropy</div>
+                <div class="metric-value" id="maxEntropyValue">0.000 bits</div>
+                <div class="metric-description" id="maxEntropyDesc">
+                    Maximum entropy for this number of outcomes (uniform distribution).
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title" id="normalizedTitle">Normalized Entropy</div>
+                <div class="metric-value" id="normalizedValue">0%</div>
+                <div class="metric-description" id="normalizedDesc">
+                    Entropy as percentage of maximum. 100% = perfectly uniform, 0% = deterministic.
+                </div>
+            </div>
+
+            <!-- Privacy Interpretation -->
+            <div class="metric-card">
+                <div class="metric-title" id="privacyTitle">Privacy Interpretation</div>
+                <div id="privacyInterpretation"></div>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="visualization" id="visualizationSection" style="display: none;">
+            <h3 id="vizTitle">Probability Distribution</h3>
+            <div id="distributionBars"></div>
+        </div>
+
+        <!-- Personal Information Entropy Section -->
+        <div class="input-section">
+            <h2 id="pieTitle">Personal Information Entropy (PIE)</h2>
+            <p id="pieDesc">
+                Calculate PIE for re-identification risk assessment.
+                PIE = -log₂(probability of individual's combination)
+            </p>
+
+            <div class="probability-input">
+                <label id="pieLabel">Number of matching records:</label>
+                <input type="number" id="matchingRecords" min="1" value="5" oninput="calculatePIE()">
+            </div>
+
+            <div class="probability-input">
+                <label id="pieTotalLabel">Total records in dataset:</label>
+                <input type="number" id="totalRecords" min="1" value="1000" oninput="calculatePIE()">
+            </div>
+
+            <div class="metric-card" id="pieResults" style="display: none;">
+                <div class="metric-title">PIE Value</div>
+                <div class="metric-value" id="pieValue">0.000 bits</div>
+                <div class="metric-description" id="pieInterpretation"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'en';
+        let numOutcomes = 2;
+
+        const translations = {
+            en: {
+                mainTitle: "Information Entropy Calculator",
+                subtitle: "Calculate Shannon entropy, mutual information, and privacy metrics",
+                theoryTitle: "Shannon Entropy Formula",
+                theoryDesc: "Entropy measures the uncertainty or \"surprise\" in a random variable. Higher entropy means more unpredictable outcomes. It's measured in bits when using log base 2.",
+                presetsTitle: "Quick Presets",
+                inputTitle: "Probability Distribution",
+                inputDesc: "Enter probabilities for each outcome (must sum to 1.0)",
+                resultsTitle: "Results",
+                entropyTitle: "Shannon Entropy (H)",
+                entropyDesc: "Measures the average information content. Maximum entropy occurs with uniform distribution.",
+                maxEntropyTitle: "Maximum Possible Entropy",
+                maxEntropyDesc: "Maximum entropy for this number of outcomes (uniform distribution).",
+                normalizedTitle: "Normalized Entropy",
+                normalizedDesc: "Entropy as percentage of maximum. 100% = perfectly uniform, 0% = deterministic.",
+                privacyTitle: "Privacy Interpretation",
+                pieTitle: "Personal Information Entropy (PIE)",
+                pieDesc: "Calculate PIE for re-identification risk assessment. PIE = -log₂(probability of individual's combination)",
+                pieLabel: "Number of matching records:",
+                pieTotalLabel: "Total records in dataset:",
+                vizTitle: "Probability Distribution"
+            },
+            ar: {
+                mainTitle: "حاسبة إنتروبيا المعلومات",
+                subtitle: "حساب إنتروبيا شانون والمعلومات المتبادلة ومقاييس الخصوصية",
+                theoryTitle: "معادلة إنتروبيا شانون",
+                theoryDesc: "تقيس الإنتروبيا عدم اليقين أو \"المفاجأة\" في متغير عشوائي. إنتروبيا أعلى تعني نتائج أقل قابلية للتنبؤ. تُقاس بالبتات عند استخدام اللوغاريتم بالأساس 2.",
+                presetsTitle: "إعدادات مسبقة سريعة",
+                inputTitle: "توزيع الاحتمالات",
+                inputDesc: "أدخل الاحتمالات لكل نتيجة (يجب أن يكون المجموع 1.0)",
+                resultsTitle: "النتائج",
+                entropyTitle: "إنتروبيا شانون (H)",
+                entropyDesc: "تقيس محتوى المعلومات المتوسط. تحدث الإنتروبيا القصوى مع التوزيع المنتظم.",
+                maxEntropyTitle: "الإنتروبيا القصوى الممكنة",
+                maxEntropyDesc: "الإنتروبيا القصوى لهذا العدد من النتائج (التوزيع المنتظم).",
+                normalizedTitle: "الإنتروبيا المعيارية",
+                normalizedDesc: "الإنتروبيا كنسبة مئوية من الحد الأقصى. 100% = منتظم تمامًا، 0% = حتمي.",
+                privacyTitle: "تفسير الخصوصية",
+                pieTitle: "إنتروبيا المعلومات الشخصية (PIE)",
+                pieDesc: "حساب PIE لتقييم مخاطر إعادة التعريف. PIE = -log₂(احتمال مجموعة الفرد)",
+                pieLabel: "عدد السجلات المطابقة:",
+                pieTotalLabel: "إجمالي السجلات في مجموعة البيانات:",
+                vizTitle: "توزيع الاحتمالات"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'ar' : 'en';
+            document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langToggleText').textContent = currentLanguage === 'en' ? 'عربي' : 'English';
+            updateTranslations();
+        }
+
+        function updateTranslations() {
+            const t = translations[currentLanguage];
+            Object.keys(t).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = t[key];
+                }
+            });
+        }
+
+        function initializeProbabilityInputs() {
+            const container = document.getElementById('probabilityInputs');
+            container.innerHTML = '';
+
+            for (let i = 0; i < numOutcomes; i++) {
+                const div = document.createElement('div');
+                div.className = 'probability-input';
+                div.innerHTML = `
+                    <label>Outcome ${i + 1}:</label>
+                    <input type="range" min="0" max="1" step="0.01" value="${1/numOutcomes}"
+                           id="prob${i}" oninput="updateProbability(${i})">
+                    <span class="value-display" id="probValue${i}">${(1/numOutcomes).toFixed(2)}</span>
+                `;
+                container.appendChild(div);
+            }
+            checkProbabilitySum();
+        }
+
+        function updateProbability(index) {
+            const value = document.getElementById(`prob${index}`).value;
+            document.getElementById(`probValue${index}`).textContent = parseFloat(value).toFixed(2);
+            checkProbabilitySum();
+        }
+
+        function checkProbabilitySum() {
+            let sum = 0;
+            for (let i = 0; i < numOutcomes; i++) {
+                const value = parseFloat(document.getElementById(`prob${i}`).value);
+                sum += value;
+            }
+
+            const warning = document.getElementById('sumWarning');
+            const currentSumSpan = document.getElementById('currentSum');
+            currentSumSpan.textContent = sum.toFixed(3);
+
+            if (Math.abs(sum - 1.0) > 0.01) {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        function addOutcome() {
+            numOutcomes++;
+            initializeProbabilityInputs();
+        }
+
+        function removeOutcome() {
+            if (numOutcomes > 2) {
+                numOutcomes--;
+                initializeProbabilityInputs();
+            }
+        }
+
+        function loadPreset(presetName) {
+            const presets = {
+                fair_coin: [0.5, 0.5],
+                biased_coin: [0.9, 0.1],
+                fair_die: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6],
+                disease: [0.01, 0.99],
+                uniform: [0.25, 0.25, 0.25, 0.25]
+            };
+
+            const probs = presets[presetName];
+            numOutcomes = probs.length;
+            initializeProbabilityInputs();
+
+            for (let i = 0; i < probs.length; i++) {
+                document.getElementById(`prob${i}`).value = probs[i];
+                document.getElementById(`probValue${i}`).textContent = probs[i].toFixed(2);
+            }
+            checkProbabilitySum();
+        }
+
+        function calculate() {
+            const probabilities = [];
+            for (let i = 0; i < numOutcomes; i++) {
+                probabilities.push(parseFloat(document.getElementById(`prob${i}`).value));
+            }
+
+            // Calculate Shannon entropy
+            let entropy = 0;
+            for (let p of probabilities) {
+                if (p > 0) {
+                    entropy -= p * Math.log2(p);
+                }
+            }
+
+            // Maximum entropy (uniform distribution)
+            const maxEntropy = Math.log2(numOutcomes);
+
+            // Normalized entropy
+            const normalizedEntropy = (entropy / maxEntropy) * 100;
+
+            // Display results
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('visualizationSection').style.display = 'block';
+
+            document.getElementById('entropyValue').textContent = entropy.toFixed(3) + ' bits';
+            document.getElementById('maxEntropyValue').textContent = maxEntropy.toFixed(3) + ' bits';
+            document.getElementById('normalizedValue').textContent = normalizedEntropy.toFixed(1) + '%';
+
+            // Privacy interpretation
+            let privacyText = '';
+            if (normalizedEntropy > 90) {
+                privacyText = '✅ High Privacy: Distribution is nearly uniform. Attackers have high uncertainty.';
+            } else if (normalizedEntropy > 60) {
+                privacyText = '⚠️ Moderate Privacy: Some outcomes are more likely, reducing uncertainty.';
+            } else if (normalizedEntropy > 30) {
+                privacyText = '⚠️ Low Privacy: Distribution is skewed. Attackers can make educated guesses.';
+            } else {
+                privacyText = '❌ Very Low Privacy: Distribution is highly concentrated. Little uncertainty remains.';
+            }
+            document.getElementById('privacyInterpretation').textContent = privacyText;
+
+            // Visualize distribution
+            visualizeDistribution(probabilities);
+        }
+
+        function visualizeDistribution(probabilities) {
+            const container = document.getElementById('distributionBars');
+            container.innerHTML = '';
+
+            probabilities.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'bar';
+                div.innerHTML = `
+                    <span class="bar-label">Outcome ${i + 1}</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${p * 100}%"></div>
+                    </div>
+                    <span class="bar-value">${(p * 100).toFixed(1)}%</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function calculatePIE() {
+            const matching = parseInt(document.getElementById('matchingRecords').value);
+            const total = parseInt(document.getElementById('totalRecords').value);
+
+            if (matching > 0 && total > 0 && matching <= total) {
+                const probability = matching / total;
+                const pie = -Math.log2(probability);
+
+                document.getElementById('pieResults').style.display = 'block';
+                document.getElementById('pieValue').textContent = pie.toFixed(3) + ' bits';
+
+                let interpretation = '';
+                if (pie > 10) {
+                    interpretation = '❌ Very High Risk: Individual is highly unique and easily re-identifiable.';
+                } else if (pie > 5) {
+                    interpretation = '⚠️ High Risk: Individual can likely be re-identified with additional information.';
+                } else if (pie > 2) {
+                    interpretation = '⚠️ Moderate Risk: Some re-identification risk exists.';
+                } else {
+                    interpretation = '✅ Low Risk: Individual is part of a large anonymity set (k ≈ ' + matching + ').';
+                }
+
+                const kValue = Math.pow(2, pie);
+                interpretation += ` Equivalent to k-anonymity with k ≈ ${Math.round(kValue)}.`;
+
+                document.getElementById('pieInterpretation').textContent = interpretation;
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initializeProbabilityInputs();
+            calculatePIE();
+        };
+    </script>
+</body>
+</html>
