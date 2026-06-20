@@ -171,16 +171,6 @@
                 </svg>
                 <figcaption>The core reasoning loop. Thought → Action → Observation repeats until a termination check exits to the final output. The full trace persists as both working memory and audit log.</figcaption>
             </figure>
-            <div class="callout callout-note">
-                <h4>Instructor note</h4>
-                <p>
-                    Resist drawing the loop as a flowchart of code. The loop is mostly <em>prose</em> &mdash; the model
-                    literally writes "Thought:&hellip;" and "Action:&hellip;" as text. If the room is technical, that
-                    surprises people in a useful way: there is far less machinery here than the word "agent" suggests.
-                    If the room is legal or managerial, the takeaway to land is that the transcript is reviewable by a
-                    human in plain language, line by line, the way a notebook is.
-                </p>
-            </div>
             <div class="callout callout-discuss">
                 <h4>Discuss</h4>
                 <p>
@@ -343,16 +333,6 @@
                 <li><strong>Human-in-the-Loop</strong> &mdash; risk-based escalation and approval gates &mdash; essential for evidence work.
                     <em>Forensic angle:</em> the approval gate before any conclusion is recorded or any privacy-sensitive source is touched &mdash; the pattern this whole part is built around.</li>
             </ul>
-            <div class="callout callout-note">
-                <h4>Instructor note</h4>
-                <p>
-                    If you are short on time, do not try to give all eight equal weight. The two that earn the most
-                    attention for this audience are <strong>Memory</strong> (because "the memory is the case file" makes
-                    the lawful-basis point concrete) and <strong>Human-in-the-Loop</strong> (because it is the safety
-                    spine). Treat the rest as a quick tour and let the anatomy section pull the load-bearing ones back
-                    together.
-                </p>
-            </div>
         </section>
 
         <section id="cross-domain" class="module-section">
@@ -560,17 +540,6 @@
                 <li>Build from open-source frameworks, but keep the model and tools <strong>local</strong> so evidence never leaves custody.</li>
                 <li>Mind the failure modes &mdash; hallucination, prompt-injection via the evidence, automation bias. The agent <strong>assists</strong>; a human <strong>decides</strong>.</li>
             </ul>
-            <div class="callout callout-note">
-                <h4>Instructor note — running the 2 hours</h4>
-                <p>
-                    The worked ReAct trace and the two activities are the pacing backbone; if you are short on time,
-                    keep the trace, keep Activity&nbsp;2 (design on paper), and compress the eight-patterns list to the
-                    forensic angles only. The single take-away you want in the room by the end of the <em>course</em> is
-                    the constraint that has run through all five parts: capability is paired with custody, and the human
-                    stays in the loop. Test it by asking the failure-modes discussion question and listening for whether
-                    people reach for "keep a human deciding" unprompted.
-                </p>
-            </div>
             <p><strong>Further practice after the course:</strong> take the agent you designed in Activity&nbsp;2 and
             write the first six steps of its ReAct trace by hand, as in the forensic example above. Mark the line where
             it must escalate. If you cannot find that line, the design is not yet safe to run &mdash; which is exactly

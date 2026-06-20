@@ -1307,17 +1307,6 @@ footer a:hover { color: var(--gold-deep); text-decoration-color: var(--gold); }
 .callout.callout-discuss > h4 { color: var(--ink); }
 .callout.callout-discuss > h4::before { content: "💬 "; }
 
-/* Instructor note — facilitator-facing; muted, dashed, set apart */
-.callout.callout-note {
-    background: var(--paper-3);
-    border: 1px dashed var(--rule-strong);
-    border-inline-start: 4px dashed var(--gold);
-    font-size: 0.95rem;
-}
-.callout.callout-note > h4 { color: var(--gold-deep); }
-.callout.callout-note > h4::before { content: "🎓 "; }
-.callout.callout-note p, .callout.callout-note li { color: var(--ink-2); }
-
 /* Tables — editorial, hairline-only */
 .module-section table {
     width: 100%;

@@ -131,16 +131,6 @@
                     <tr><td>Search engines</td><td>"Index and retrieve fast"</td><td>Querying terabytes of artefacts</td></tr>
                 </tbody>
             </table>
-            <div class="callout callout-note">
-                <h4>Instructor note</h4>
-                <p>
-                    Resist the urge to lecture all six families up front &mdash; keep this section to ~10 minutes as a
-                    map, then let each family earn its detail in its own section. If the room is non-technical, the one
-                    sentence that must land is "machine learning is one tool of six, and often not the most defensible
-                    one." If the room is technical, ask which family they reach for by reflex and why &mdash; the
-                    reflex is usually ML, and that is exactly the habit this part is built to widen.
-                </p>
-            </div>
         </section>
 
         <section id="csp" class="module-section">
@@ -358,17 +348,6 @@
                 <img src="../images/diagrams/feature_engineering_tree.svg" alt="Taxonomy tree branching the features extracted from a file into categories such as size, entropy, timestamps and path properties" loading="lazy">
                 <figcaption>A feature-engineering taxonomy: a file reaches the tool only as the measurable properties you choose to expose, so a careless choice here &mdash; like a feature that secretly encodes the answer &mdash; quietly decides what the model can ever learn.</figcaption>
             </figure>
-            <div class="callout callout-note">
-                <h4>Instructor note</h4>
-                <p>
-                    This is the section to slow down on for a forensic audience, because it is where their existing
-                    instincts transfer directly. "Where did this come from, is it complete, could it have been altered"
-                    &mdash; the chain-of-custody questions from Part&nbsp;2 &mdash; <em>are</em> data preparation. Make
-                    that link explicit: a sloppy timestamp normalisation is not a data-science footnote, it is a
-                    custody-grade error that can produce a confident, wrong timeline. Spend the time here; it pays off
-                    in every later section.
-                </p>
-            </div>
             <div class="callout callout-discuss">
                 <h4>Discuss</h4>
                 <p>
@@ -591,17 +570,6 @@
                     part. For each stage, name the one sentence you would say in court to justify it. Where in your
                     pipeline does a human have to step in &mdash; and what goes wrong if they don't? Which single stage
                     would be the hardest to defend, and could you swap a black-box step for an explainable one?
-                </p>
-            </div>
-            <div class="callout callout-note">
-                <h4>Instructor note — running the 2 hours</h4>
-                <p>
-                    The three activities and three discussion prompts are the pacing backbone. If you are short on time,
-                    keep Activity&nbsp;1 (the paper CSP) and the base-rate trap in the evaluation section &mdash; those
-                    two land the part's two big ideas: explainable tools win for court, and ML output is a lead, not a
-                    verdict. The take-away you want in the room by the end is that each of the six tools, and the
-                    pipeline that chains them, can be run locally and defended link by link. Test it by asking the
-                    closing discussion question and listening for whether people reach for an explainable tool unprompted.
                 </p>
             </div>
         </section>
