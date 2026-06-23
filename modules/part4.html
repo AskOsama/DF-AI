@@ -131,6 +131,18 @@
                     <tr><td>Search engines</td><td>"Index and retrieve fast"</td><td>Querying terabytes of artefacts</td></tr>
                 </tbody>
             </table>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Datasets &amp; worked examples:</strong> five of these tools now have a full pipeline page
+                    &mdash; a real open-access dataset, the encoding, the algorithm, runnable code, and the final
+                    output. Each is linked from its section below:
+                    <a href="part4-csp-geolife.html">CSP&nbsp;·&nbsp;GeoLife</a>,
+                    <a href="part4-optimization-govdocs1.html">Optimization&nbsp;·&nbsp;GovDocs1</a>,
+                    <a href="part4-feature-engineering-ember.html">Feature engineering&nbsp;·&nbsp;EMBER</a>,
+                    <a href="part4-knowledge-openflights.html">Knowledge&nbsp;·&nbsp;OpenFlights</a>, and
+                    <a href="part4-search-enron.html">Search&nbsp;·&nbsp;Enron</a>.
+                </p>
+            </div>
         </section>
 
         <section id="csp" class="module-section">
@@ -195,6 +207,13 @@
                     breaks &mdash; is what makes a CSP admissible where a black box would not be.
                 </p>
             </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Dataset &amp; worked example:</strong> run this end-to-end over a real GPS log in
+                    <a href="part4-csp-geolife.html">Constraint satisfaction · GeoLife</a> &mdash; download, encoding,
+                    CP-SAT solver, and an <code>INFEASIBLE</code> alibi finding with its minimal conflict set.
+                </p>
+            </div>
         </section>
 
         <section id="optimization" class="module-section">
@@ -257,6 +276,13 @@
                 of devices and estimates. No evidence content is needed &mdash; only your value and cost estimates
                 &mdash; so this is among the easiest tools to run on an isolated machine and to disclose in full.
             </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Dataset &amp; worked example:</strong> prioritise a real carved-file corpus in
+                    <a href="part4-optimization-govdocs1.html">Optimization · GovDocs1</a> &mdash; cost/value
+                    encoding, a knapsack vs. greedy comparison, and an NSGA-II Pareto front of triage plans.
+                </p>
+            </div>
         </section>
 
         <section id="ml" class="module-section">
@@ -358,6 +384,13 @@
                     chain-of-custody questions wearing a different hat?
                 </p>
             </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Dataset &amp; worked example:</strong> see feature engineering in action in
+                    <a href="part4-feature-engineering-ember.html">Feature engineering · EMBER</a> &mdash; a PE file
+                    reduced to a 2,380-dimension vector, a LightGBM verdict, and the timestamp leakage trap to avoid.
+                </p>
+            </div>
         </section>
 
         <section id="evaluating" class="module-section">
@@ -453,6 +486,14 @@
                 code; both run on your workstation and both are disclosable in full. The rules <em>are</em> the
                 documentation &mdash; an opposing expert can read exactly what your system believes.
             </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Dataset &amp; worked example:</strong> derive a hidden link in
+                    <a href="part4-knowledge-openflights.html">Knowledge &amp; reasoning · OpenFlights</a> &mdash;
+                    facts and rules over a real flight graph, backward chaining, and an auditable path that
+                    contradicts an alibi.
+                </p>
+            </div>
         </section>
 
         <section id="topic" class="module-section">
@@ -533,6 +574,13 @@
                 network. You point them at the evidence store, the index lives beside the case, and queries never leave
                 the building. The index build is itself logged and reproducible.
             </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Dataset &amp; worked example:</strong> build an inverted index over the Enron corpus in
+                    <a href="part4-search-enron.html">Search engines · Enron</a> &mdash; tokenisation, a BM25 ranking
+                    model, and a ranked e-discovery hit list with snippets.
+                </p>
+            </div>
         </section>
 
         <section id="pipeline" class="module-section">

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مثال تطبيقي للجزء الرابع: هندسة السمات لفرز البرمجيات الخبيثة استاتيكياً، باستخدام مجموعة بيانات EMBER 2018 المفتوحة. خط معالجة كامل — التنزيل، ومجموعات السمات، وLightGBM، والتنفيذ، وحكم قابل للتفسير.">
+    <title>هندسة السمات · فرز البرمجيات الخبيثة بـ EMBER | DF-AI الجزء الرابع</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-feature-engineering-ember.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index_ar.html">الرئيسية</a><span class="sep">›</span>
+            <a href="part4_ar.html">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</a><span class="sep">›</span>
+            <span>هندسة السمات · EMBER</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">الجزء الرابع · مجموعة بيانات ومثال تطبيقي</div>
+        <h1>هندسة السمات — فرز البرمجيات الخبيثة استاتيكياً من البايتات الخام</h1>
+        <p class="module-lede">
+            أوضح <a href="part4_ar.html#data-prep">قسم إعداد البيانات</a> النقطة الجوهرية: لا يُسلَّم الملف إلى
+            المصنِّف بوصفه ملفاً — بل بوصفه قائمة سمات (الحجم، العشوائية المعلوماتية، بايتات الترويسة، …)، والسمات
+            الرديئة تُغرِق حتى الخوارزمية المثالية. و<span class="en">EMBER</span> هو المثال النموذجي على ذلك تماماً:
+            ملف <span class="en">Windows</span> تنفيذي يُختزَل إلى متجه سمات بـ2,380 بُعداً. تمشي هذه الصفحة بخط
+            البايتات الخام ← السمات ← الحكم، بما في ذلك فخّ التسرّب الواجب تجنّبه.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="جدول المحتويات">
+            <h4>في هذه الصفحة</h4>
+            <ol>
+                <li><a href="#dataset">مجموعة البيانات والتنزيل</a></li>
+                <li><a href="#scenario">السيناريو الجنائي</a></li>
+                <li><a href="#encoding">الترميز: متجه السمات</a></li>
+                <li><a href="#algorithm">الخوارزمية وبنى البيانات</a></li>
+                <li><a href="#execution">التنفيذ</a></li>
+                <li><a href="#output">المخرجات النهائية</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>مجموعة البيانات والتنزيل</h2>
+            <p>
+                <strong><span class="en">EMBER 2018</span> (سمات الإصدار 2) — مرجع البرمجيات الخبيثة من
+                <span class="en">Elastic</span>.</strong> سمات استاتيكية مُهندَسة مستخرَجة من نحو مليون ملف
+                <span class="en">Windows PE</span> (خبيث / حميد / غير مُعنوَن)، مُصدَرة <em>مع شِفرة الاستخراج</em> —
+                ليرى الطلاب بالضبط كيف تصير البايتات الخام سمات. إنها قصة "الأثر الخام ← متجه السمات" النموذجية.
+            </p>
+            <table>
+                <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+                <tbody>
+                    <tr><td>الترخيص</td><td>ملفات البيانات <strong><span class="en">MIT</span></strong>؛ شِفرة الاستخراج <span class="en">AGPL-v3</span>. البيانات التي تصنّفها قابلة للاستخدام بحرية. مؤكَّدة مفتوحة الوصول.</td></tr>
+                    <tr><td>الحجم</td><td>~مليون عيّنة؛ المصفوفة المُتَّجهة ~1M × 2,380 <span class="en">float32</span> (الأرشيف عدة جيجابايت).</td></tr>
+                    <tr><td>الصيغة</td><td>سمات خام لكل عيّنة بصيغة <span class="en">JSONL</span> + مُتَّجِه يُنتِج خرائط ذاكرة ثنائية <span class="en"><code>X_*.dat</code> / <code>y_*.dat</code></span>.</td></tr>
+                    <tr><td>المصدر</td><td><a href="https://github.com/elastic/ember">github.com/elastic/ember</a> · الورقة <span class="en">arXiv:1804.04637</span> · نسخ بديلة على <span class="en">Academic Torrents</span> و<span class="en">Kaggle</span> (<span class="en"><code>dhoogla/ember-2018-v2-features</code></span>)</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget https://ember.elastic.co/ember_dataset_2018_2.tar.bz2
+tar -xjf ember_dataset_2018_2.tar.bz2
+pip install lightgbm
+pip install git+https://github.com/elastic/ember.git   # ember.features + helpers</pre>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>السيناريو الجنائي</h2>
+            <div class="callout callout-story">
+                <p>
+                    يستخرج محلّل ملف <span class="en">Windows</span> تنفيذياً مجهولاً من مساحة غير مخصَّصة — بلا توقيع،
+                    بلا حكم مضادّ للفيروسات. <em>هل هو حميد أم خبيث؟</em> — يُجاب <strong>دون تشغيله</strong>، من
+                    خصائص بايتية وبنيوية قابلة للقياس فحسب. وعلى نطاق واسع، يرتّب التقييم نفسه 10,000 ملف تنفيذي
+                    مُستخرَج ليراجع الإنسان الأكثر اشتباهاً أولاً.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>الترميز: متجه السمات</h2>
+            <p>يصير كل ملف <span class="en">PE</span> خام متجهاً ثابتاً بـ<strong>2,380 بُعداً</strong> عبر تسع مجموعات (سمات الإصدار 2):</p>
+            <table>
+                <thead><tr><th>المجموعة (الأبعاد)</th><th>تُحسَب من البايتات الخام</th></tr></thead>
+                <tbody>
+                    <tr><td>مدرّج البايتات (256)</td><td>عدّ كل قيمة بايت <span class="en">0x00–0xFF</span>، مُسوّى — التركيب الإجمالي.</td></tr>
+                    <tr><td>مدرّج عشوائية البايتات (256)</td><td><strong>عشوائية شانون</strong> بنافذة منزلقة؛ المناطق العالية تشير إلى التغليف/التشفير.</td></tr>
+                    <tr><td>إحصاءات السلاسل (109)</td><td>عدد السلاسل القابلة للطباعة، متوسط الطول، عشوائية توزّع المحارف، علامات المسار/<span class="en">URL</span>/السجلّ.</td></tr>
+                    <tr><td>معلومات عامة (10)</td><td>الحجم، الحجم الافتراضي، أعداد الاستيراد/التصدير، وجود تنقيح/<span class="en">TLS</span>/توقيع.</td></tr>
+                    <tr><td>معلومات الترويسة (62)</td><td>نوع آلة/سحر <span class="en">COFF</span>، الطابع الزمني، الخصائص؛ النظام الفرعي، إصدار الرابط.</td></tr>
+                    <tr><td>معلومات المقاطع (305)</td><td>اسم وحجم و<strong>عشوائية</strong> وأعلام وصول كل مقطع — مُجزّأة سماتياً.</td></tr>
+                    <tr><td>الاستيرادات (1,280)</td><td>مكتبات <span class="en">DLL</span> + دوال واجهات (مثل <span class="en"><code>VirtualAlloc</code>, <code>WriteProcessMemory</code></span>) — مُجزّأة.</td></tr>
+                    <tr><td>التصديرات (128)</td><td>أسماء الدوال المُصدَّرة — مُجزّأة سماتياً.</td></tr>
+                    <tr><td>أدلّة البيانات (30)</td><td>حجم وعنوان أدلّة بيانات <span class="en">PE</span> الخمسة عشر.</td></tr>
+                </tbody>
+            </table>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>فخّ التسرّب.</strong> يتسرّب <em>الطابع الزمني</em> في ترويسة <span class="en">PE</span>
+                    تحت تقسيم <span class="en">EMBER</span> الزمني (التدريب قبل عتبة، الاختبار بعدها): إذ يستطيع
+                    النموذج تعلّم "طابع أحدث ⇐ صنف&nbsp;X"، وهو اختصار لن يعمّم على ملفات مجهولة فعلاً. ويسري الخطر
+                    نفسه على أيّ بيانات وصفية لاسم/مسار/مصدر الملف — وهو عين اختصار "مجلّد باسم <em>أدلّة</em>" الذي
+                    يحذّر منه الجزء&nbsp;الرابع. أسقِط السمات المشتقّة من الطابع الزمني أو دقّق فيها.
+                </p>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>الخوارزمية وبنى البيانات</h2>
+            <ul>
+                <li><strong>مصفوفة السمات:</strong> صفّ لكل ملف = الأبعاد 2,380 أعلاه، مُسلسَلة بترتيب المجموعات الثابت؛ المجموعة هي <span class="en"><code>X</code></span> بشكل <span class="en"><code>(n, 2380)</code></span> (خريطة ذاكرة <span class="en">float32</span>) والعناوين <span class="en"><code>y</code></span> (<span class="en"><code>0</code></span> حميد، <span class="en"><code>1</code></span> خبيث، <span class="en"><code>-1</code></span> غير مُعنوَن ← يُسقَط).</li>
+                <li><strong>المصنِّف:</strong> أشجار <a href="https://github.com/microsoft/LightGBM">LightGBM</a> المُعزَّزة بالتدرّج (<span class="en">MIT</span>، <span class="en"><code>LGBMClassifier</code></span>) — خط أساس <span class="en">EMBER</span> الرسمي (<span class="en">AUC ≈ 0.999</span>). تتعامل أشجار <span class="en">GBDT</span> مع السمات المتغايرة وغير المُقيَّسة والمُجزّأة أصلاً دون تسوية. بديل: <span class="en">scikit-learn <code>RandomForestClassifier</code></span>.</li>
+                <li><strong>قابلية التفسير:</strong> <span class="en"><code>model.feature_importance()</code></span> مُسقَطة على المجموعات التسع؛ و<span class="en">SHAP</span> لكل عيّنة على الأثر الوحيد قيد المراجعة.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>التنفيذ</h2>
+            <ol>
+                <li>نزّل واستخرج <span class="en">EMBER</span>؛ <span class="en"><code>pip install lightgbm</code></span> وحزمة <span class="en">ember</span> المساعِدة.</li>
+                <li>اتّجِه السمات الخام بصيغة <span class="en">JSONL</span> ← <span class="en"><code>X_*.dat</code> / <code>y_*.dat</code></span> (هذه الخطوة <em>هي</em> عرض هندسة السمات).</li>
+                <li>حمّل وأسقِط الصفوف غير المُعنوَنة (<span class="en"><code>y == -1</code></span>).</li>
+                <li>درّب <span class="en">LightGBM</span>؛ اطبع أهمّيات السمات مُسقَطة على المجموعات.</li>
+                <li>فحص التسرّب: أعِد التدريب مستبعِداً سمات الطابع الزمني؛ قارن <span class="en">AUC</span> الاختبار عبر التقسيم الزمني.</li>
+                <li>صنّف المجهول المُستخرَج؛ فسّر العيّنة الوحيدة بـ<span class="en">SHAP</span>.</li>
+            </ol>
+            <div class="callout">
+<pre>import ember
+ember.create_vectorized_features("ember2018/")          # raw JSONL -> matrix
+X, y = ember.read_vectorized_features("ember2018/", "train")
+X, y = X[y != -1], y[y != -1]                            # drop unlabeled
+
+model = ember.train_model("ember2018/")                  # LightGBM baseline
+
+# classify the carved unknown, statically (never executed)
+with open("sample_4471.exe", "rb") as f:
+    score = ember.predict_sample(model, f.read())
+print(f"malware probability = {score:.3f}")              # -> 0.987</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>المخرجات النهائية</h2>
+            <p>يرى المحلّل حكماً وثقةً، والأهمّ للمحكمة — السمات التي قادته:</p>
+            <div class="callout">
+<pre>sample_4471.exe
+  VERDICT:     MALWARE
+  CONFIDENCE:  0.987
+  TOP DRIVERS (feature importance / SHAP):
+    1. Section entropy (.text) = 7.92        -> packing
+    2. Imports: VirtualAlloc, WriteProcessMemory -> process injection
+    3. Byte-entropy histogram high bins
+    4. Low printable-string count            -> packed
+  NOTE: timestamp features excluded to avoid temporal leakage.</pre>
+            </div>
+            <p>
+                وكما يشدّد الجزء&nbsp;الرابع، هذا <em>خيط للتحقّق</em> لا حكماً — فإسناد السمات يمنح المراجِع البشري
+                نقطة انطلاق قابلة للدفاع، وملاحظة التسرّب تُبقي المنهج أميناً.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>كيف يشغّل الوكيل هذا:</strong> راجع
+                    <a href="part5_ar.html#worked-prompts">المطالبات التطبيقية في الجزء&nbsp;الخامس</a> لطلب المحلّل
+                    ولأثر <span class="en">ReAct</span> الذي يستخرج السمات ثم يصنّف أثراً مجهولاً دون تشغيله.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="تصفّح الصفحات الفرعية">
+            <a href="part4-knowledge-openflights_ar.html" class="prev">
+                <span class="nav-label">← المثال السابق</span>
+                <span class="nav-title">المعرفة والاستدلال · OpenFlights</span>
+            </a>
+            <a href="part4-search-enron_ar.html" class="next">
+                <span class="nav-label">المثال التالي →</span>
+                <span class="nav-title">محركات البحث · Enron</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>عن هذه الصفحة</h3>
+                <p>مثال تطبيقي للجزء&nbsp;الرابع من <a href="../index_ar.html">الجنايات الرقمية: البيانات والذكاء الاصطناعي</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>الأجزاء الخمسة</h3>
+                <ul>
+                    <li><a href="part1_ar.html">الجزء الأول — الأسس</a></li>
+                    <li><a href="part2_ar.html">الجزء الثاني — البيانات</a></li>
+                    <li><a href="part3_ar.html">الجزء الثالث — الخصوصية والمقبولية</a></li>
+                    <li><a href="part4_ar.html"><strong>الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</strong></a></li>
+                    <li><a href="part5_ar.html">الجزء الخامس — الحلول الوكيلة</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>الترخيص</h3>
+                <p>CC BY 4.0. الإسناد: "مواد مقرّر DF-AI، مرخّصة بموجب CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 الجنايات الرقمية والذكاء الاصطناعي · مورد تعليمي مفتوح</p>
+        </div>
+    </footer>
+</body>
+</html>

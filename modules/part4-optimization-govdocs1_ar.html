@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مثال تطبيقي للجزء الرابع: الأمثلة ومفاضلات باريتو لترتيب أولويات الفرز الجنائي، باستخدام مجموعة ملفات GovDocs1 المفتوحة. خط معالجة كامل — التنزيل، والترميز، وحقيبة الظهر/NSGA-II، والتنفيذ، والمخرجات النهائية.">
+    <title>الأمثلة · فرز GovDocs1 | DF-AI الجزء الرابع</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-optimization-govdocs1.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index_ar.html">الرئيسية</a><span class="sep">›</span>
+            <a href="part4_ar.html">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</a><span class="sep">›</span>
+            <span>الأمثلة · GovDocs1</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">الجزء الرابع · مجموعة بيانات ومثال تطبيقي</div>
+        <h1>الأمثلة والمفاضلات — ترتيب أولويات الفرز على مجموعة ملفات</h1>
+        <p class="module-lede">
+            صاغ <a href="part4_ar.html#optimization">قسم الأمثلة</a> الفرزَ بوصفه تعظيماً لـ"الدليل المتوقَّع لكل
+            ساعة-محلّل"، مع جبهة باريتو من التسويات القابلة للدفاع لا جواباً أمثل وحيداً. تجعل هذه الصفحة ذلك ملموساً
+            فوق مجموعة <span class="en">GovDocs1</span> المفتوحة: 1000 ملف مُستخرَج، محلّلان، موعد محكمة نهائي —
+            وأداة أمثلة تتفوّق على الترتيب الجشِع والجشِع-إبسيلون والعشوائي.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="جدول المحتويات">
+            <h4>في هذه الصفحة</h4>
+            <ol>
+                <li><a href="#dataset">مجموعة البيانات والتنزيل</a></li>
+                <li><a href="#scenario">السيناريو الجنائي</a></li>
+                <li><a href="#encoding">الترميز: الملفات ← عناصر</a></li>
+                <li><a href="#algorithm">الخوارزمية وبنى البيانات</a></li>
+                <li><a href="#execution">التنفيذ</a></li>
+                <li><a href="#output">المخرجات النهائية</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>مجموعة البيانات والتنزيل</h2>
+            <p>
+                <strong><span class="en">GovDocs1</span> (ديجيتال كوربورا).</strong> نحو مليون ملف حقيقي
+                (<span class="en">PDF, DOC, XLS, PPT, HTML, JPG, TXT, CSV</span>…) جُمعت من خوادم
+                <span class="en">.gov</span> — مجموعة الاختبار المعيارية بحكم الأمر الواقع في الجنايات الرقمية
+                الأكاديمية. تُشحَن على هيئة <span class="en"><code>subset0.zip … subset9.zip</code></span>، كلٌّ
+                منها 1000 ملف، ليتمكّن الطالب من التجريب على مجموعة فرعية واحدة.
+            </p>
+            <table>
+                <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+                <tbody>
+                    <tr><td>الترخيص</td><td>متاحة بحرية وقابلة لإعادة التوزيع للبحث (برنامج بيانات أمازون المفتوحة). مؤكَّدة مفتوحة الوصول.</td></tr>
+                    <tr><td>الحجم</td><td>المجموعة الكاملة ~مئات الجيجابايت؛ <span class="en"><code>subsetN.zip</code></span> واحدة ≈ عشرات إلى مئات الميجابايت. <em>استخدم مجموعة فرعية واحدة.</em></td></tr>
+                    <tr><td>الصيغة</td><td>ملفات مكتبية/وِب/صور متنوّعة، مسمّاة <span class="en"><code>NNN/NNNNNN.ext</code></span>؛ يُشحَن معها تقرير فحص برمجيات خبيثة (إشارة قيمة مفيدة).</td></tr>
+                    <tr><td>المصدر</td><td><a href="https://digitalcorpora.org/corpora/file-corpora/files/">digitalcorpora.org</a> · <span class="en">S3: <code>s3://digitalcorpora/corpora/files/govdocs1/</code></span></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre># list the bucket first to confirm the exact subset path
+aws s3 ls s3://digitalcorpora/corpora/files/govdocs1/ --no-sign-request
+# then fetch one subset (no AWS account needed)
+curl -L -O https://downloads.digitalcorpora.org/corpora/files/govdocs1/subsets/subset0.zip
+unzip subset0.zip -d ./corpus
+pip install ortools deap numpy python-magic   # OR-Tools + DEAP (NSGA-II)</pre>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>السيناريو الجنائي</h2>
+            <div class="callout callout-story">
+                <p>
+                    صورة قرص من محطة عمل محجوزة جرى استخراج محتواها، فأنتجت 1000 ملف من مجموعة
+                    <span class="en">GovDocs1</span> فرعية واحدة (عُدّ كلاً منها أثراً مُستخرَجاً). لدى محلّلَين
+                    معاً <strong>16 ساعة-محلّل</strong> قبل موعد المحكمة. <em>بأيّ ترتيب، وعلى طابور مَن، ينبغي فحص
+                    الملفات لتعظيم القيمة الاستدلالية المتوقَّعة ضمن ميزانية الوقت؟</em> جداول البيانات والمستندات
+                    عالية القيمة لكل دقيقة؛ والوسائط الكبيرة بطيئة؛ وقليل من الملفات المُعلَّمة كخبيثة عالية القيمة
+                    لكنها مكلِفة.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>الترميز: الملفات ← عناصر</h2>
+            <p>يصير كل ملف مُستخرَج سجلاً بـ<strong>تكلفة</strong> و<strong>قيمة</strong> شفافتين:</p>
+            <table>
+                <thead><tr><th>السمة</th><th>كيف تُحسَب (بثمن بخس وقابلية تكرار)</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="en"><code>cost_minutes</code></span></td><td><span class="en"><code>base[ext] + k · size_MB</code></span>، مثلاً <span class="en"><code>base = {xls:8, doc:6, pdf:5, ppt:5, html:3, jpg:4, txt:2}</code></span>، <span class="en"><code>k ≈ 2</code></span>.</td></tr>
+                    <tr><td><span class="en"><code>value_score</code></span></td><td>أولوية نوع الملف + مكافأة تقرير الفحص الخبيث + إصابات تعابير نمطية/عشوائية معلوماتية (بريد، أنماط بطاقات/<span class="en">IBAN</span>، عشوائية عالية = تشفير/إخفاء محتمل).</td></tr>
+                    <tr><td>زوج العنصر</td><td><span class="en"><code>(id, ext, size, cost_minutes, value_score)</code></span></td></tr>
+                    <tr><td>الهدف الثاني (باريتو)</td><td><span class="en"><code>coverage</code></span> = عدد أنواع الملفات المتمايزة المَطروقة — الشمولية مفاضَلةً مع القيمة والوقت.</td></tr>
+                </tbody>
+            </table>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>أبقِ معادلة القيمة قابلة للإفصاح.</strong> كل وزن (أولويات الأنواع، مكافأة الخبيث، مجموعة
+                    التعابير النمطية) رقم يمكنك الدفاع عنه في المحكمة. وفي اللحظة التي تصير فيها "القيمة" درجة صندوق
+                    أسود، يفقد ترتيب الفرز قابليته للتفسير — وهو الفخّ نفسه الذي يحذّر منه الجزء&nbsp;الرابع بشأن
+                    تعلّم الآلة.
+                </p>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>الخوارزمية وبنى البيانات</h2>
+            <ul>
+                <li><strong>خطوط الأساس (من الجزء&nbsp;الرابع):</strong> جشِع (ترتيب بنسبة القيمة/التكلفة)، جشِع-إبسيلون، عشوائي، وقوة غاشمة (على شريحة ≤20 عنصراً فقط) — الاستراتيجيات الواجب التفوّق عليها.</li>
+                <li><strong>حقيبة الظهر أحادية الهدف:</strong> السعة = دقائق المحلّل، تعظيم مجموع القيمة.
+                <a href="https://developers.google.com/optimization/pack/multiple_knapsack">OR-Tools</a>
+                <span class="en"><code>KnapsackSolver</code></span>؛ البيانات: متجهات قيمة/تكلفة <span class="en">NumPy</span>،
+                وطابور أولوية <span class="en"><code>heapq</code></span> لخط الأساس الجشِع.</li>
+                <li><strong>محلّلان:</strong> نموذج حقيبة ظهر متعدّدة / <span class="en">CP-SAT</span> يُسنِد الملفات إلى صندوقَي 8 ساعات، مع تعظيم القيمة الكلية ضمن كل ميزانية.</li>
+                <li><strong>باريتو متعدّد الأهداف:</strong> <a href="https://github.com/DEAP/deap">DEAP</a>
+                <span class="en">NSGA-II</span> (<span class="en"><code>tools.selNSGA2</code></span>،
+                <span class="en"><code>tools.ParetoFront</code></span>) فوق الأهداف <span class="en"><code>(maximise value, maximise coverage, minimise time)</code></span>؛
+                و<span class="en"><code>Individual</code></span> هو متجه شمول/استبعاد ثنائي.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>التنفيذ</h2>
+            <ol>
+                <li>نزّل مجموعة فرعية واحدة وفُكّ ضغطها في <span class="en"><code>./corpus</code></span>.</li>
+                <li>استخرج السمات: امشِ المجموعة، واحسب <span class="en"><code>cost_minutes</code></span> و<span class="en"><code>value_score</code></span> لكل ملف ← <span class="en"><code>items.csv</code></span>.</li>
+                <li>شغّل خطوط الأساس الأربعة لميزانية 16 ساعة واحدة؛ سجّل القيمة الكلية.</li>
+                <li>احلل الأمثل العددي (ميزانية واحدة) وتقسيم المحلّلَين (<span class="en">CP-SAT</span>)؛ قارن بخطوط الأساس.</li>
+                <li>شغّل <span class="en">NSGA-II</span> لجبهة باريتو قيمة/شمول/وقت؛ اجمع الخطط غير المُهيمَن عليها.</li>
+            </ol>
+            <div class="callout">
+<pre>import numpy as np
+from ortools.algorithms.python import knapsack_solver
+
+# items.csv already has cost_minutes (int) and value_score (int) per file
+values  = items["value_score"].to_list()
+weights = [items["cost_minutes"].to_list()]      # one dimension: minutes
+capacity = [16*60]                                # 16 analyst-hours
+
+s = knapsack_solver.KnapsackSolver(
+    knapsack_solver.SolverType.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
+    "triage")
+s.init(values, weights, capacity)
+best = s.solve()
+chosen = [i for i in range(len(values)) if s.best_solution_contains(i)]
+print(f"selected {len(chosen)} files, total value {best}")
+
+# greedy baseline for comparison
+order = sorted(range(len(values)),
+               key=lambda i: values[i]/weights[0][i], reverse=True)</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>المخرجات النهائية</h2>
+            <p>يتلقّى المحلّل شيئين:</p>
+            <ul>
+                <li><strong>ترتيب فحص مُرتَّب</strong> مقسوماً إلى طابورَي المحلّل&nbsp;A والمحلّل&nbsp;B، كلٌّ يحترم ميزانيته (8 ساعات)، مع الدرجة الكلية للدليل المتوقَّع وجدول يبيّن تفوّق أداة الأمثلة على الجشِع / الجشِع-إبسيلون / العشوائي.</li>
+                <li><strong>جبهة باريتو</strong> من 4–5 خطط بديلة قابلة للدفاع — مثلاً "عالية القيمة / ضيّقة" مقابل "واسعة الشمول / أقل قيمة" — ليختار القائد المفاضلة المناسبة للقضية.</li>
+            </ul>
+            <div class="callout">
+<pre>Examiner A (480 min):  142 files,  value 318.7   [docs+sheets first]
+Examiner B (471 min):  120 files,  value 296.1   [malware-flagged + PDFs]
+vs greedy 571.2 | optimiser 614.8 | random 402.5
+
+Pareto front (value, types covered, minutes):
+  P1  614.8   6   951      <- max value
+  P3  571.0   9   948
+  P5  498.4  11   930      <- max coverage</pre>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>كيف يشغّل الوكيل هذا:</strong> راجع
+                    <a href="part5_ar.html#worked-prompts">المطالبات التطبيقية في الجزء&nbsp;الخامس</a> لطلب المحلّل
+                    ولأثر <span class="en">ReAct</span> الذي يستخرج السمات ويحلّ ويُرجِع كلاً من الخطة والجبهة.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="تصفّح الصفحات الفرعية">
+            <a href="part4-csp-geolife_ar.html" class="prev">
+                <span class="nav-label">← المثال السابق</span>
+                <span class="nav-title">إرضاء القيود · GeoLife</span>
+            </a>
+            <a href="part4-knowledge-openflights_ar.html" class="next">
+                <span class="nav-label">المثال التالي →</span>
+                <span class="nav-title">المعرفة والاستدلال · OpenFlights</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>عن هذه الصفحة</h3>
+                <p>مثال تطبيقي للجزء&nbsp;الرابع من <a href="../index_ar.html">الجنايات الرقمية: البيانات والذكاء الاصطناعي</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>الأجزاء الخمسة</h3>
+                <ul>
+                    <li><a href="part1_ar.html">الجزء الأول — الأسس</a></li>
+                    <li><a href="part2_ar.html">الجزء الثاني — البيانات</a></li>
+                    <li><a href="part3_ar.html">الجزء الثالث — الخصوصية والمقبولية</a></li>
+                    <li><a href="part4_ar.html"><strong>الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</strong></a></li>
+                    <li><a href="part5_ar.html">الجزء الخامس — الحلول الوكيلة</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>الترخيص</h3>
+                <p>CC BY 4.0. الإسناد: "مواد مقرّر DF-AI، مرخّصة بموجب CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 الجنايات الرقمية والذكاء الاصطناعي · مورد تعليمي مفتوح</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 worked example: feature engineering for static malware triage, using the open-access EMBER 2018 dataset. Full pipeline — download, feature groups, LightGBM, execution, and an explainable verdict.">
+    <title>Feature Engineering · EMBER Malware Triage | DF-AI Part 4</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-feature-engineering-ember_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part4.html">Part 4 — In-House AI Tools</a><span class="sep">›</span>
+            <span>Feature engineering · EMBER</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4 · Dataset &amp; worked example</div>
+        <h1>Feature Engineering — Static Malware Triage from Raw Bytes</h1>
+        <p class="module-lede">
+            The <a href="part4.html#data-prep">data-preparation section</a> made the core point: a file is not handed
+            to a classifier as a file — it is handed as a list of features (size, entropy, header bytes, …), and poor
+            features sink even a perfect algorithm. EMBER is the canonical example of exactly that: a Windows
+            executable reduced to a 2,380-dimensional engineered vector. This page walks the raw-bytes → features →
+            verdict pipeline, including the leakage trap to avoid.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#dataset">Dataset &amp; download</a></li>
+                <li><a href="#scenario">Forensic scenario</a></li>
+                <li><a href="#encoding">Encoding: the feature vector</a></li>
+                <li><a href="#algorithm">Algorithm &amp; data structures</a></li>
+                <li><a href="#execution">Execution</a></li>
+                <li><a href="#output">Final output</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>Dataset &amp; download</h2>
+            <p>
+                <strong>EMBER 2018 (v2 features) — Elastic Malware Benchmark for Empowering Researchers.</strong>
+                Engineered static features extracted from ~1 million Windows PE files (malicious / benign /
+                unlabeled), released <em>with the extraction source code</em> — so students can see exactly how raw
+                bytes become features. The textbook "raw artifact → feature vector" story.
+            </p>
+            <table>
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>License</td><td>Data files <strong>MIT</strong>; the extraction code is AGPL-v3. The data you classify is freely usable. Confirmed open-access.</td></tr>
+                    <tr><td>Size</td><td>~1M samples; vectorized matrix ~1M × 2,380 float32 (archive is several GB).</td></tr>
+                    <tr><td>Format</td><td>Per-sample raw features in JSONL + a vectorizer producing binary <code>X_*.dat</code> / <code>y_*.dat</code> memmaps.</td></tr>
+                    <tr><td>Home</td><td><a href="https://github.com/elastic/ember">github.com/elastic/ember</a> · paper arXiv:1804.04637 · mirrors on Academic Torrents &amp; Kaggle (<code>dhoogla/ember-2018-v2-features</code>)</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget https://ember.elastic.co/ember_dataset_2018_2.tar.bz2
+tar -xjf ember_dataset_2018_2.tar.bz2
+pip install lightgbm
+pip install git+https://github.com/elastic/ember.git   # ember.features + helpers</pre>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>Forensic scenario</h2>
+            <div class="callout callout-story">
+                <p>
+                    An analyst carves an unknown Windows executable from unallocated space — no signature, no AV
+                    verdict. <em>Is it benign or malware?</em> — answered <strong>without running it</strong>, purely
+                    from measurable byte-level and structural properties. At scale, the same scoring ranks 10,000
+                    carved executables so a human reviews the most suspicious first.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>Encoding: the feature vector</h2>
+            <p>Each raw PE file becomes a fixed <strong>2,380-dimensional vector</strong> across nine groups (feature version 2):</p>
+            <table>
+                <thead><tr><th>Group (dims)</th><th>Computed from the raw bytes</th></tr></thead>
+                <tbody>
+                    <tr><td>Byte histogram (256)</td><td>Count of each byte value 0x00–0xFF, normalised — gross composition.</td></tr>
+                    <tr><td>Byte-entropy histogram (256)</td><td>Sliding-window <strong>Shannon entropy</strong>; high regions flag packing/encryption.</td></tr>
+                    <tr><td>String stats (109)</td><td>Printable-string count, mean length, char-distribution entropy, path/URL/registry markers.</td></tr>
+                    <tr><td>General info (10)</td><td>File size, virtual size, imports/exports counts, has-debug/TLS/signature.</td></tr>
+                    <tr><td>Header info (62)</td><td>COFF machine type/magic, timestamp, characteristics; subsystem, linker version.</td></tr>
+                    <tr><td>Section info (305)</td><td>Per-section name, size, <strong>entropy</strong>, access flags — feature-hashed.</td></tr>
+                    <tr><td>Imports (1,280)</td><td>DLLs + API functions (e.g. <code>VirtualAlloc</code>, <code>WriteProcessMemory</code>) — hashed.</td></tr>
+                    <tr><td>Exports (128)</td><td>Exported function names — feature-hashed.</td></tr>
+                    <tr><td>Data directories (30)</td><td>Size + address of the 15 PE data directories.</td></tr>
+                </tbody>
+            </table>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Leakage trap.</strong> The PE header <em>timestamp</em> leaks under EMBER's time-split
+                    (train before a cutoff, test after): a model can learn "newer timestamp ⇒ class&nbsp;X", a shortcut
+                    that won't generalise to genuinely unknown files. Same risk for any filename/path/source-feed
+                    metadata — the exact "folder named <em>evidence</em>" shortcut Part&nbsp;4 warns about. Drop or
+                    scrutinise timestamp-derived features.
+                </p>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>Algorithm &amp; data structures</h2>
+            <ul>
+                <li><strong>Feature matrix:</strong> one row per file = the 2,380 floats above, concatenated in fixed group order; the corpus is <code>X</code> of shape <code>(n, 2380)</code> (float32 memmap) and labels <code>y</code> (<code>0</code> benign, <code>1</code> malware, <code>-1</code> unlabeled → dropped).</li>
+                <li><strong>Classifier:</strong> <a href="https://github.com/microsoft/LightGBM">LightGBM</a> gradient-boosted trees (MIT, <code>LGBMClassifier</code>) — the official EMBER baseline (AUC ≈ 0.999). GBDTs handle heterogeneous, unscaled, hashed features natively, no normalisation needed. Alternative: scikit-learn <code>RandomForestClassifier</code>.</li>
+                <li><strong>Explainability:</strong> <code>model.feature_importance()</code> mapped back to the nine groups; per-sample SHAP for the one artefact under review.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>Execution</h2>
+            <ol>
+                <li>Download &amp; extract EMBER; <code>pip install lightgbm</code> and the ember helper package.</li>
+                <li>Vectorize the JSONL raw features → <code>X_*.dat</code> / <code>y_*.dat</code> (this step <em>is</em> the feature-engineering demo).</li>
+                <li>Load and drop unlabeled rows (<code>y == -1</code>).</li>
+                <li>Train LightGBM; print feature importances mapped to the groups.</li>
+                <li>Leakage check: retrain excluding header-timestamp features; compare test AUC over the time-split.</li>
+                <li>Classify the carved unknown; explain the single sample with SHAP.</li>
+            </ol>
+            <div class="callout">
+<pre>import ember
+ember.create_vectorized_features("ember2018/")          # raw JSONL -> matrix
+X, y = ember.read_vectorized_features("ember2018/", "train")
+X, y = X[y != -1], y[y != -1]                            # drop unlabeled
+
+model = ember.train_model("ember2018/")                  # LightGBM baseline
+
+# classify the carved unknown, statically (never executed)
+with open("sample_4471.exe", "rb") as f:
+    score = ember.predict_sample(model, f.read())
+print(f"malware probability = {score:.3f}")              # -> 0.987</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>Final output</h2>
+            <p>The analyst sees a verdict, a confidence, and — most importantly for court — the features that drove it:</p>
+            <div class="callout">
+<pre>sample_4471.exe
+  VERDICT:     MALWARE
+  CONFIDENCE:  0.987
+  TOP DRIVERS (feature importance / SHAP):
+    1. Section entropy (.text) = 7.92        -> packing
+    2. Imports: VirtualAlloc, WriteProcessMemory -> process injection
+    3. Byte-entropy histogram high bins
+    4. Low printable-string count            -> packed
+  NOTE: timestamp features excluded to avoid temporal leakage.</pre>
+            </div>
+            <p>
+                As Part&nbsp;4 stresses, this is a <em>lead to verify</em>, not a verdict — the feature attribution
+                gives the human reviewer a defensible starting point, and the leakage note keeps the method honest.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>How an agent runs this:</strong> see the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
+                    ReAct trace that featurizes then classifies an unknown artefact without executing it.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Sub-page navigation">
+            <a href="part4-knowledge-openflights.html" class="prev">
+                <span class="nav-label">← Previous example</span>
+                <span class="nav-title">Knowledge &amp; reasoning · OpenFlights</span>
+            </a>
+            <a href="part4-search-enron.html" class="next">
+                <span class="nav-label">Next example →</span>
+                <span class="nav-title">Search engines · Enron</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;4 worked example for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

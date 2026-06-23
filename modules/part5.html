@@ -70,6 +70,7 @@
                 <li><a href="#cross-domain">Where forensics sits</a></li>
                 <li><a href="#frameworks">Open-source frameworks</a></li>
                 <li><a href="#anatomy">Anatomy of a forensic triage agent</a></li>
+                <li><a href="#worked-prompts">Five prompts on real data</a></li>
                 <li><a href="#failure-modes">Failure modes &amp; limits</a></li>
                 <li><a href="#takeaways">Recap &amp; further practice</a></li>
             </ol>
@@ -482,6 +483,175 @@
                     Swap sheets with another group and play adversary: find one step where their agent could touch a
                     source it should not, or record a conclusion without sign-off. The best designs are the ones whose
                     gates you cannot get around.
+                </p>
+            </div>
+        </section>
+
+        <section id="worked-prompts" class="module-section">
+            <h2>Five prompts on real data</h2>
+            <p>
+                Each tool from <a href="part4.html">Part&nbsp;4</a> now has a worked pipeline over a real,
+                open-access dataset &mdash; download, encoding, algorithm and final output are documented on the
+                Part&nbsp;4 sub-pages. Here we close the loop: for each one, the natural-language <strong>prompt</strong>
+                an analyst would actually type, and the <strong>ReAct trace</strong> &mdash; Thought &rarr; Action
+                &rarr; Observation &mdash; showing how the agent decomposes that prompt into calls on the very tools
+                you built. Read each trace as an audit log: every action is named, every observation recorded.
+            </p>
+
+            <h3>1 · Constraint satisfaction — alibi check (GeoLife GPS)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "I've extracted the suspect's phone GPS log into <code>/case/phone.plt</code>. They claim they were
+                    home in north Beijing the whole hour from 14:00 to 15:00 on 2008-10-23. A CCTV sighting places them
+                    at the south Beijing crime scene at 14:30. Assuming nobody travels faster than 120&nbsp;km/h,
+                    determine whether the alibi is consistent with their own phone data and the sighting &mdash; and if
+                    it's impossible, tell me exactly which constraint breaks."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: I need the phone's actual logged positions in the window.
+Action:  parse_plt("/case/phone.plt", window=("14:00","15:00"))
+Observation: 6 points, all near 40.01N,116.32E (HOME_NORTH); none in the south.
+
+Thought: Build the CSP — 10-min slots, region domain, anchors + CCTV + reachability.
+Action:  build_csp(slots=7, regions=[HOME_NORTH,MIDTOWN,CRIME_SCENE_SOUTH,ELSEWHERE], v_max=120)
+Observation: 7 vars, 6 anchors, 1 CCTV constraint, 6 reachability constraints.
+
+Thought: Solve and check satisfiability.
+Action:  cp_sat_solve(model)
+Observation: status = INFEASIBLE. core = {P_14:30==HOME_NORTH, P_14:30==CRIME_SCENE_SOUTH}.
+
+Final answer: Alibi inconsistent — phone log and CCTV cannot both be true; no
+120 km/h-bounded movement reconciles a 25 km gap in one slot.</pre>
+            </div>
+            <p>
+                <strong>Limit:</strong> the agent reports UNSAT <em>with</em> the conflict set, never "guilty"; move
+                the CCTV time later and it returns a satisfying timeline instead. The honest output is the conflict,
+                not a verdict. Full pipeline: <a href="part4-csp-geolife.html">Constraint satisfaction · GeoLife</a>.
+            </p>
+
+            <h3>2 · Optimization — triage prioritisation (GovDocs1)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "I've carved 1,000 files from a seized workstation. Two examiners have 8 hours each before the
+                    deadline. Estimate each file's review cost and evidentiary value, then give me (a) the single best
+                    examination plan within 16 analyst-hours split across both examiners, and (b) a Pareto front of
+                    4&ndash;5 alternatives trading thoroughness against value. Show the objective values."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: I need per-file (cost, value) before optimising.
+Action:  run_python("featurize.py --corpus ./corpus --out items.csv")
+Observation: 1000 items; mean cost 6.4 min; 37 malware-flagged; 11 file types.
+
+Thought: Get a defensible single plan — multiple-knapsack, two 480-min bins.
+Action:  run_python("solve_assign.py --items items.csv --bins 2 --cap 480")
+Observation: 142 files selected; A 478 min / B 471 min; total value 318.7.
+
+Thought: The analyst also asked for trade-offs — run NSGA-II.
+Action:  run_python("solve_pareto.py --items items.csv --gen 200")
+Observation: Pareto front of 5 plans, value 318→271 as coverage 6→11 types.
+
+Final answer: ranked queues per examiner + the Pareto front; optimiser beats greedy (571).</pre>
+            </div>
+            <p>
+                <strong>Limit:</strong> the agent presents the front but the <em>choice</em> of trade-off is the
+                human's &mdash; an agent that silently picks one point is hiding a judgement call. Full pipeline:
+                <a href="part4-optimization-govdocs1.html">Optimization · GovDocs1</a>.
+            </p>
+
+            <h3>3 · Knowledge &amp; reasoning — path inference (OpenFlights)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "Subject&nbsp;X claims they were in Dubai and couldn't have reached Bogotá the night of the
+                    incident. Their last confirmed location is London Heathrow (LHR). Using the flight route knowledge
+                    base, determine whether X could have travelled LHR&nbsp;&rarr;&nbsp;BOG with at most 3 connections.
+                    If yes, list every transit hub and cite the specific airline flights that make it possible."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Test reachability LHR -> BOG within 3 hops in the route graph.
+Action:  query_kb("reachable('LHR','BOG',Path), length(Path,L), L =< 4")
+Observation: Path = ['LHR','MAD','BOG']  (1 connection)
+
+Thought: Surface the underlying flight facts so the chain is auditable.
+Action:  query_kb("flight(A,'LHR','MAD')")   -> A = 'BA'
+Action:  query_kb("flight(A,'MAD','BOG')")   -> A = 'AV'
+
+Final answer: Reachable in 1 stop via Madrid (BA then AV) — alibi inconsistent
+with the route graph. Every edge is a named real airline service.</pre>
+            </div>
+            <p>
+                <strong>Limit:</strong> the conclusion is only as complete as the route snapshot &mdash; a "no path
+                found" means "not in this graph", not "impossible in the world". The agent must state the data's date.
+                Full pipeline: <a href="part4-knowledge-openflights.html">Knowledge &amp; reasoning · OpenFlights</a>.
+            </p>
+
+            <h3>4 · Feature engineering — static malware triage (EMBER)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "I carved an unknown Windows executable <code>sample_4471.exe</code> from unallocated space. Don't
+                    execute it. Statically featurize it the way EMBER does, score it with the trained model, and tell
+                    me benign vs malware with a confidence and the top features behind the call."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Must not run the binary — extract EMBER static features, then score.
+Action:  PEFeatureExtractor(2).feature_vector(read("sample_4471.exe"))
+Observation: 2,380-float vector; .text entropy 7.92 (packed); imports VirtualAlloc, WriteProcessMemory.
+
+Thought: High entropy + injection APIs are classic indicators. Score it.
+Action:  model.predict(vector)
+Observation: 0.987 > 0.5 threshold -> malware, high confidence.
+
+Thought: Surface the drivers for the human reviewer.
+Action:  feature_importance + SHAP(this sample)
+Observation: top = section entropy, injection imports, byte-entropy high bins.
+
+Final answer: Malware, confidence 0.987, driven by packing + process-injection imports.</pre>
+            </div>
+            <p>
+                <strong>Limit:</strong> this is a <em>lead to verify</em>, not a verdict &mdash; and the agent must
+                exclude leak-prone features (the PE timestamp) or its confidence is an artefact of the time-split.
+                Full pipeline: <a href="part4-feature-engineering-ember.html">Feature engineering · EMBER</a>.
+            </p>
+
+            <h3>5 · Search engines — ranked e-discovery (Enron)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "The Enron maildir is indexed. Find emails about off-balance-sheet special-purpose entities and the
+                    Raptor/LJM hedges. Return the top 10 most relevant messages with sender, date, score and a one-line
+                    snippet. Refine the query if the top hits look off-topic."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Start with the strongest domain terms over the BM25 index.
+Action:  search(index, "raptor LJM special purpose entity", top_k=10)
+Observation: top score 18.7, but hits 6-10 are generic "special meeting" noise.
+
+Thought: Tighten with a phrase constraint and add an accounting term.
+Action:  search(index, '"special purpose entity" raptor LJM mark-to-market', phrase=True)
+Observation: top 8 all reference Raptor/SPE accounting; noise gone; top score 24.1.
+
+Thought: Pivot on the sender to recover the thread.
+Action:  search(index, "raptor", filter_from="andrew.fastow@enron.com")
+Observation: the linked correspondence chain.
+
+Final answer: ranked hit list with metadata + KWIC snippets for counsel to review top-down.</pre>
+            </div>
+            <p>
+                <strong>Limit:</strong> ranking is a starting point, not a completeness guarantee &mdash; the agent
+                loops (refine, re-query) and a human still decides when coverage is adequate for disclosure. Full
+                pipeline: <a href="part4-search-enron.html">Search engines · Enron</a>.
+            </p>
+
+            <div class="callout callout-discuss">
+                <h4>Discuss</h4>
+                <p>
+                    Across all five traces, mark the single step where a human <em>must</em> stay in control before the
+                    result becomes evidence &mdash; the UNSAT report, the Pareto pick, the snapshot caveat, the
+                    lead-not-verdict, the "is coverage enough?" call. Notice that the agent's value is the tedious
+                    sweep between those gates, not the judgement at them.
                 </p>
             </div>
         </section>

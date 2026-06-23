@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 worked example: building a search engine (inverted index + BM25 ranking) for forensic e-discovery, using the open-access Enron email corpus. Full pipeline — download, indexing, ranking, execution, and a ranked hit list.">
+    <title>Search Engines · Enron E-Discovery | DF-AI Part 4</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-search-enron_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part4.html">Part 4 — In-House AI Tools</a><span class="sep">›</span>
+            <span>Search engines · Enron</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4 · Dataset &amp; worked example</div>
+        <h1>Search Engines — Inverted Index &amp; Ranking for E-Discovery</h1>
+        <p class="module-lede">
+            The <a href="part4.html#search">search section</a> made the point that underneath much of forensics is
+            plain search: build an index once, then retrieve fast. This page builds a real inverted index over the
+            Enron email corpus — the classic e-discovery dataset — and runs ranked keyword queries that surface the
+            most probative messages first instead of scanning half a million files linearly.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#dataset">Dataset &amp; download</a></li>
+                <li><a href="#scenario">Forensic scenario</a></li>
+                <li><a href="#encoding">Encoding: the inverted index</a></li>
+                <li><a href="#algorithm">Algorithm &amp; data structures</a></li>
+                <li><a href="#execution">Execution</a></li>
+                <li><a href="#output">Final output</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>Dataset &amp; download</h2>
+            <p>
+                <strong>Enron Email Dataset (CMU distribution).</strong> ~500,000 real corporate emails from ~150
+                senior Enron employees, released by FERC during the 2001–2004 investigation — the canonical
+                forensic / e-discovery corpus, and the standard testbed for information-retrieval research.
+            </p>
+            <table>
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>License</td><td>Public, freely downloadable for research; CMU asks only that users respect the privacy of those involved. (No formal SPDX licence — treat as research-public.)</td></tr>
+                    <tr><td>Size</td><td>~1.7&nbsp;GB gzipped; ~2.6&nbsp;GB uncompressed; ~0.5M messages.</td></tr>
+                    <tr><td>Format</td><td>Maildir tree — one RFC-822 text file per message (<code>maildir/&lt;user&gt;/&lt;folder&gt;/&lt;n&gt;</code>) with standard headers + body.</td></tr>
+                    <tr><td>Home</td><td><a href="https://www.cs.cmu.edu/~enron/">cs.cmu.edu/~enron</a> (May 2015 version)</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz
+tar -xzf enron_mail_20150507.tar.gz          # creates ./maildir/
+pip install rank-bm25 nltk                    # BM25 ranking + tokeniser
+python -m nltk.downloader stopwords punkt
+# persistent on-disk index alternative: pip install Whoosh</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Scaling note.</strong> 2.6&nbsp;GB is the artefact a student actually indexes; the
+                    <em>same code</em> scales to the multi-terabyte seized-disk collection Part&nbsp;4 describes —
+                    the only change is sharding the index. (For a literal seized-disk story instead, Digital Corpora's
+                    <a href="https://digitalcorpora.org/corpora/scenarios/m57-patents-scenario/">M57-Patents</a>
+                    scenario is the alternative.)
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>Forensic scenario</h2>
+            <div class="callout callout-story">
+                <p>
+                    An e-discovery analyst under a litigation hold must surface every internal email discussing
+                    off-balance-sheet special-purpose entities and the Raptor/LJM hedging vehicles, <em>ranked by
+                    relevance</em>, so counsel reviews the most probative documents first. Rather than linearly
+                    scanning 500k files, the analyst builds an inverted index once, then issues sub-second ranked
+                    queries (<code>raptor</code>, <code>LJM</code>, <code>"special purpose entity"</code>) and pivots
+                    on the top hits.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>Encoding: the inverted index</h2>
+            <p>Raw RFC-822 messages become an inverted index in four passes:</p>
+            <table>
+                <thead><tr><th>Pass</th><th>What happens</th></tr></thead>
+                <tbody>
+                    <tr><td>Parse</td><td><code>email.parser</code> reads each maildir file; keep <code>Message-ID</code> as the doc&nbsp;ID, retain <code>From/To/Subject/Date</code> as fields + the body as the searchable content.</td></tr>
+                    <tr><td>Tokenize</td><td>Split body+subject on non-alphanumeric boundaries (<code>\w+</code>); optionally keep email-address tokens intact.</td></tr>
+                    <tr><td>Normalize</td><td>Lowercase → drop stopwords → Porter/Snowball stem (<code>hedging→hedg</code>) → drop &lt;2-char tokens.</td></tr>
+                    <tr><td>Postings</td><td><code>term → [(doc_id, term_freq, [positions])]</code>; positions enable phrase/proximity queries. A parallel <code>doc_store</code> maps <code>doc_id → {subject, from, date, snippet}</code> for display.</td></tr>
+                </tbody>
+            </table>
+            <p>
+                <strong>Ranking model:</strong> <strong>BM25 (Okapi)</strong> as the primary scorer
+                (<code>k1=1.5, b=0.75</code>), with TF-IDF as the simpler baseline. BM25 is preferred because it
+                saturates term frequency and length-normalises — which matters for the wildly varying email lengths
+                in the corpus.
+            </p>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>Algorithm &amp; data structures</h2>
+            <ul>
+                <li><strong>Inverted index:</strong> <code>dict[str, list[Posting]]</code> (term → postings list) plus a document-length table and corpus average length for BM25.</li>
+                <li><strong>Scoring:</strong> sum BM25 over query terms; rank docs by descending score. The Part-4 search strategies map onto retrieval — <em>brute-force</em> = linear scan of all 500k files (the thing we avoid); <em>greedy</em> = expand the top-scored postings first; <em>ε-greedy/random</em> = occasionally sample lower-ranked hits for diversity during review.</li>
+                <li><strong>Libraries:</strong> <a href="https://github.com/dorianbrown/rank_bm25">rank_bm25</a> (Apache-2.0) for a transparent from-scratch pipeline; scikit-learn <code>TfidfVectorizer</code> for the baseline; <a href="https://whoosh.readthedocs.io/">Whoosh</a> for a real on-disk index with a query parser; Tantivy / Elasticsearch for production scale-out.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>Execution</h2>
+            <ol>
+                <li>Download &amp; extract the corpus; install <code>rank-bm25</code> + <code>nltk</code>.</li>
+                <li>Ingest: walk <code>maildir/</code>, parse each file, build <code>doc_store[doc_id] = {from,to,subject,date,body}</code>.</li>
+                <li>Preprocess: lowercase → tokenize → drop stopwords → stem → <code>tokenized_corpus</code>.</li>
+                <li>Build the index: <code>BM25Okapi(tokenized_corpus)</code> (or a Whoosh on-disk schema).</li>
+                <li>Query: preprocess the query the same way → <code>get_scores</code> → <code>argsort</code> → top-k.</li>
+                <li>Display: join top-k IDs back to <code>doc_store</code> for sender/date/subject + a keyword-in-context snippet; refine with phrase constraints and <code>from:</code> filters.</li>
+            </ol>
+            <div class="callout">
+<pre>import os, email
+from rank_bm25 import BM25Okapi
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+
+stop, stem = set(stopwords.words('english')), SnowballStemmer('english')
+def prep(text):
+    return [stem.stem(w) for w in __import__('re').findall(r'\w+', text.lower())
+            if w not in stop and len(w) > 1]
+
+docs, corpus = [], []
+for root, _, files in os.walk('maildir'):
+    for fn in files:
+        msg = email.message_from_file(open(os.path.join(root, fn),
+                                           errors='ignore'))
+        body = msg.get_payload() if isinstance(msg.get_payload(), str) else ''
+        docs.append({'from': msg['From'], 'date': msg['Date'],
+                     'subject': msg['Subject'], 'body': body})
+        corpus.append(prep((msg['Subject'] or '') + ' ' + body))
+
+bm25 = BM25Okapi(corpus)
+scores = bm25.get_scores(prep('raptor LJM special purpose entity'))
+top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:10]</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>Final output</h2>
+            <p>A ranked hit list the analyst reviews top-down — each row showing relevance score, structured metadata, and a keyword-in-context snippet:</p>
+            <div class="callout">
+<pre>Rank  Score  Date        From                      Subject                    Snippet
+ 1    24.1   2001-09-14  andrew.fastow@enron.com   Re: Raptor restructuring   "…Raptor vehicles and LJM hedge the mark-to-market…"
+ 2    21.6   2001-10-02  richard.causey@enron.com  SPE accounting treatment   "…special purpose entity does not require consolidation…"
+ 3    19.8   2001-08-23  …                         Re: LJM2 capital           "…LJM2 funding for the special purpose entities…"</pre>
+            </div>
+            <p>
+                The deliverable demonstrates the core forensic claim: build an index once, then retrieve ranked hits
+                in milliseconds — letting counsel review the most probative documents first instead of scanning 500k
+                files linearly.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>How an agent runs this:</strong> see the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
+                    ReAct trace that indexes, runs a ranked query, and refines it when the top hits look off-topic.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Sub-page navigation">
+            <a href="part4-feature-engineering-ember.html" class="prev">
+                <span class="nav-label">← Previous example</span>
+                <span class="nav-title">Feature engineering · EMBER</span>
+            </a>
+            <a href="part4.html" class="next">
+                <span class="nav-label">Back to →</span>
+                <span class="nav-title">Part 4 — In-House AI Tools</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;4 worked example for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

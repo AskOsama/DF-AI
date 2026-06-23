@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مثال تطبيقي للجزء الرابع: إرضاء القيود للتحقق من اتساق حجّة الغياب/الخط الزمني جنائياً، باستخدام مجموعة بيانات مسارات GeoLife المفتوحة. خط معالجة كامل — التنزيل، والترميز، والحلّال، والتنفيذ، والمخرجات النهائية.">
+    <title>إرضاء القيود · التحقق من حجّة الغياب بـ GeoLife | DF-AI الجزء الرابع</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-csp-geolife.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index_ar.html">الرئيسية</a><span class="sep">›</span>
+            <a href="part4_ar.html">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</a><span class="sep">›</span>
+            <span>إرضاء القيود · GeoLife</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">الجزء الرابع · مجموعة بيانات ومثال تطبيقي</div>
+        <h1>إرضاء القيود — اتساق حجّة الغياب على مسارات GPS</h1>
+        <p class="module-lede">
+            عرض <a href="part4_ar.html#csp">قسم إرضاء القيود</a> في الجزء&nbsp;الرابع الفكرة نظرياً: الخط الزمني
+            مسألة إرضاء قيود (<span class="en">CSP</span>)، وتُدحَض حجّة الغياب حين <em>لا</em> يوجد أيّ إسناد يُرضي
+            كل القيود معاً. تحوّل هذه الصفحة تلك القصة إلى خط معالجة قابل للتشغيل فوق مجموعة بيانات حقيقية مفتوحة —
+            مسارات <span class="en">GeoLife</span> من مايكروسوفت بوصفها بديلاً عن سجلّ مواقع هاتف محجوز — وتمشي
+            بالسلسلة كاملةً من التنزيل إلى نتيجة جاهزة للمحكمة.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="جدول المحتويات">
+            <h4>في هذه الصفحة</h4>
+            <ol>
+                <li><a href="#dataset">مجموعة البيانات والتنزيل</a></li>
+                <li><a href="#scenario">السيناريو الجنائي</a></li>
+                <li><a href="#encoding">الترميز: البيانات ← مسألة قيود</a></li>
+                <li><a href="#algorithm">الخوارزمية وبنى البيانات</a></li>
+                <li><a href="#execution">التنفيذ</a></li>
+                <li><a href="#output">المخرجات النهائية</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>مجموعة البيانات والتنزيل</h2>
+            <p>
+                <strong>مسارات <span class="en">GeoLife GPS</span> (الإصدار 1.3)، مايكروسوفت ريسيرش آسيا.</strong>
+                17,621 مساراً حقيقياً من 182 مستخدماً (2007–2012، معظمها في بكين) — كلٌّ منها تسلسل كثيف مختوم زمنياً
+                من نقاط خطّ العرض/الطول. وهي تماماً شكل الأثر الذي يستردّه المحقّق الجنائي من هاتف أو متعقّب مركبة:
+                "أين كان هذا الجهاز في اللحظة&nbsp;T؟".
+            </p>
+            <table>
+                <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+                <tbody>
+                    <tr><td>الترخيص</td><td>توزيع بحثي مفتوح من مايكروسوفت — مجاني للاستخدام الأكاديمي/التعليمي مع اشتراط الاستشهاد. (ليس ترخيص برمجيات متساهلاً؛ استشهد بالمصدر.)</td></tr>
+                    <tr><td>الحجم</td><td>~298&nbsp;ميجابايت مضغوطة؛ ~1.2 مليون كم من المسارات</td></tr>
+                    <tr><td>الصيغة</td><td>ملف مضغوط ← <span class="en"><code>Data/&lt;user&gt;/Trajectory/*.plt</code></span> (نصّ <span class="en">CSV</span>: 6 أسطر ترويسة ثم <span class="en"><code>lat,lon,0,alt,days,date,time</code></span>)</td></tr>
+                    <tr><td>المصدر</td><td><a href="https://www.microsoft.com/en-us/download/details.aspx?id=52367">microsoft.com/download id=52367</a> · نسخة بديلة: <span class="en">Kaggle <code>arashnic/microsoft-geolife-gps-trajectory-dataset</code></span></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget -O geolife.zip "https://download.microsoft.com/download/f/4/8/f4894aa5-fdbc-481e-9285-d5f8c4c4f039/Geolife%20Trajectories%201.3.zip"
+unzip geolife.zip
+# one user folder = our "seized phone", e.g.:
+#   Geolife Trajectories 1.3/Data/010/Trajectory/20081023025304.plt
+pip install ortools          # OR-Tools CP-SAT solver (Apache-2.0)
+# teaching-clarity alternative: pip install python-constraint2</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>بيانات حقيقية، قصة مُركَّبة.</strong> مسارات الـ<span class="en">GPS</span> أصيلة؛ أما
+                    السياق الجنائي (المشتبه به، كاميرا المراقبة، مسرح الجريمة) فهو سيناريو تعليمي مُختَلَق فوقها —
+                    الطريقة الأمينة للحصول على تمرين جنائي واقعي من مجموعة بيانات مفتوحة.
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>السيناريو الجنائي</h2>
+            <div class="callout callout-story">
+                <p>
+                    يُحجَز هاتف المشتبه به ويُستردّ سجلّ الـ<span class="en">GPS</span> منه (نستخدم ملف
+                    <span class="en"><code>.plt</code></span> لأحد مستخدمي <span class="en">GeoLife</span> بديلاً).
+                    يدّعي المشتبه به حجّة غياب: <em>"من الساعة 14:00 إلى 15:00 يوم الحادثة كنت في منزلي شمال بكين —
+                    لم أقترب قطّ من مسرح الجريمة جنوباً."</em> تُظهر صورة كاميرا مراقبة شخصاً عند المسرح الجنوبي عند
+                    14:30. <strong>هل تتسق حجّة الغياب مع بيانات الهاتف نفسه ومع المشاهدة، بافتراض أن لا أحد يسافر
+                    أسرع من 120&nbsp;كم/س؟</strong>
+                </p>
+            </div>
+            <p>
+                هذا سؤال <em>اتساق</em> لا أمثَلة — لا نريد "أفضل" خط زمني، بل نريد معرفة هل يمكن لأيّ خط زمني أن
+                يُرضي كل الحقائق معاً. فإن لم يكن ذلك ممكناً، فإن حجّة الغياب تُدحَض بالهندسة، ويمكننا تسمية القيد
+                المحدّد الذي كسرها.
+            </p>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>الترميز: البيانات ← مسألة قيود</h2>
+            <p>
+                جزّئ ساعة الحادثة إلى شرائح من عشر دقائق واطلب من الحلّال أن يضع الجهاز في مناطق تتسق مع كلٍّ من
+                السجلّ المسترَدّ وحجّة الغياب المُدّعاة.
+            </p>
+            <table>
+                <thead><tr><th>عنصر المسألة</th><th>من البيانات</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>المتغيّرات</strong></td><td>واحد لكل شريحة زمنية: <span class="en"><code>P_1400, P_1410, … P_1500</code></span> (7 متغيّرات).</td></tr>
+                    <tr><td><strong>المجالات</strong></td><td>شبكة مناطق صغيرة من تجميع خطّ العرض/الطول: <span class="en"><code>{HOME_NORTH, MIDTOWN, CRIME_SCENE_SOUTH, ELSEWHERE}</code></span>.</td></tr>
+                    <tr><td><strong>قيود التثبيت</strong></td><td>لكل شريحة سجّل فيها الهاتف نقطة فعلاً، ثبّتها: مثلاً <span class="en"><code>P_1400 == HOME_NORTH</code></span>.</td></tr>
+                    <tr><td><strong>قيد المشاهدة</strong></td><td>تأكيد كاميرا المراقبة قيد الاختبار: <span class="en"><code>P_1430 == CRIME_SCENE_SOUTH</code></span>.</td></tr>
+                    <tr><td><strong>قيود قابلية الوصول</strong></td><td>بين الشرائح المتتالية، تصحّ <span class="en"><code>reachable(a,b)</code></span> فقط إذا كان <span class="en"><code>haversine(a,b) ≤ v_max · Δt</code></span> (Δt = 10&nbsp;دقائق، v_max = 120&nbsp;كم/س). الانتقال <span class="en">HOME_NORTH→CRIME_SCENE_SOUTH</span> (~25&nbsp;كم) <em>غير</em> قابل للوصول في شريحة واحدة.</td></tr>
+                </tbody>
+            </table>
+            <p>
+                تُرجِع المسألة إسناداً فقط إذا كان هناك خط زمني ممكن فيزيائياً يُرضي التثبيتات وحجّة الغياب
+                <em>والمشاهدة</em> معاً. وحين يتعذّر ذلك، فإن نتيجة <strong>عدم القابلية للإرضاء
+                (<span class="en">UNSAT</span>)</strong> هي عين النتيجة الجنائية.
+            </p>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>الخوارزمية وبنى البيانات</h2>
+            <ul>
+                <li><strong>الخوارزمية:</strong> بحث تراجعي مع نشر القيود (اتساق الأقواس / الفحص الأمامي). يقوم
+                <span class="en">OR-Tools CP-SAT</span> بذلك تلقائياً، والأهم أنه يُرجِع <em>برهان عدم القابلية</em> —
+                مجموعة قيود متعارضة دنيا.</li>
+                <li><strong>مخطّط القيود:</strong> العقد = متغيّرات الشرائح الزمنية؛ الأضلاع = قيود قابلية الوصول
+                الثنائية بين الشرائح المتتالية؛ القيود الأحادية = التثبيتات والمشاهدة. يُخزَّن كقائمة جوار.</li>
+                <li><strong>جدول المناطق:</strong> <span class="en"><code>{region: (lat, lon)}</code></span> مع مصفوفة
+                مسافات دائرة عظمى (<span class="en">haversine</span>) محسوبة مسبقاً يستشيرها مُسنِد قابلية الوصول.</li>
+                <li><strong>المكتبة:</strong> <a href="https://github.com/google/or-tools">Google OR-Tools</a>
+                <span class="en">CP-SAT</span> (<span class="en"><code>ortools.sat.python.cp_model</code></span>،
+                <span class="en">Apache-2.0</span>). ولنسخة تعليمية شفافة، يكشف
+                <a href="https://github.com/python-constraint/python-constraint">python-constraint</a>
+                (<span class="en">BSD</span>) عن <span class="en"><code>addVariable</code> / <code>addConstraint</code> /
+                <code>getSolution</code></span> مباشرةً.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>التنفيذ</h2>
+            <ol>
+                <li>اختر مجلّد مستخدم واحد بوصفه الهاتف المحجوز؛ حلّل ملف <span class="en"><code>.plt</code></span> (تجاوز 6 أسطر الترويسة)، ورشّح إلى يوم الحادثة ونافذة 14:00–15:00.</li>
+                <li>صنّف كل نقطة مسجّلة إلى منطقة؛ سجّل، لكل شريحة، المنطقة التي كان فيها الهاتف ← قيود التثبيت.</li>
+                <li>ابنِ جدول مراكز المناطق ومصفوفة مسافات <span class="en">haversine</span>.</li>
+                <li>ابنِ المسألة: متغيّرات الشرائح فوق مجال المناطق، التثبيتات الأحادية، قيد كاميرا المراقبة عند 14:30، وقيود قابلية الوصول الثنائية بين الشرائح المتتالية.</li>
+                <li>احلل وفسّر: قابل للإرضاء ← اطبع الخط الزمني للمناطق بحسب الشرائح؛ غير قابل ← استخرج مجموعة التعارض الدنيا.</li>
+            </ol>
+            <div class="callout">
+<pre>from ortools.sat.python import cp_model
+from math import radians, sin, cos, asin, sqrt
+
+REGIONS = ["HOME_NORTH", "MIDTOWN", "CRIME_SCENE_SOUTH", "ELSEWHERE"]
+CENTROID = {"HOME_NORTH": (40.01, 116.32), "MIDTOWN": (39.95, 116.33),
+            "CRIME_SCENE_SOUTH": (39.88, 116.33), "ELSEWHERE": (39.99, 116.50)}
+SLOTS = ["1400", "1410", "1420", "1430", "1440", "1450", "1500"]
+
+def km(a, b):                                   # great-circle distance
+    (la1, lo1), (la2, lo2) = CENTROID[a], CENTROID[b]
+    dla, dlo = radians(la2-la1), radians(lo2-lo1)
+    h = sin(dla/2)**2 + cos(radians(la1))*cos(radians(la2))*sin(dlo/2)**2
+    return 2*6371*asin(sqrt(h))
+
+V_MAX, DT_H = 120, 10/60                         # km/h, hours per slot
+m = cp_model.CpModel()
+P = {s: m.NewIntVar(0, len(REGIONS)-1, f"P_{s}") for s in SLOTS}
+
+# anchors from the recovered phone log (phone was HOME_NORTH all hour)
+for s in SLOTS:
+    m.Add(P[s] == REGIONS.index("HOME_NORTH"))
+# the CCTV sighting under test
+m.Add(P["1430"] == REGIONS.index("CRIME_SCENE_SOUTH"))
+# reachability between consecutive slots
+for a, b in zip(SLOTS, SLOTS[1:]):
+    forbidden = [(i, j) for i in range(len(REGIONS)) for j in range(len(REGIONS))
+                 if km(REGIONS[i], REGIONS[j]) > V_MAX*DT_H]
+    m.AddForbiddenAssignments([P[a], P[b]], forbidden)
+
+solver = cp_model.CpSolver()
+status = solver.Solve(m)
+print(solver.StatusName(status))                # -> INFEASIBLE</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>المخرجات النهائية</h2>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>النتيجة: غير قابلة للإرضاء (<span class="en">INFEASIBLE</span>) — حجّة الغياب متناقضة.</strong>
+                    لا يوجد إسناد لموضع الجهاز عبر 14:00–15:00 يُرضي كل الحقائق معاً. فسجلّ الهاتف يثبّته في
+                    <span class="en">HOME_NORTH</span> عند 14:30، بينما تتطلّب مشاهدة كاميرا المراقبة
+                    <span class="en">CRIME_SCENE_SOUTH</span> عند 14:30؛ والمنطقتان تبعدان نحو 25&nbsp;كم ولا يمكن
+                    احتلالهما في الشريحة نفسها. <strong>مجموعة التعارض الدنيا:</strong>
+                    <span class="en"><code>{phone-anchor@14:30, CCTV@14:30}</code></span>. حجّة الغياب كما صيغت
+                    لا يمكن أن تكون صحيحة.
+                </p>
+            </div>
+            <p>
+                وللمقارنة، انقل وقت كاميرا المراقبة إلى 15:30 فيُرجِع الحلّال خطاً زمنياً قابلاً للإرضاء
+                (<span class="en">HOME_NORTH → MIDTOWN → CRIME_SCENE_SOUTH</span>) — حالة القابلية للإرضاء، مما يبيّن
+                أن المنهج لا يصيح "مذنب" دائماً. وقيمته للمحكمة أن الجواب إسناد محدّد (أو تناقض مُسمّى)، لا احتمال.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>كيف يشغّل الوكيل هذا:</strong> راجع
+                    <a href="part5_ar.html#worked-prompts">المطالبات التطبيقية في الجزء&nbsp;الخامس</a> لطلب المحلّل
+                    بلغة طبيعية ولأثر <span class="en">ReAct</span> الذي يحوّله إلى استدعاءات للحلّال.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="تصفّح الصفحات الفرعية">
+            <a href="part4_ar.html#csp" class="prev">
+                <span class="nav-label">← العودة إلى</span>
+                <span class="nav-title">الجزء الرابع — إرضاء القيود</span>
+            </a>
+            <a href="part4-optimization-govdocs1_ar.html" class="next">
+                <span class="nav-label">المثال التالي →</span>
+                <span class="nav-title">الأمثلة · GovDocs1</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>عن هذه الصفحة</h3>
+                <p>مثال تطبيقي للجزء&nbsp;الرابع من <a href="../index_ar.html">الجنايات الرقمية: البيانات والذكاء الاصطناعي</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>الأجزاء الخمسة</h3>
+                <ul>
+                    <li><a href="part1_ar.html">الجزء الأول — الأسس</a></li>
+                    <li><a href="part2_ar.html">الجزء الثاني — البيانات</a></li>
+                    <li><a href="part3_ar.html">الجزء الثالث — الخصوصية والمقبولية</a></li>
+                    <li><a href="part4_ar.html"><strong>الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</strong></a></li>
+                    <li><a href="part5_ar.html">الجزء الخامس — الحلول الوكيلة</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>الترخيص</h3>
+                <p>CC BY 4.0. الإسناد: "مواد مقرّر DF-AI، مرخّصة بموجب CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 الجنايات الرقمية والذكاء الاصطناعي · مورد تعليمي مفتوح</p>
+        </div>
+    </footer>
+</body>
+</html>

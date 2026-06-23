@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مثال تطبيقي للجزء الرابع: تمثيل المعرفة والاستدلال لاستنتاج المسارات جنائياً، باستخدام مجموعة بيانات مسارات/مطارات OpenFlights المفتوحة. خط معالجة كامل — التنزيل، والحقائق والقواعد، والتسلسل الخلفي، والتنفيذ، واستنتاج قابل للتدقيق.">
+    <title>المعرفة والاستدلال · استنتاج المسارات بـ OpenFlights | DF-AI الجزء الرابع</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-knowledge-openflights.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index_ar.html">الرئيسية</a><span class="sep">›</span>
+            <a href="part4_ar.html">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</a><span class="sep">›</span>
+            <span>المعرفة والاستدلال · OpenFlights</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">الجزء الرابع · مجموعة بيانات ومثال تطبيقي</div>
+        <h1>المعرفة والاستدلال — استنتاج المسارات على شبكة طيران</h1>
+        <p class="module-lede">
+            احتجّ <a href="part4_ar.html#knowledge">قسم الاستدلال المعرفي</a> بأن العائد الجنائي للأنظمة القائمة على
+            القواعد هو <em>الشفافية</em>: كل استنتاج يعود إلى القواعد والحقائق المحدّدة التي أنتجته. تُبرهن هذه الصفحة
+            ذلك فوق مخطّط مسارات <span class="en">OpenFlights</span> المفتوح — باستنتاج هل كان بإمكان مشتبه به بلوغ
+            مدينة عبر رحلات متّصلة، مع الاستشهاد بكل خدمة طيران حقيقية في السلسلة.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="جدول المحتويات">
+            <h4>في هذه الصفحة</h4>
+            <ol>
+                <li><a href="#dataset">مجموعة البيانات والتنزيل</a></li>
+                <li><a href="#scenario">السيناريو الجنائي</a></li>
+                <li><a href="#encoding">الترميز: الحقائق والقواعد</a></li>
+                <li><a href="#algorithm">الخوارزمية وبنى البيانات</a></li>
+                <li><a href="#execution">التنفيذ</a></li>
+                <li><a href="#output">المخرجات النهائية</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>مجموعة البيانات والتنزيل</h2>
+            <p>
+                <strong>مسارات ومطارات <span class="en">OpenFlights</span>.</strong> مخطّط عالمي يضمّ نحو 67,663
+                مسار طيران مجدوَلاً بين نحو 3,321 مطاراً على 548 شركة، إضافةً إلى دليل بأكثر من 10,000 مطار مع بيانات
+                المدينة/البلد/الموقع. صغير، بصيغة <span class="en">CSV</span> بسيطة، ويُحمَّل كاملاً في الذاكرة بسهولة.
+            </p>
+            <table>
+                <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+                <tbody>
+                    <tr><td>الترخيص</td><td>البيانات مُصدَرة بموجب <strong>رخصة قاعدة البيانات المفتوحة (<span class="en">ODbL</span>)</strong> — مفتوحة تماماً لإعادة الاستخدام/التوزيع مع الإسناد ("<span class="en">OpenFlights.org</span>"). (شِفرة <em>تطبيق</em> المستودع بترخيص <span class="en">AGPL</span>؛ أنت تستخدم ملفات البيانات فقط.)</td></tr>
+                    <tr><td>الحجم</td><td><span class="en"><code>routes.dat</code></span> ~2&nbsp;ميجابايت · <span class="en"><code>airports.dat</code></span> ~1&nbsp;ميجابايت</td></tr>
+                    <tr><td>الصيغة</td><td><span class="en">CSV</span> بترميز <span class="en">UTF-8</span> بلا ترويسة؛ القيمة الفارغة = <span class="en"><code>\N</code></span>. المسارات: <span class="en"><code>Airline, …, Src, …, Dst, …, Stops, Equipment</code></span>؛ المطارات: <span class="en"><code>ID, Name, City, Country, IATA, ICAO, Lat, Lon, …</code></span></td></tr>
+                    <tr><td>المصدر</td><td><a href="https://openflights.org/data.php">openflights.org/data.php</a> · المستودع <a href="https://github.com/jpatokal/openflights">jpatokal/openflights</a></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>mkdir -p data &amp;&amp; cd data
+curl -L -O https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat
+curl -L -O https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat
+pip install pyDatalog networkx        # rule engine + graph cross-check</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>بيانات حقيقية، قصة مُركَّبة.</strong> مخطّط المسارات أصيل (لقطة ثابتة من يونيو 2014 —
+                    مثالية لأن كل طالب يحصل على نتائج متطابقة). أما إطار المشتبه به/حجّة الغياب فسيناريو تعليمي
+                    مُختَلَق، وهو تماماً نوع القضية المُختلَقة التي يدعو إليها التكليف حين لا تلائم مجموعة بيانات
+                    جنائية جاهزة.
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>السيناريو الجنائي</h2>
+            <div class="callout callout-story">
+                <p>
+                    يدّعي المشتبه به&nbsp;X أنه كان في دبي ليلة الحادثة، ومن ثَمّ لم يكن بإمكانه أن يكون في بوغوتا
+                    (<span class="en">BOG</span>) حيث وقعت الجريمة. تضع سجلّات الحدود مغادرته من لندن هيثرو
+                    (<span class="en">LHR</span>) قبل نحو 28 ساعة، ولا توجد خدمة مباشرة <span class="en">LHR→BOG</span>
+                    في مخطّط المسارات. <em>هل توجد أيّ سلسلة رحلات متّصلة (≤3 وصلات) تتيح لـ X السفر
+                    <span class="en">LHR → BOG</span> ضمن النافذة الزمنية — وعبر أيّ محاور؟</em> إن وُجدت "نعم، عبر
+                    المحور H" دحضت حجّة الغياب، ويُسمّي المحرّك الرحلات المحدّدة التي تجعلها ممكنة.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>الترميز: الحقائق والقواعد</h2>
+            <p>يصير كل صفّ <span class="en">CSV</span> <strong>حقيقة</strong> أرضية؛ وتُعرَّف قابلية الوصول بـ<strong>قواعد</strong>.</p>
+            <div class="callout">
+<pre># Facts extracted from the CSVs
+airport('LHR', 'London', 'United Kingdom').
+airport('BOG', 'Bogota', 'Colombia').
+flight('BA', 'LHR', 'MAD').        % from routes.dat
+flight('AV', 'MAD', 'BOG').
+
+# Rules (the inference engine)
+reachable(A, B, [A,B])      :- flight(_, A, B).               % one hop
+reachable(A, C, [A|Path])   :- flight(_, A, B),               % transitive
+                               reachable(B, C, Path),
+                               \+ member(A, Path).             % no cycles
+contradicts_alibi(S, O, C, Path) :- claimed_origin(S, O),
+                                     reachable(O, C, Path),
+                                     length(Path, L), L =< 4.  % ≤3 connections</pre>
+            </div>
+            <p>الفكرة نفسها في <a href="https://pypi.org/project/pyDatalog/">pyDatalog</a> (المكتبة الأساسية)، مع تحميل الحقائق في حلقة من <span class="en"><code>routes.dat</code></span>:</p>
+            <div class="callout">
+<pre>from pyDatalog import pyDatalog
+pyDatalog.create_terms('flight, reachable, X, Y, Z, W')
++ flight('BA', 'LHR', 'MAD'); + flight('AV', 'MAD', 'BOG')
+reachable(X, Y) <= flight(Z, X, Y)                  # base case
+reachable(X, Y) <= flight(Z, X, W) & reachable(W, Y) # recursive case
+print(reachable('LHR', 'BOG'))                       # query</pre>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>الخوارزمية وبنى البيانات</h2>
+            <ul>
+                <li><strong>استراتيجية الاستدلال:</strong> <em>التسلسل الخلفي</em> (موجَّه بالهدف: "هل <span class="en">BOG</span> قابلة للوصول من <span class="en">LHR</span>؟") — الخيار الطبيعي، يستكشف فقط المسارات ذات الصلة بالهدف. ونسخة <em>التسلسل الأمامي</em> (تجسيد الإغلاق المتعدّي كاملاً ثم البحث) تمرين تباين جيّد.</li>
+                <li><strong>مخطّط المعرفة:</strong> مخطّط متعدّد موجَّه — العقد = مطارات (<span class="en">IATA</span>)، الأضلاع = رحلات (ضلع لكل خدمة طيران). عملياً <span class="en"><code>networkx.MultiDiGraph</code></span>؛ تنطبق صفوف <span class="en"><code>routes.dat</code></span> على الأضلاع 1:1، ويوفّر <span class="en"><code>airports.dat</code></span> سمات العقد.</li>
+                <li><strong>الاستدلال ≡ بحث:</strong> قابلية الوصول التراجعية مع تجنّب الدورات هي بحث محدود بالعمق/العرض؛ تحقّق متقاطعاً بـ<span class="en"><code>networkx.all_simple_paths(G, src, dst, cutoff=3)</code></span> و<span class="en"><code>has_path</code></span>.</li>
+                <li><strong>المكتبات:</strong> <span class="en">pyDatalog</span> (<span class="en">LGPL</span>) لمحرّك القواعد؛ <span class="en">networkx</span> (<span class="en">BSD</span>) للمخطّط وخوارزميات المسار؛ <span class="en">SWI-Prolog</span> اختيارياً لنسخة <span class="en">Prolog</span> خالصة، أو <span class="en">Experta/CLIPS</span> لعرض تسلسل أمامي بـ<span class="en">RETE</span>.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>التنفيذ</h2>
+            <ol>
+                <li>نزّل <span class="en"><code>routes.dat</code></span> و<span class="en"><code>airports.dat</code></span>.</li>
+                <li>حلّل الحقائق: المطارات ← <span class="en"><code>airport(IATA, City, Country)</code></span>؛ المسارات ← <span class="en"><code>flight(Airline, Src, Dst)</code></span>، متجاوزاً صفوف رموز <span class="en"><code>\N</code></span>.</li>
+                <li>أكّد كل حقائق <span class="en"><code>flight/3</code></span> في <span class="en">pyDatalog</span> (و/أو ابنِ <span class="en"><code>MultiDiGraph</code></span>).</li>
+                <li>عرّف قواعد <span class="en"><code>reachable</code></span> وميزانية الوصلات (≤3 وصلات).</li>
+                <li>استعلِم <span class="en"><code>reachable('LHR','BOG')</code></span>؛ استخرج المسار الشاهد وحقائق <span class="en"><code>flight/3</code></span> على كل ضلع.</li>
+                <li>تحقّق متقاطعاً بـ<span class="en"><code>networkx.all_simple_paths(G,'LHR','BOG',cutoff=3)</code></span>.</li>
+            </ol>
+            <div class="callout">
+<pre>import csv, networkx as nx
+
+G = nx.MultiDiGraph()
+with open('data/airports.dat', encoding='utf-8') as f:
+    for r in csv.reader(f):
+        iata = r[4]
+        if iata != '\\N':
+            G.add_node(iata, city=r[2], country=r[3])
+with open('data/routes.dat', encoding='utf-8') as f:
+    for r in csv.reader(f):
+        src, dst, airline = r[2], r[4], r[0]
+        if src in G and dst in G:
+            G.add_edge(src, dst, airline=airline)
+
+paths = list(nx.all_simple_paths(G, 'LHR', 'BOG', cutoff=3))
+print(paths[0])     # -> ['LHR', 'MAD', 'BOG']</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>المخرجات النهائية</h2>
+            <p><strong>الحقيقة المستنتَجة:</strong> <span class="en"><code>contradicts_alibi('SubjectX','LHR','BOG',['LHR','MAD','BOG'])</code></span> — صحيحة. يوجد مسار بوصلة واحدة عبر مدريد، ضمن النافذة الزمنية بأريحية، فحجّة دبي متناقضة مع شبكة الطيران.</p>
+            <p>والعائد التربوي هو <strong>السلسلة القابلة للتدقيق</strong> — لا احتمال، بل مسار كل ضلع فيه خدمة طيران حقيقية مُسمّاة، واشتقاقه يستشهد بالقاعدة التراجعية المطبَّقة عند كل خطوة:</p>
+            <div class="callout">
+<pre>GOAL: reachable('LHR','BOG')
+ ├─ RULE  reachable(X,Y) <= flight(_,X,W) & reachable(W,Y)
+ │   ├─ FACT  flight('BA','LHR','MAD')     [routes.dat: BA,…,LHR,…,MAD]
+ │   └─ GOAL  reachable('MAD','BOG')
+ │        └─ RULE reachable(X,Y) <= flight(_,X,Y)
+ │             └─ FACT flight('AV','MAD','BOG')  [routes.dat: AV,…,MAD,…,BOG]
+ └─ DERIVED PATH: LHR --BA--> MAD --AV--> BOG   (connections = 1 ≤ 3)</pre>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>كيف يشغّل الوكيل هذا:</strong> راجع
+                    <a href="part5_ar.html#worked-prompts">المطالبات التطبيقية في الجزء&nbsp;الخامس</a> لطلب المحلّل
+                    ولأثر <span class="en">ReAct</span> الذي يستعلم قاعدة المعرفة ويُبرِز حقائق الطيران الكامنة.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="تصفّح الصفحات الفرعية">
+            <a href="part4-optimization-govdocs1_ar.html" class="prev">
+                <span class="nav-label">← المثال السابق</span>
+                <span class="nav-title">الأمثلة · GovDocs1</span>
+            </a>
+            <a href="part4-feature-engineering-ember_ar.html" class="next">
+                <span class="nav-label">المثال التالي →</span>
+                <span class="nav-title">هندسة السمات · EMBER</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>عن هذه الصفحة</h3>
+                <p>مثال تطبيقي للجزء&nbsp;الرابع من <a href="../index_ar.html">الجنايات الرقمية: البيانات والذكاء الاصطناعي</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>الأجزاء الخمسة</h3>
+                <ul>
+                    <li><a href="part1_ar.html">الجزء الأول — الأسس</a></li>
+                    <li><a href="part2_ar.html">الجزء الثاني — البيانات</a></li>
+                    <li><a href="part3_ar.html">الجزء الثالث — الخصوصية والمقبولية</a></li>
+                    <li><a href="part4_ar.html"><strong>الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</strong></a></li>
+                    <li><a href="part5_ar.html">الجزء الخامس — الحلول الوكيلة</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>الترخيص</h3>
+                <p>CC BY 4.0. الإسناد: "مواد مقرّر DF-AI، مرخّصة بموجب CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 الجنايات الرقمية والذكاء الاصطناعي · مورد تعليمي مفتوح</p>
+        </div>
+    </footer>
+</body>
+</html>

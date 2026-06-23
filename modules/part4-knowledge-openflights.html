@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 worked example: knowledge representation & reasoning for forensic path inference, using the open-access OpenFlights routes/airports dataset. Full pipeline — download, facts & rules, backward chaining, execution, and an auditable conclusion.">
+    <title>Knowledge &amp; Reasoning · OpenFlights Path Inference | DF-AI Part 4</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-knowledge-openflights_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part4.html">Part 4 — In-House AI Tools</a><span class="sep">›</span>
+            <span>Knowledge &amp; reasoning · OpenFlights</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4 · Dataset &amp; worked example</div>
+        <h1>Knowledge &amp; Reasoning — Path Inference over a Flight Network</h1>
+        <p class="module-lede">
+            The <a href="part4.html#knowledge">knowledge-reasoning section</a> argued that the forensic payoff of
+            rule-based systems is <em>transparency</em>: every conclusion traces back to the exact rules and facts
+            that produced it. This page demonstrates that over the open-access OpenFlights route graph — deriving
+            whether a suspect could have reached a city by connecting flights, and citing each real airline service
+            in the chain.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#dataset">Dataset &amp; download</a></li>
+                <li><a href="#scenario">Forensic scenario</a></li>
+                <li><a href="#encoding">Encoding: facts &amp; rules</a></li>
+                <li><a href="#algorithm">Algorithm &amp; data structures</a></li>
+                <li><a href="#execution">Execution</a></li>
+                <li><a href="#output">Final output</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>Dataset &amp; download</h2>
+            <p>
+                <strong>OpenFlights Routes &amp; Airports.</strong> A global graph of ~67,663 scheduled airline routes
+                between ~3,321 airports on 548 airlines, plus a gazetteer of 10,000+ airports with city/country/geo
+                metadata. Tiny, plain-CSV, and trivial to load entirely in memory.
+            </p>
+            <table>
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>License</td><td>Data released under the <strong>Open Database License (ODbL)</strong> — fully open for reuse/redistribution with attribution ("OpenFlights.org"). (The repo's <em>application code</em> is AGPL; you only use the data files.)</td></tr>
+                    <tr><td>Size</td><td><code>routes.dat</code> ~2&nbsp;MB · <code>airports.dat</code> ~1&nbsp;MB</td></tr>
+                    <tr><td>Format</td><td>Header-less UTF-8 CSV; null = <code>\N</code>. routes: <code>Airline, …, Src, …, Dst, …, Stops, Equipment</code>; airports: <code>ID, Name, City, Country, IATA, ICAO, Lat, Lon, …</code></td></tr>
+                    <tr><td>Home</td><td><a href="https://openflights.org/data.php">openflights.org/data.php</a> · repo <a href="https://github.com/jpatokal/openflights">jpatokal/openflights</a></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>mkdir -p data &amp;&amp; cd data
+curl -L -O https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat
+curl -L -O https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat
+pip install pyDatalog networkx        # rule engine + graph cross-check</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Real data, constructed story.</strong> The route graph is genuine (a fixed June-2014
+                    snapshot — perfect because every student gets identical results). The suspect/alibi framing is an
+                    invented teaching scenario, exactly the kind of made-up case the brief invites when no off-the-shelf
+                    forensic dataset fits.
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>Forensic scenario</h2>
+            <div class="callout callout-story">
+                <p>
+                    Subject&nbsp;X claims they were in Dubai on the night of an incident and therefore could not have
+                    been in Bogotá (BOG), where the crime occurred. Border records place X departing London Heathrow
+                    (LHR) ~28 hours earlier, and there is no direct LHR→BOG service in the route graph. <em>Is there any
+                    chain of connecting flights (≤3 connections) that would let X travel LHR → BOG within the window —
+                    and through which hubs?</em> A "yes, via hub H" contradicts the alibi, and the engine names the exact
+                    flights that make it possible.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>Encoding: facts &amp; rules</h2>
+            <p>Each CSV row becomes a ground <strong>fact</strong>; reachability is defined by <strong>rules</strong>.</p>
+            <div class="callout">
+<pre># Facts extracted from the CSVs
+airport('LHR', 'London', 'United Kingdom').
+airport('BOG', 'Bogota', 'Colombia').
+flight('BA', 'LHR', 'MAD').        % from routes.dat
+flight('AV', 'MAD', 'BOG').
+
+# Rules (the inference engine)
+reachable(A, B, [A,B])      :- flight(_, A, B).               % one hop
+reachable(A, C, [A|Path])   :- flight(_, A, B),               % transitive
+                               reachable(B, C, Path),
+                               \+ member(A, Path).             % no cycles
+contradicts_alibi(S, O, C, Path) :- claimed_origin(S, O),
+                                     reachable(O, C, Path),
+                                     length(Path, L), L =&lt; 4.  % ≤3 connections</pre>
+            </div>
+            <p>The same idea in <a href="https://pypi.org/project/pyDatalog/">pyDatalog</a> (the primary library), with facts loaded in a loop from <code>routes.dat</code>:</p>
+            <div class="callout">
+<pre>from pyDatalog import pyDatalog
+pyDatalog.create_terms('flight, reachable, X, Y, Z, W')
++ flight('BA', 'LHR', 'MAD'); + flight('AV', 'MAD', 'BOG')
+reachable(X, Y) &lt;= flight(Z, X, Y)                  # base case
+reachable(X, Y) &lt;= flight(Z, X, W) &amp; reachable(W, Y) # recursive case
+print(reachable('LHR', 'BOG'))                       # query</pre>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>Algorithm &amp; data structures</h2>
+            <ul>
+                <li><strong>Inference strategy:</strong> <em>backward chaining</em> (goal-directed: "is BOG reachable from LHR?") — the natural fit, exploring only routes relevant to the goal. A <em>forward-chaining</em> variant (materialise the full transitive closure, then look up) is a good contrast exercise.</li>
+                <li><strong>Knowledge graph:</strong> a directed multigraph — nodes = airports (IATA), edges = flights (one edge per airline service). Concretely a <code>networkx.MultiDiGraph</code>; <code>routes.dat</code> rows map 1:1 to edges, <code>airports.dat</code> supplies node attributes.</li>
+                <li><strong>Reasoning ≡ search:</strong> recursive reachability with cycle-avoidance is bounded DFS/BFS; cross-check with <code>networkx.all_simple_paths(G, src, dst, cutoff=3)</code> and <code>has_path</code>.</li>
+                <li><strong>Libraries:</strong> pyDatalog (LGPL) for the rule engine; networkx (BSD) for the graph + path algorithms; optional SWI-Prolog for a pure-Prolog version, or Experta/CLIPS for a forward-chaining RETE demo.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>Execution</h2>
+            <ol>
+                <li>Download <code>routes.dat</code> and <code>airports.dat</code>.</li>
+                <li>Parse facts: airports → <code>airport(IATA, City, Country)</code>; routes → <code>flight(Airline, Src, Dst)</code>, skipping rows with <code>\N</code> codes.</li>
+                <li>Assert all <code>flight/3</code> facts into pyDatalog (and/or build the <code>MultiDiGraph</code>).</li>
+                <li>Define the <code>reachable</code> rules and the hop budget (≤3 connections).</li>
+                <li>Query <code>reachable('LHR','BOG')</code>; extract the witnessing path and the <code>flight/3</code> facts on each edge.</li>
+                <li>Cross-validate with <code>networkx.all_simple_paths(G,'LHR','BOG',cutoff=3)</code>.</li>
+            </ol>
+            <div class="callout">
+<pre>import csv, networkx as nx
+
+G = nx.MultiDiGraph()
+with open('data/airports.dat', encoding='utf-8') as f:
+    for r in csv.reader(f):
+        iata = r[4]
+        if iata != '\\N':
+            G.add_node(iata, city=r[2], country=r[3])
+with open('data/routes.dat', encoding='utf-8') as f:
+    for r in csv.reader(f):
+        src, dst, airline = r[2], r[4], r[0]
+        if src in G and dst in G:
+            G.add_edge(src, dst, airline=airline)
+
+paths = list(nx.all_simple_paths(G, 'LHR', 'BOG', cutoff=3))
+print(paths[0])     # -> ['LHR', 'MAD', 'BOG']</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>Final output</h2>
+            <p><strong>Derived fact:</strong> <code>contradicts_alibi('SubjectX','LHR','BOG',['LHR','MAD','BOG'])</code> — TRUE. A one-connection route via Madrid exists, well within the time window, so the Dubai alibi is inconsistent with the flight network.</p>
+            <p>The pedagogical payoff is the <strong>auditable chain</strong> — not a probability, but a path whose every edge is a named real airline service and whose derivation cites the recursive rule applied at each step:</p>
+            <div class="callout">
+<pre>GOAL: reachable('LHR','BOG')
+ ├─ RULE  reachable(X,Y) &lt;= flight(_,X,W) &amp; reachable(W,Y)
+ │   ├─ FACT  flight('BA','LHR','MAD')     [routes.dat: BA,…,LHR,…,MAD]
+ │   └─ GOAL  reachable('MAD','BOG')
+ │        └─ RULE reachable(X,Y) &lt;= flight(_,X,Y)
+ │             └─ FACT flight('AV','MAD','BOG')  [routes.dat: AV,…,MAD,…,BOG]
+ └─ DERIVED PATH: LHR --BA--> MAD --AV--> BOG   (connections = 1 ≤ 3)</pre>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>How an agent runs this:</strong> see the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
+                    ReAct trace that queries the knowledge base and surfaces the underlying flight facts.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Sub-page navigation">
+            <a href="part4-optimization-govdocs1.html" class="prev">
+                <span class="nav-label">← Previous example</span>
+                <span class="nav-title">Optimization · GovDocs1</span>
+            </a>
+            <a href="part4-feature-engineering-ember.html" class="next">
+                <span class="nav-label">Next example →</span>
+                <span class="nav-title">Feature engineering · EMBER</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;4 worked example for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 worked example: optimization and Pareto trade-offs for forensic triage prioritisation, using the open-access GovDocs1 file corpus. Full pipeline — download, encoding, knapsack/NSGA-II, execution, and final output.">
+    <title>Optimization · GovDocs1 Triage | DF-AI Part 4</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-optimization-govdocs1_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part4.html">Part 4 — In-House AI Tools</a><span class="sep">›</span>
+            <span>Optimization · GovDocs1</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4 · Dataset &amp; worked example</div>
+        <h1>Optimization &amp; Trade-offs — Triage Prioritisation on a File Corpus</h1>
+        <p class="module-lede">
+            The <a href="part4.html#optimization">optimization section</a> framed triage as maximising "expected
+            evidence per analyst-hour", with a Pareto front of defensible compromises rather than a single best
+            answer. This page makes that concrete over the open-access GovDocs1 corpus: 1,000 carved files, two
+            examiners, a court deadline — and an optimiser that beats greedy, ε-greedy and random ordering.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#dataset">Dataset &amp; download</a></li>
+                <li><a href="#scenario">Forensic scenario</a></li>
+                <li><a href="#encoding">Encoding: files → items</a></li>
+                <li><a href="#algorithm">Algorithm &amp; data structures</a></li>
+                <li><a href="#execution">Execution</a></li>
+                <li><a href="#output">Final output</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>Dataset &amp; download</h2>
+            <p>
+                <strong>GovDocs1 (Digital Corpora).</strong> Roughly one million real files (PDF, DOC, XLS, PPT, HTML,
+                JPG, TXT, CSV…) harvested from <code>.gov</code> servers — the de-facto standard test corpus in
+                academic digital forensics. Conveniently shipped as <code>subset0.zip … subset9.zip</code>, each
+                1,000 files, so a student can pilot on a single subset.
+            </p>
+            <table>
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>License</td><td>Freely available and redistributable for research (AWS Open Data Sponsorship). Confirmed open-access.</td></tr>
+                    <tr><td>Size</td><td>Full corpus ~hundreds of GB; one <code>subsetN.zip</code> ≈ tens–hundreds of MB. <em>Use one subset.</em></td></tr>
+                    <tr><td>Format</td><td>Heterogeneous office/web/image files, named <code>NNN/NNNNNN.ext</code>; a malware-scan report ships alongside (a useful value signal).</td></tr>
+                    <tr><td>Home</td><td><a href="https://digitalcorpora.org/corpora/file-corpora/files/">digitalcorpora.org</a> · S3: <code>s3://digitalcorpora/corpora/files/govdocs1/</code></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre># list the bucket first to confirm the exact subset path
+aws s3 ls s3://digitalcorpora/corpora/files/govdocs1/ --no-sign-request
+# then fetch one subset (no AWS account needed)
+curl -L -O https://downloads.digitalcorpora.org/corpora/files/govdocs1/subsets/subset0.zip
+unzip subset0.zip -d ./corpus
+pip install ortools deap numpy python-magic   # OR-Tools + DEAP (NSGA-II)</pre>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>Forensic scenario</h2>
+            <div class="callout callout-story">
+                <p>
+                    A drive image from a seized workstation has been carved, yielding the 1,000 files of one GovDocs1
+                    subset (treat each as one carved artefact). Two examiners have a combined <strong>16
+                    analyst-hours</strong> before a court deadline. <em>In what order, and on whose queue, should files
+                    be examined to maximise expected evidentiary value within the time budget?</em> Spreadsheets and
+                    documents are high-value-per-minute; large media are slow; a few malware-flagged files are
+                    high-value but expensive.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>Encoding: files → items</h2>
+            <p>Each carved file becomes a record with a transparent <strong>cost</strong> and <strong>value</strong>:</p>
+            <table>
+                <thead><tr><th>Attribute</th><th>How it's computed (cheaply, reproducibly)</th></tr></thead>
+                <tbody>
+                    <tr><td><code>cost_minutes</code></td><td><code>base[ext] + k · size_MB</code>, e.g. <code>base = {xls:8, doc:6, pdf:5, ppt:5, html:3, jpg:4, txt:2}</code>, <code>k ≈ 2</code>.</td></tr>
+                    <tr><td><code>value_score</code></td><td>file-type prior + malware-scan-report bonus + regex/entropy hits (emails, card/IBAN patterns, high-entropy = possible encryption/stego).</td></tr>
+                    <tr><td>item tuple</td><td><code>(id, ext, size, cost_minutes, value_score)</code></td></tr>
+                    <tr><td>2nd objective (Pareto)</td><td><code>coverage</code> = number of distinct file types touched — thoroughness traded against value and time.</td></tr>
+                </tbody>
+            </table>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Keep the value heuristic disclosable.</strong> Every weight (type priors, the malware
+                    bonus, the regex set) is a number you can defend in court. The moment "value" becomes a black-box
+                    score, the triage order stops being explainable — the same trap Part&nbsp;4 warns about for ML.
+                </p>
+            </div>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>Algorithm &amp; data structures</h2>
+            <ul>
+                <li><strong>Baselines (from Part&nbsp;4):</strong> greedy (sort by value/cost), ε-greedy, random, and brute-force (only on a ≤20-item slice) — the strategies to beat.</li>
+                <li><strong>Single-objective knapsack:</strong> capacity = analyst-minutes, maximise Σ value. <a href="https://developers.google.com/optimization/pack/multiple_knapsack">OR-Tools</a> <code>KnapsackSolver</code>; data: NumPy value/cost vectors, a <code>heapq</code> priority queue for the greedy baseline.</li>
+                <li><strong>Two examiners:</strong> a multiple-knapsack / CP-SAT model assigns files to two 8-hour bins, maximising total value within each budget.</li>
+                <li><strong>Multi-objective Pareto:</strong> <a href="https://github.com/DEAP/deap">DEAP</a> NSGA-II (<code>tools.selNSGA2</code>, <code>tools.ParetoFront</code>) over objectives <code>(maximise value, maximise coverage, minimise time)</code>; an <code>Individual</code> is a binary include/exclude vector.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>Execution</h2>
+            <ol>
+                <li>Download one subset and unzip into <code>./corpus</code>.</li>
+                <li>Featurize: walk the corpus, compute <code>cost_minutes</code> and <code>value_score</code> per file → <code>items.csv</code>.</li>
+                <li>Run the four baselines for a single 16-hour budget; record total value.</li>
+                <li>Solve the scalar optimum (one budget) and the two-examiner split (CP-SAT); compare against baselines.</li>
+                <li>Run NSGA-II for the value/coverage/time Pareto front; collect the non-dominated plans.</li>
+            </ol>
+            <div class="callout">
+<pre>import numpy as np
+from ortools.algorithms.python import knapsack_solver
+
+# items.csv already has cost_minutes (int) and value_score (int) per file
+values  = items["value_score"].to_list()
+weights = [items["cost_minutes"].to_list()]      # one dimension: minutes
+capacity = [16*60]                                # 16 analyst-hours
+
+s = knapsack_solver.KnapsackSolver(
+    knapsack_solver.SolverType.KNAPSACK_MULTIDIMENSION_BRANCH_AND_BOUND_SOLVER,
+    "triage")
+s.init(values, weights, capacity)
+best = s.solve()
+chosen = [i for i in range(len(values)) if s.best_solution_contains(i)]
+print(f"selected {len(chosen)} files, total value {best}")
+
+# greedy baseline for comparison
+order = sorted(range(len(values)),
+               key=lambda i: values[i]/weights[0][i], reverse=True)</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>Final output</h2>
+            <p>The analyst receives two things:</p>
+            <ul>
+                <li>A <strong>ranked examination order</strong> split into Examiner&nbsp;A and Examiner&nbsp;B queues, each respecting its 8-hour budget, with the total expected-evidence score and a table showing the optimiser beating greedy / ε-greedy / random.</li>
+                <li>A <strong>Pareto front</strong> of 4–5 defensible alternative plans — e.g. "high-value / narrow" vs. "broad-coverage / lower-value" — so the lead can pick the trade-off that fits the case.</li>
+            </ul>
+            <div class="callout">
+<pre>Examiner A (480 min):  142 files,  value 318.7   [docs+sheets first]
+Examiner B (471 min):  120 files,  value 296.1   [malware-flagged + PDFs]
+vs greedy 571.2 | optimiser 614.8 | random 402.5
+
+Pareto front (value, types covered, minutes):
+  P1  614.8   6   951      <- max value
+  P3  571.0   9   948
+  P5  498.4  11   930      <- max coverage</pre>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>How an agent runs this:</strong> see the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
+                    ReAct trace that featurizes, solves, and returns both the plan and the front.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Sub-page navigation">
+            <a href="part4-csp-geolife.html" class="prev">
+                <span class="nav-label">← Previous example</span>
+                <span class="nav-title">Constraint satisfaction · GeoLife</span>
+            </a>
+            <a href="part4-knowledge-openflights.html" class="next">
+                <span class="nav-label">Next example →</span>
+                <span class="nav-title">Knowledge &amp; reasoning · OpenFlights</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;4 worked example for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

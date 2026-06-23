@@ -70,6 +70,7 @@
                 <li><a href="#cross-domain">أين يقع التحليل الجنائي</a></li>
                 <li><a href="#frameworks">أطر العمل مفتوحة المصدر</a></li>
                 <li><a href="#anatomy">تشريح وكيل فرز جنائي</a></li>
+                <li><a href="#worked-prompts">خمس مطالبات على بيانات حقيقية</a></li>
                 <li><a href="#failure-modes">أنماط الفشل والحدود</a></li>
                 <li><a href="#takeaways">الخلاصة ومزيد من التطبيق</a></li>
             </ol>
@@ -469,6 +470,176 @@
                     بادِل الأوراق مع مجموعةٍ أخرى والعب دور الخصم: اعثر على خطوةٍ واحدة يستطيع فيها وكيلهم المساس
                     بمصدرٍ لا ينبغي له، أو تسجيل استنتاجٍ دون اعتماد. وأفضل التصاميم هي تلك التي لا تستطيع
                     الالتفاف على بواباتها.
+                </p>
+            </div>
+        </section>
+
+        <section id="worked-prompts" class="module-section">
+            <h2>خمس مطالبات على بيانات حقيقية</h2>
+            <p>
+                صار لكل أداة من <a href="part4_ar.html">الجزء&nbsp;الرابع</a> خط معالجة تطبيقي فوق مجموعة بيانات
+                حقيقية مفتوحة — التنزيل والترميز والخوارزمية والمخرجات النهائية موثَّقة على الصفحات الفرعية للجزء
+                الرابع. وهنا نُغلِق الحلقة: لكلٍّ منها، <strong>المطالبة</strong> بلغة طبيعية كما سيكتبها المحلّل
+                فعلاً، و<strong>أثر <span class="en">ReAct</span></strong> — فكرة ← فعل ← ملاحظة — الذي يبيّن كيف
+                يفكّك الوكيل تلك المطالبة إلى استدعاءات للأدوات نفسها التي بنيتها. اقرأ كل أثر بوصفه سجلّ تدقيق: كل
+                فعل مُسمّى، وكل ملاحظة مُسجَّلة.
+            </p>
+
+            <h3>١ · إرضاء القيود — التحقق من حجّة الغياب (<span class="en">GeoLife GPS</span>)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "استخرجتُ سجلّ <span class="en">GPS</span> هاتف المشتبه به إلى
+                    <span class="en"><code>/case/phone.plt</code></span>. يدّعي أنه كان في منزله شمال بكين الساعة
+                    كاملةً من 14:00 إلى 15:00 يوم 2008-10-23. تضع مشاهدة كاميرا مراقبة الشخص عند مسرح الجريمة جنوب
+                    بكين عند 14:30. بافتراض أن لا أحد يسافر أسرع من 120&nbsp;كم/س، حدّد هل تتسق حجّة الغياب مع بيانات
+                    هاتفه نفسه ومع المشاهدة — وإن استحال ذلك، أخبِرني أيّ قيد بالضبط ينكسر."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: I need the phone's actual logged positions in the window.
+Action:  parse_plt("/case/phone.plt", window=("14:00","15:00"))
+Observation: 6 points, all near 40.01N,116.32E (HOME_NORTH); none in the south.
+
+Thought: Build the CSP — 10-min slots, region domain, anchors + CCTV + reachability.
+Action:  build_csp(slots=7, regions=[HOME_NORTH,MIDTOWN,CRIME_SCENE_SOUTH,ELSEWHERE], v_max=120)
+Observation: 7 vars, 6 anchors, 1 CCTV constraint, 6 reachability constraints.
+
+Thought: Solve and check satisfiability.
+Action:  cp_sat_solve(model)
+Observation: status = INFEASIBLE. core = {P_14:30==HOME_NORTH, P_14:30==CRIME_SCENE_SOUTH}.
+
+Final answer: Alibi inconsistent — phone log and CCTV cannot both be true; no
+120 km/h-bounded movement reconciles a 25 km gap in one slot.</pre>
+            </div>
+            <p>
+                <strong>الحدّ:</strong> يبلّغ الوكيل عن عدم القابلية للإرضاء <em>مع</em> مجموعة التعارض، لا عن
+                "مذنب" قطّ؛ وأخّر وقت كاميرا المراقبة فيُرجِع خطاً زمنياً قابلاً للإرضاء بدلاً من ذلك. المُخرَج
+                الأمين هو التعارض لا الحكم. خط المعالجة الكامل:
+                <a href="part4-csp-geolife_ar.html">إرضاء القيود · GeoLife</a>.
+            </p>
+
+            <h3>٢ · الأمثلة — ترتيب أولويات الفرز (<span class="en">GovDocs1</span>)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "استخرجتُ 1000 ملف من محطة عمل محجوزة. لدى محلّلَين 8 ساعات لكلٍّ منهما قبل الموعد النهائي. قدّر
+                    تكلفة مراجعة كل ملف وقيمته الاستدلالية، ثم أعطِني (أ) أفضل خطة فحص وحيدة ضمن 16 ساعة-محلّل مقسومةً
+                    على المحلّلَين، و(ب) جبهة باريتو من 4&ndash;5 بدائل تفاضل بين الشمولية والقيمة. اعرض قيم الأهداف."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: I need per-file (cost, value) before optimising.
+Action:  run_python("featurize.py --corpus ./corpus --out items.csv")
+Observation: 1000 items; mean cost 6.4 min; 37 malware-flagged; 11 file types.
+
+Thought: Get a defensible single plan — multiple-knapsack, two 480-min bins.
+Action:  run_python("solve_assign.py --items items.csv --bins 2 --cap 480")
+Observation: 142 files selected; A 478 min / B 471 min; total value 318.7.
+
+Thought: The analyst also asked for trade-offs — run NSGA-II.
+Action:  run_python("solve_pareto.py --items items.csv --gen 200")
+Observation: Pareto front of 5 plans, value 318→271 as coverage 6→11 types.
+
+Final answer: ranked queues per examiner + the Pareto front; optimiser beats greedy (571).</pre>
+            </div>
+            <p>
+                <strong>الحدّ:</strong> يعرض الوكيل الجبهة لكنّ <em>اختيار</em> المفاضلة من شأن الإنسان — والوكيل
+                الذي يلتقط نقطة واحدة بصمت يُخفي حُكماً. خط المعالجة الكامل:
+                <a href="part4-optimization-govdocs1_ar.html">الأمثلة · GovDocs1</a>.
+            </p>
+
+            <h3>٣ · المعرفة والاستدلال — استنتاج المسار (<span class="en">OpenFlights</span>)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "يدّعي المشتبه به&nbsp;X أنه كان في دبي ولم يكن بإمكانه بلوغ بوغوتا ليلة الحادثة. آخر موقع مؤكَّد
+                    له هو لندن هيثرو (<span class="en">LHR</span>). باستخدام قاعدة معرفة مسارات الطيران، حدّد هل كان
+                    بإمكان X السفر <span class="en">LHR&nbsp;&rarr;&nbsp;BOG</span> بثلاث وصلات على الأكثر. إن كان نعم،
+                    عدِّد كل محور عبور واستشهِد برحلات الطيران المحدّدة التي تجعله ممكناً."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Test reachability LHR -> BOG within 3 hops in the route graph.
+Action:  query_kb("reachable('LHR','BOG',Path), length(Path,L), L =< 4")
+Observation: Path = ['LHR','MAD','BOG']  (1 connection)
+
+Thought: Surface the underlying flight facts so the chain is auditable.
+Action:  query_kb("flight(A,'LHR','MAD')")   -> A = 'BA'
+Action:  query_kb("flight(A,'MAD','BOG')")   -> A = 'AV'
+
+Final answer: Reachable in 1 stop via Madrid (BA then AV) — alibi inconsistent
+with the route graph. Every edge is a named real airline service.</pre>
+            </div>
+            <p>
+                <strong>الحدّ:</strong> الاستنتاج مكتمل بقدر اكتمال لقطة المسارات فحسب — فـ"لا مسار" تعني "ليس في
+                هذا المخطّط" لا "مستحيل في الواقع". وعلى الوكيل أن يذكر تاريخ البيانات. خط المعالجة الكامل:
+                <a href="part4-knowledge-openflights_ar.html">المعرفة والاستدلال · OpenFlights</a>.
+            </p>
+
+            <h3>٤ · هندسة السمات — فرز البرمجيات الخبيثة استاتيكياً (<span class="en">EMBER</span>)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "استخرجتُ ملف <span class="en">Windows</span> تنفيذياً مجهولاً
+                    <span class="en"><code>sample_4471.exe</code></span> من مساحة غير مخصَّصة. لا تشغّله. استخرِج سماته
+                    استاتيكياً بالطريقة التي يتّبعها <span class="en">EMBER</span>، وقيّمه بالنموذج المُدرَّب، وأخبِرني
+                    حميد أم خبيث مع ثقة وأهمّ السمات وراء الحكم."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Must not run the binary — extract EMBER static features, then score.
+Action:  PEFeatureExtractor(2).feature_vector(read("sample_4471.exe"))
+Observation: 2,380-float vector; .text entropy 7.92 (packed); imports VirtualAlloc, WriteProcessMemory.
+
+Thought: High entropy + injection APIs are classic indicators. Score it.
+Action:  model.predict(vector)
+Observation: 0.987 > 0.5 threshold -> malware, high confidence.
+
+Thought: Surface the drivers for the human reviewer.
+Action:  feature_importance + SHAP(this sample)
+Observation: top = section entropy, injection imports, byte-entropy high bins.
+
+Final answer: Malware, confidence 0.987, driven by packing + process-injection imports.</pre>
+            </div>
+            <p>
+                <strong>الحدّ:</strong> هذا <em>خيط للتحقّق</em> لا حكماً — وعلى الوكيل استبعاد السمات المعرّضة
+                للتسرّب (الطابع الزمني لـ<span class="en">PE</span>) وإلا فثقته أثر من آثار التقسيم الزمني. خط المعالجة
+                الكامل: <a href="part4-feature-engineering-ember_ar.html">هندسة السمات · EMBER</a>.
+            </p>
+
+            <h3>٥ · محركات البحث — كشف إلكتروني مُرتَّب (<span class="en">Enron</span>)</h3>
+            <div class="callout callout-story">
+                <p>
+                    "مجموعة <span class="en">Enron maildir</span> مفهرَسة. جِد الرسائل عن كيانات الأغراض الخاصة خارج
+                    الميزانية وتحوّطات <span class="en">Raptor/LJM</span>. أرجِع أكثر 10 رسائل صلةً مع المُرسِل
+                    والتاريخ والدرجة ومقتطف من سطر واحد. نقّح الاستعلام إن بدت أعلى النتائج خارج الموضوع."
+                </p>
+            </div>
+            <div class="callout">
+<pre>Thought: Start with the strongest domain terms over the BM25 index.
+Action:  search(index, "raptor LJM special purpose entity", top_k=10)
+Observation: top score 18.7, but hits 6-10 are generic "special meeting" noise.
+
+Thought: Tighten with a phrase constraint and add an accounting term.
+Action:  search(index, '"special purpose entity" raptor LJM mark-to-market', phrase=True)
+Observation: top 8 all reference Raptor/SPE accounting; noise gone; top score 24.1.
+
+Thought: Pivot on the sender to recover the thread.
+Action:  search(index, "raptor", filter_from="andrew.fastow@enron.com")
+Observation: the linked correspondence chain.
+
+Final answer: ranked hit list with metadata + KWIC snippets for counsel to review top-down.</pre>
+            </div>
+            <p>
+                <strong>الحدّ:</strong> الترتيب نقطة انطلاق لا ضمان شمول — يدور الوكيل (نقّح، أعِد الاستعلام) ويظلّ
+                الإنسان هو من يقرّر متى تكفي التغطية للإفصاح. خط المعالجة الكامل:
+                <a href="part4-search-enron_ar.html">محركات البحث · Enron</a>.
+            </p>
+
+            <div class="callout callout-discuss">
+                <h4>نقاش</h4>
+                <p>
+                    عبر الآثار الخمسة جميعاً، حدّد الخطوة الوحيدة التي <em>يجب</em> أن يبقى الإنسان مسيطراً عندها قبل
+                    أن تصير النتيجة دليلاً — تبليغ عدم القابلية للإرضاء، واختيار نقطة باريتو، وتحفّظ اللقطة الزمنية،
+                    وخيط-لا-حكم، وسؤال "هل تكفي التغطية؟". لاحظ أن قيمة الوكيل في المسح المُمِلّ بين تلك البوابات، لا
+                    في الحُكم عندها.
                 </p>
             </div>
         </section>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مثال تطبيقي للجزء الرابع: بناء محرّك بحث (فهرس معكوس + ترتيب) للكشف الإلكتروني الجنائي، باستخدام مجموعة بريد Enron المفتوحة. خط معالجة كامل — التنزيل، والفهرسة، والترتيب، والتنفيذ، وقائمة نتائج مُرتَّبة.">
+    <title>محركات البحث · الكشف الإلكتروني بـ Enron | DF-AI الجزء الرابع</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-search-enron.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index_ar.html">الرئيسية</a><span class="sep">›</span>
+            <a href="part4_ar.html">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</a><span class="sep">›</span>
+            <span>محركات البحث · Enron</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">الجزء الرابع · مجموعة بيانات ومثال تطبيقي</div>
+        <h1>محركات البحث — فهرس معكوس وترتيب للكشف الإلكتروني</h1>
+        <p class="module-lede">
+            بيّن <a href="part4_ar.html#search">قسم البحث</a> أن وراء كثير من الجنايات الرقمية بحثاً صِرفاً: ابنِ
+            فهرساً مرة واحدة، ثم استرجِع بسرعة. تبني هذه الصفحة فهرساً معكوساً حقيقياً فوق مجموعة بريد
+            <span class="en">Enron</span> — مجموعة الكشف الإلكتروني الكلاسيكية — وتُشغّل استعلامات كلمات مفتاحية
+            مُرتَّبة تُبرِز أكثر الرسائل دلالةً أولاً بدل مسح نصف مليون ملف خطّياً.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="جدول المحتويات">
+            <h4>في هذه الصفحة</h4>
+            <ol>
+                <li><a href="#dataset">مجموعة البيانات والتنزيل</a></li>
+                <li><a href="#scenario">السيناريو الجنائي</a></li>
+                <li><a href="#encoding">الترميز: الفهرس المعكوس</a></li>
+                <li><a href="#algorithm">الخوارزمية وبنى البيانات</a></li>
+                <li><a href="#execution">التنفيذ</a></li>
+                <li><a href="#output">المخرجات النهائية</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>مجموعة البيانات والتنزيل</h2>
+            <p>
+                <strong>مجموعة بريد <span class="en">Enron</span> (توزيع <span class="en">CMU</span>).</strong> نحو
+                500,000 رسالة بريد مؤسسية حقيقية من نحو 150 موظفاً كباراً في <span class="en">Enron</span>، أفرجت
+                عنها <span class="en">FERC</span> أثناء تحقيق 2001–2004 — مجموعة الكشف الإلكتروني/الجنائية النموذجية،
+                والمختبَر المعياري لبحوث استرجاع المعلومات.
+            </p>
+            <table>
+                <thead><tr><th>الخاصية</th><th>القيمة</th></tr></thead>
+                <tbody>
+                    <tr><td>الترخيص</td><td>عامة، قابلة للتنزيل بحرية للبحث؛ تطلب <span class="en">CMU</span> فقط احترام خصوصية المعنيين. (لا ترخيص <span class="en">SPDX</span> رسمي — عُدّها عامة-للبحث.)</td></tr>
+                    <tr><td>الحجم</td><td>~1.7&nbsp;جيجابايت مضغوطة؛ ~2.6&nbsp;جيجابايت غير مضغوطة؛ ~0.5 مليون رسالة.</td></tr>
+                    <tr><td>الصيغة</td><td>شجرة <span class="en">Maildir</span> — ملف نصّي <span class="en">RFC-822</span> لكل رسالة (<span class="en"><code>maildir/&lt;user&gt;/&lt;folder&gt;/&lt;n&gt;</code></span>) بترويسات قياسية + متن.</td></tr>
+                    <tr><td>المصدر</td><td><a href="https://www.cs.cmu.edu/~enron/">cs.cmu.edu/~enron</a> (نسخة مايو 2015)</td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz
+tar -xzf enron_mail_20150507.tar.gz          # creates ./maildir/
+pip install rank-bm25 nltk                    # BM25 ranking + tokeniser
+python -m nltk.downloader stopwords punkt
+# persistent on-disk index alternative: pip install Whoosh</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>ملاحظة عن النطاق.</strong> الـ2.6&nbsp;جيجابايت هي الأثر الذي يفهرسه الطالب فعلاً؛
+                    و<em>الشِفرة نفسها</em> تتوسّع إلى مجموعة قرص محجوز بحجم تيرابايتات كالتي يصفها الجزء&nbsp;الرابع
+                    — التغيير الوحيد هو تجزئة الفهرس. (ولقصة قرص محجوز حرفية بدلاً من ذلك، يُعدّ سيناريو
+                    <a href="https://digitalcorpora.org/corpora/scenarios/m57-patents-scenario/">M57-Patents</a> من
+                    ديجيتال كوربورا البديل.)
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>السيناريو الجنائي</h2>
+            <div class="callout callout-story">
+                <p>
+                    على محلّل كشف إلكتروني تحت حجز قضائي أن يُبرِز كل رسالة داخلية تناقش كيانات الأغراض الخاصة خارج
+                    الميزانية وأدوات التحوّط <span class="en">Raptor/LJM</span>، <em>مُرتَّبةً بالصلة</em>، ليراجع
+                    المحامي أكثر المستندات دلالةً أولاً. وبدل مسح 500 ألف ملف خطّياً، يبني المحلّل فهرساً معكوساً مرة
+                    واحدة، ثم يُصدِر استعلامات مُرتَّبة في أجزاء من الثانية (<span class="en"><code>raptor</code>,
+                    <code>LJM</code>, "special purpose entity"</span>) ويتمحور حول أعلى النتائج.
+                </p>
+            </div>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>الترميز: الفهرس المعكوس</h2>
+            <p>تصير رسائل <span class="en">RFC-822</span> الخام فهرساً معكوساً عبر أربع مرورات:</p>
+            <table>
+                <thead><tr><th>المرور</th><th>ما يحدث</th></tr></thead>
+                <tbody>
+                    <tr><td>التحليل</td><td>يقرأ <span class="en"><code>email.parser</code></span> كل ملف <span class="en">maildir</span>؛ احتفِظ بـ<span class="en"><code>Message-ID</code></span> معرِّفَ مستند، واحتفِظ بـ<span class="en"><code>From/To/Subject/Date</code></span> حقولاً + المتن محتوىً قابلاً للبحث.</td></tr>
+                    <tr><td>التقطيع</td><td>قسّم المتن+الموضوع على حدود غير أبجدية-رقمية (<span class="en"><code>\w+</code></span>)؛ اختيارياً أبقِ رموز عناوين البريد سليمة.</td></tr>
+                    <tr><td>التسوية</td><td>تصغير الأحرف ← إسقاط كلمات الوقف ← تجذير <span class="en">Porter/Snowball</span> (<span class="en"><code>hedging→hedg</code></span>) ← إسقاط الرموز &lt;حرفين.</td></tr>
+                    <tr><td>القوائم</td><td><span class="en"><code>term → [(doc_id, term_freq, [positions])]</code></span>؛ المواضع تتيح استعلامات العبارة/التجاور. وتربط <span class="en"><code>doc_store</code></span> موازِيةٌ <span class="en"><code>doc_id → {subject, from, date, snippet}</code></span> للعرض.</td></tr>
+                </tbody>
+            </table>
+            <p>
+                <strong>نموذج الترتيب:</strong> <strong><span class="en">BM25 (Okapi)</span></strong> مُقيِّماً أساسياً
+                (<span class="en"><code>k1=1.5, b=0.75</code></span>)، مع <span class="en">TF-IDF</span> خط أساس أبسط.
+                يُفضَّل <span class="en">BM25</span> لأنه يُشبِع تكرار المصطلح ويُسوّي الطول — وهو ما يهمّ مع تباين أطوال
+                البريد الجامح في المجموعة.
+            </p>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>الخوارزمية وبنى البيانات</h2>
+            <ul>
+                <li><strong>الفهرس المعكوس:</strong> <span class="en"><code>dict[str, list[Posting]]</code></span> (مصطلح ← قائمة قوائم) مع جدول أطوال المستندات ومتوسط طول المجموعة لأجل <span class="en">BM25</span>.</li>
+                <li><strong>التقييم:</strong> اجمع <span class="en">BM25</span> فوق مصطلحات الاستعلام؛ رتّب المستندات تنازلياً بالدرجة. وتنطبق استراتيجيات بحث الجزء&nbsp;الرابع على الاسترجاع — <em>القوة الغاشمة</em> = مسح خطّي لكل 500 ألف ملف (ما نتجنّبه)؛ <em>الجشِع</em> = توسيع أعلى القوائم درجةً أولاً؛ <em>الجشِع-إبسيلون/العشوائي</em> = أخذ عيّنات من نتائج أدنى أحياناً للتنويع أثناء المراجعة.</li>
+                <li><strong>المكتبات:</strong> <a href="https://github.com/dorianbrown/rank_bm25">rank_bm25</a> (<span class="en">Apache-2.0</span>) لخط معالجة شفاف من الصفر؛ <span class="en">scikit-learn <code>TfidfVectorizer</code></span> لخط الأساس؛ <a href="https://whoosh.readthedocs.io/">Whoosh</a> لفهرس حقيقي على القرص مع مُحلِّل استعلام؛ <span class="en">Tantivy / Elasticsearch</span> للتوسّع الإنتاجي.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>التنفيذ</h2>
+            <ol>
+                <li>نزّل واستخرج المجموعة؛ ثبّت <span class="en"><code>rank-bm25</code></span> + <span class="en"><code>nltk</code></span>.</li>
+                <li>الاستيعاب: امشِ <span class="en"><code>maildir/</code></span>، حلّل كل ملف، ابنِ <span class="en"><code>doc_store[doc_id] = {from,to,subject,date,body}</code></span>.</li>
+                <li>المعالجة المسبقة: تصغير ← تقطيع ← إسقاط كلمات الوقف ← تجذير ← <span class="en"><code>tokenized_corpus</code></span>.</li>
+                <li>بناء الفهرس: <span class="en"><code>BM25Okapi(tokenized_corpus)</code></span> (أو مخطّط <span class="en">Whoosh</span> على القرص).</li>
+                <li>الاستعلام: عالِج الاستعلام بالطريقة نفسها ← <span class="en"><code>get_scores</code></span> ← <span class="en"><code>argsort</code></span> ← أعلى-k.</li>
+                <li>العرض: اربط معرّفات أعلى-k بـ<span class="en"><code>doc_store</code></span> للمُرسِل/التاريخ/الموضوع + مقتطف كلمة-في-سياق؛ نقّح بقيود العبارة ومرشّحات <span class="en"><code>from:</code></span>.</li>
+            </ol>
+            <div class="callout">
+<pre>import os, email
+from rank_bm25 import BM25Okapi
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+
+stop, stem = set(stopwords.words('english')), SnowballStemmer('english')
+def prep(text):
+    return [stem.stem(w) for w in __import__('re').findall(r'\w+', text.lower())
+            if w not in stop and len(w) > 1]
+
+docs, corpus = [], []
+for root, _, files in os.walk('maildir'):
+    for fn in files:
+        msg = email.message_from_file(open(os.path.join(root, fn),
+                                           errors='ignore'))
+        body = msg.get_payload() if isinstance(msg.get_payload(), str) else ''
+        docs.append({'from': msg['From'], 'date': msg['Date'],
+                     'subject': msg['Subject'], 'body': body})
+        corpus.append(prep((msg['Subject'] or '') + ' ' + body))
+
+bm25 = BM25Okapi(corpus)
+scores = bm25.get_scores(prep('raptor LJM special purpose entity'))
+top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:10]</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>المخرجات النهائية</h2>
+            <p>قائمة نتائج مُرتَّبة يراجعها المحلّل من الأعلى — يُظهِر كل صفّ درجة الصلة وبيانات وصفية بنيوية ومقتطف كلمة-في-سياق:</p>
+            <div class="callout">
+<pre>Rank  Score  Date        From                      Subject                    Snippet
+ 1    24.1   2001-09-14  andrew.fastow@enron.com   Re: Raptor restructuring   "…Raptor vehicles and LJM hedge the mark-to-market…"
+ 2    21.6   2001-10-02  richard.causey@enron.com  SPE accounting treatment   "…special purpose entity does not require consolidation…"
+ 3    19.8   2001-08-23  …                         Re: LJM2 capital           "…LJM2 funding for the special purpose entities…"</pre>
+            </div>
+            <p>
+                يُبرهن المُخرَج الادّعاء الجنائي الجوهري: ابنِ الفهرس مرة واحدة، ثم استرجِع نتائج مُرتَّبة في أجزاء
+                من الثانية — لتمكين المحامي من مراجعة أكثر المستندات دلالةً أولاً بدل مسح 500 ألف ملف خطّياً.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>كيف يشغّل الوكيل هذا:</strong> راجع
+                    <a href="part5_ar.html#worked-prompts">المطالبات التطبيقية في الجزء&nbsp;الخامس</a> لطلب المحلّل
+                    ولأثر <span class="en">ReAct</span> الذي يفهرس ويُشغّل استعلاماً مُرتَّباً وينقّحه حين تبدو أعلى
+                    النتائج خارج الموضوع.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="تصفّح الصفحات الفرعية">
+            <a href="part4-feature-engineering-ember_ar.html" class="prev">
+                <span class="nav-label">← المثال السابق</span>
+                <span class="nav-title">هندسة السمات · EMBER</span>
+            </a>
+            <a href="part4_ar.html" class="next">
+                <span class="nav-label">العودة إلى →</span>
+                <span class="nav-title">الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>عن هذه الصفحة</h3>
+                <p>مثال تطبيقي للجزء&nbsp;الرابع من <a href="../index_ar.html">الجنايات الرقمية: البيانات والذكاء الاصطناعي</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>الأجزاء الخمسة</h3>
+                <ul>
+                    <li><a href="part1_ar.html">الجزء الأول — الأسس</a></li>
+                    <li><a href="part2_ar.html">الجزء الثاني — البيانات</a></li>
+                    <li><a href="part3_ar.html">الجزء الثالث — الخصوصية والمقبولية</a></li>
+                    <li><a href="part4_ar.html"><strong>الجزء الرابع — أدوات الذكاء الاصطناعي الداخلية</strong></a></li>
+                    <li><a href="part5_ar.html">الجزء الخامس — الحلول الوكيلة</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>الترخيص</h3>
+                <p>CC BY 4.0. الإسناد: "مواد مقرّر DF-AI، مرخّصة بموجب CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 الجنايات الرقمية والذكاء الاصطناعي · مورد تعليمي مفتوح</p>
+        </div>
+    </footer>
+</body>
+</html>

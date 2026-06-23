@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 4 worked example: constraint satisfaction for forensic alibi/timeline consistency, using the open-access Microsoft GeoLife GPS trajectory dataset. Full pipeline — download, encoding, solver, execution, and final output.">
+    <title>Constraint Satisfaction · GeoLife Alibi Check | DF-AI Part 4</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-4">
+    <div class="language-switcher">
+        <a href="part4-csp-geolife_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part4.html">Part 4 — In-House AI Tools</a><span class="sep">›</span>
+            <span>Constraint satisfaction · GeoLife</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 4 · Dataset &amp; worked example</div>
+        <h1>Constraint Satisfaction — Alibi Consistency on GPS Trajectories</h1>
+        <p class="module-lede">
+            The <a href="part4.html#csp">constraint-satisfaction section</a> in Part&nbsp;4 made the case on paper:
+            a timeline is a CSP, and an alibi is contradicted when <em>no</em> assignment satisfies all the
+            constraints at once. This page turns that story into a runnable pipeline over a real, open-access
+            dataset — Microsoft's GeoLife GPS trajectories standing in for a seized phone's location log — and
+            walks the whole chain from download to a court-ready finding.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#dataset">Dataset &amp; download</a></li>
+                <li><a href="#scenario">Forensic scenario</a></li>
+                <li><a href="#encoding">Encoding: data → CSP</a></li>
+                <li><a href="#algorithm">Algorithm &amp; data structures</a></li>
+                <li><a href="#execution">Execution</a></li>
+                <li><a href="#output">Final output</a></li>
+            </ol>
+        </nav>
+
+        <section id="dataset" class="module-section">
+            <h2>Dataset &amp; download</h2>
+            <p>
+                <strong>GeoLife GPS Trajectories (v1.3), Microsoft Research Asia.</strong> 17,621 real GPS
+                trajectories from 182 users (2007–2012, mostly Beijing) — each a dense, time-stamped sequence of
+                latitude/longitude points. It is exactly the shape of artefact a forensic examiner recovers from a
+                phone or vehicle tracker: "where was this device at time&nbsp;T?"
+            </p>
+            <table>
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody>
+                    <tr><td>License</td><td>Microsoft Research open-research distribution — free for academic/coursework use, with a citation requirement. (Not a permissive code licence; cite the source.)</td></tr>
+                    <tr><td>Size</td><td>~298&nbsp;MB zip; ~1.2M&nbsp;km of tracks</td></tr>
+                    <tr><td>Format</td><td>ZIP → <code>Data/&lt;user&gt;/Trajectory/*.plt</code> (plain-text CSV: 6 header lines, then <code>lat,lon,0,alt,days,date,time</code>)</td></tr>
+                    <tr><td>Home</td><td><a href="https://www.microsoft.com/en-us/download/details.aspx?id=52367">microsoft.com/download id=52367</a> · mirror: Kaggle <code>arashnic/microsoft-geolife-gps-trajectory-dataset</code></td></tr>
+                </tbody>
+            </table>
+            <div class="callout">
+<pre>wget -O geolife.zip "https://download.microsoft.com/download/f/4/8/f4894aa5-fdbc-481e-9285-d5f8c4c4f039/Geolife%20Trajectories%201.3.zip"
+unzip geolife.zip
+# one user folder = our "seized phone", e.g.:
+#   Geolife Trajectories 1.3/Data/010/Trajectory/20081023025304.plt
+pip install ortools          # OR-Tools CP-SAT solver (Apache-2.0)
+# teaching-clarity alternative: pip install python-constraint2</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Real data, constructed story.</strong> The GPS traces are genuine; the criminal context
+                    (suspect, CCTV, crime scene) is an invented teaching scenario layered on top — the honest way to
+                    get a realistic forensic exercise from an open dataset.
+                </p>
+            </div>
+        </section>
+
+        <section id="scenario" class="module-section">
+            <h2>Forensic scenario</h2>
+            <div class="callout callout-story">
+                <p>
+                    A suspect's phone is seized and its GPS log recovered (we use one GeoLife user's <code>.plt</code>
+                    file as the stand-in). The suspect claims an alibi: <em>"From 14:00 to 15:00 on the incident date
+                    I was home in north Beijing — I was never near the crime scene in the south."</em> A CCTV still
+                    places a person at the southern scene at 14:30. <strong>Is the alibi consistent with the phone's
+                    own data and the sighting, given that nobody travels faster than 120&nbsp;km/h?</strong>
+                </p>
+            </div>
+            <p>
+                This is a <em>consistency</em> question, not an optimisation — we don't want the "best" timeline, we
+                want to know whether <em>any</em> timeline can satisfy every fact at once. If none can, the alibi is
+                contradicted by geometry, and we can name the exact constraint that broke it.
+            </p>
+        </section>
+
+        <section id="encoding" class="module-section">
+            <h2>Encoding: data → CSP</h2>
+            <p>
+                Discretise the incident hour into ten-minute slots and ask the solver to place the device in regions
+                consistent with both the recovered log and the claimed alibi.
+            </p>
+            <table>
+                <thead><tr><th>CSP element</th><th>From the data</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Variables</strong></td><td>One per time slot: <code>P_1400, P_1410, … P_1500</code> (7 variables).</td></tr>
+                    <tr><td><strong>Domains</strong></td><td>A small region grid built by binning lat/lon: <code>{HOME_NORTH, MIDTOWN, CRIME_SCENE_SOUTH, ELSEWHERE}</code>.</td></tr>
+                    <tr><td><strong>Anchor constraints</strong></td><td>For each slot the phone actually logged a point, pin it: e.g. <code>P_1400 == HOME_NORTH</code>.</td></tr>
+                    <tr><td><strong>Sighting constraint</strong></td><td>The CCTV assertion under test: <code>P_1430 == CRIME_SCENE_SOUTH</code>.</td></tr>
+                    <tr><td><strong>Reachability constraints</strong></td><td>Between consecutive slots, <code>reachable(a,b)</code> holds only if <code>haversine(a,b) ≤ v_max · Δt</code> (Δt = 10&nbsp;min, v_max = 120&nbsp;km/h). HOME_NORTH→CRIME_SCENE_SOUTH (~25&nbsp;km) is <em>not</em> reachable in one slot.</td></tr>
+                </tbody>
+            </table>
+            <p>
+                The CSP returns an assignment only if a physically possible timeline satisfies the anchors, the
+                alibi, <em>and</em> the sighting. When it can't, that <strong>UNSAT</strong> result is the forensic
+                finding.
+            </p>
+        </section>
+
+        <section id="algorithm" class="module-section">
+            <h2>Algorithm &amp; data structures</h2>
+            <ul>
+                <li><strong>Algorithm:</strong> backtracking search with constraint propagation (arc-consistency / forward checking). OR-Tools CP-SAT does this automatically and, crucially, returns a <em>proof of infeasibility</em> — a minimal conflicting set of constraints.</li>
+                <li><strong>Constraint graph:</strong> nodes = time-slot variables; edges = binary reachability constraints between consecutive slots; unary constraints = anchors and the sighting. Stored as an adjacency list.</li>
+                <li><strong>Region table:</strong> <code>{region: (lat, lon)}</code> plus a precomputed pairwise great-circle (haversine) distance matrix the reachability predicate consults.</li>
+                <li><strong>Library:</strong> <a href="https://github.com/google/or-tools">Google OR-Tools</a> CP-SAT (<code>ortools.sat.python.cp_model</code>, Apache-2.0). For a transparent teaching version, <a href="https://github.com/python-constraint/python-constraint">python-constraint</a> (BSD) exposes <code>addVariable</code> / <code>addConstraint</code> / <code>getSolution</code> directly.</li>
+            </ul>
+        </section>
+
+        <section id="execution" class="module-section">
+            <h2>Execution</h2>
+            <ol>
+                <li>Pick one user folder as the seized phone; parse the <code>.plt</code> file (skip 6 header lines), filter to the incident date and the 14:00–15:00 window.</li>
+                <li>Bin each logged point into a region; record, per slot, which region the phone was in → anchor constraints.</li>
+                <li>Build the region centroid table and a haversine distance matrix.</li>
+                <li>Build the CSP: slot variables over the region domain, unary anchors, the CCTV constraint at 14:30, binary reachability between consecutive slots.</li>
+                <li>Solve and interpret: SAT → print the satisfying region-per-slot timeline; UNSAT → extract the minimal conflict set.</li>
+            </ol>
+            <div class="callout">
+<pre>from ortools.sat.python import cp_model
+from math import radians, sin, cos, asin, sqrt
+
+REGIONS = ["HOME_NORTH", "MIDTOWN", "CRIME_SCENE_SOUTH", "ELSEWHERE"]
+CENTROID = {"HOME_NORTH": (40.01, 116.32), "MIDTOWN": (39.95, 116.33),
+            "CRIME_SCENE_SOUTH": (39.88, 116.33), "ELSEWHERE": (39.99, 116.50)}
+SLOTS = ["1400", "1410", "1420", "1430", "1440", "1450", "1500"]
+
+def km(a, b):                                   # great-circle distance
+    (la1, lo1), (la2, lo2) = CENTROID[a], CENTROID[b]
+    dla, dlo = radians(la2-la1), radians(lo2-lo1)
+    h = sin(dla/2)**2 + cos(radians(la1))*cos(radians(la2))*sin(dlo/2)**2
+    return 2*6371*asin(sqrt(h))
+
+V_MAX, DT_H = 120, 10/60                         # km/h, hours per slot
+m = cp_model.CpModel()
+P = {s: m.NewIntVar(0, len(REGIONS)-1, f"P_{s}") for s in SLOTS}
+
+# anchors from the recovered phone log (phone was HOME_NORTH all hour)
+for s in SLOTS:
+    m.Add(P[s] == REGIONS.index("HOME_NORTH"))
+# the CCTV sighting under test
+m.Add(P["1430"] == REGIONS.index("CRIME_SCENE_SOUTH"))
+# reachability between consecutive slots
+for a, b in zip(SLOTS, SLOTS[1:]):
+    forbidden = [(i, j) for i in range(len(REGIONS)) for j in range(len(REGIONS))
+                 if km(REGIONS[i], REGIONS[j]) > V_MAX*DT_H]
+    m.AddForbiddenAssignments([P[a], P[b]], forbidden)
+
+solver = cp_model.CpSolver()
+status = solver.Solve(m)
+print(solver.StatusName(status))                # -> INFEASIBLE</pre>
+            </div>
+        </section>
+
+        <section id="output" class="module-section">
+            <h2>Final output</h2>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Result: INFEASIBLE — alibi inconsistent.</strong> No assignment of the device's position
+                    over 14:00–15:00 satisfies every fact at once. The phone log anchors it to HOME_NORTH at 14:30,
+                    while the CCTV sighting requires CRIME_SCENE_SOUTH at 14:30; the two regions are ~25&nbsp;km apart
+                    and cannot be occupied in the same slot. <strong>Minimal conflict set:</strong>
+                    <code>{phone-anchor@14:30, CCTV@14:30}</code>. The alibi as stated cannot be true.
+                </p>
+            </div>
+            <p>
+                For contrast, move the CCTV time to 15:30 and the solver returns a satisfying timeline
+                (HOME_NORTH → MIDTOWN → CRIME_SCENE_SOUTH) — the SAT case, showing the method does not simply always
+                cry "guilty". The value for court is that the answer is a concrete assignment (or a named
+                contradiction), not a probability.
+            </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>How an agent runs this:</strong> see the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst's
+                    natural-language request and the ReAct trace that turns it into solver calls.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Sub-page navigation">
+            <a href="part4.html#csp" class="prev">
+                <span class="nav-label">← Back to</span>
+                <span class="nav-title">Part 4 — Constraint satisfaction</span>
+            </a>
+            <a href="part4-optimization-govdocs1.html" class="next">
+                <span class="nav-label">Next example →</span>
+                <span class="nav-title">Optimization · GovDocs1</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;4 worked example for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html"><strong>Part 4 — In-House AI Tools</strong></a></li>
+                    <li><a href="part5.html">Part 5 — Agentic Solutions</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>
