@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 5 verified run — results & guidance: an agent runs the constraint-satisfaction alibi check on the real GeoLife GPS dataset, framed as Approach → Action → Observation → Done, with the genuine captured output.">
+    <title>Verified Run · Constraint Satisfaction (GeoLife) | DF-AI Part 5</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-5">
+    <div class="language-switcher">
+        <a href="part5-csp-geolife_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part5.html">Part 5 — Agentic Solutions</a><span class="sep">›</span>
+            <a href="part5.html#worked-prompts">Worked prompts</a><span class="sep">›</span>
+            <span>Constraint satisfaction — verified run</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 5 · Verified run — results &amp; guidance</div>
+        <h1>Constraint Satisfaction — the Agent's Run on Real GPS Data</h1>
+        <p class="module-lede">
+            This is the actual, executed outcome behind the
+            <a href="part5.html#worked-prompts">worked prompt</a> for constraint satisfaction. The pipeline really ran
+            over a real Microsoft GeoLife trajectory; below is how an agent approaches it — <strong>Approach →
+            Action → Observation → Done</strong> — with the genuine captured output woven into each observation. The
+            data engineering (dataset, encoding, solver) lives on the
+            <a href="part4-csp-geolife.html">Part&nbsp;4 dataset page</a>.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#overview">What was run</a></li>
+                <li><a href="#plan-prompt">Plan-phase prompt</a></li>
+                <li><a href="#execute-prompt">Execute-phase prompt</a></li>
+                <li><a href="#run">The run: Approach → Action → Observation</a></li>
+                <li><a href="#result">Done — the result</a></li>
+                <li><a href="#guidance">Guidance: reading the outcome</a></li>
+                <li><a href="#reproduce">Reproduce it</a></li>
+            </ol>
+        </nav>
+
+        <section id="overview" class="module-section">
+            <h2>What was run</h2>
+            <p>
+                <strong>Forensic question:</strong> a suspect's phone places them at home (north Beijing) at 14:00 and
+                15:00; a CCTV hit reportedly places them at the crime scene (~67&nbsp;km south) at 14:30; nobody travels
+                faster than 120&nbsp;km/h. <em>Is that physically possible — and if not, which evidence conflicts?</em>
+                The agent encodes the hour as a constraint-satisfaction problem over a real GeoLife trajectory and
+                solves it with OR-Tools CP-SAT. <strong>Verified outcome:</strong> the alibi is <code>INFEASIBLE</code>
+                and the solver names the exact conflicting evidence; a re-timed sensitivity check is <code>FEASIBLE</code>.
+            </p>
+        </section>
+
+        <section id="plan-prompt" class="module-section">
+            <h2>Plan-phase prompt</h2>
+            <p>What the analyst types to make the agent <em>plan</em> the analysis (no execution yet):</p>
+            <div class="callout">
+<pre>You are a digital-forensics analyst's planning assistant. Plan — do not yet
+execute — a constraint-satisfaction analysis that tests whether a suspect's
+alibi is physically consistent with the evidence.
+
+Context:
+  - Phone-provider records place the suspect at HOME (north Beijing) at 14:00
+    and at 15:00.
+  - A CCTV hit reportedly places them at the CRIME SCENE (south Beijing, ~67 km
+    from home) at 14:30.
+  - Assume a maximum travel speed of 120 km/h.
+
+Produce a plan covering:
+  1. Data: which open dataset grounds real coordinates (GeoLife GPS v1.3), how
+     to download it, and the .plt format.
+  2. Encoding: time-slot variables, region domains, and which evidence becomes
+     which constraint (anchor / CCTV / reachability via a haversine matrix).
+  3. Tooling: Python + OR-Tools CP-SAT; register CCTV and reachability as
+     assumption literals so an UNSAT core can be extracted.
+  4. Outputs: solver status for two scenarios, the minimal conflicting set on
+     UNSAT, and a satisfying region-per-slot timeline on SAT.
+  5. Reporting rule: the deliverable is "consistent" or "contradictory (with
+     the conflicting evidence named)" — NEVER a guilt determination.
+
+Return the plan as numbered steps with the exact tools/commands you will use.</pre>
+            </div>
+        </section>
+
+        <section id="execute-prompt" class="module-section">
+            <h2>Execute-phase prompt</h2>
+            <p>What the analyst types to actually carry out the plan and run the tools:</p>
+            <div class="callout">
+<pre>Execute the plan now. Concretely:
+  1. Create a venv with --system-site-packages and `pip install ortools`.
+  2. Download GeoLife Trajectories 1.3 into data/ and unzip. If download fails,
+     fall back to a format-accurate synthetic .plt, clearly labelled.
+  3. Write and run run.py so that it: parses a real .plt (skip 6 header lines);
+     builds the 4-region grid anchored on a real GPS point + haversine matrix;
+     builds the CP-SAT model (7 slot vars, anchor + CCTV + reachability as
+     assumption literals); solves scenario (a) CCTV @ CRIME_SCENE_SOUTH 14:30
+     and on UNSAT prints the minimal conflict; solves scenario (b) with the CCTV
+     retimed to a reachable region and prints the satisfying timeline.
+  4. Capture the real output with `python3 run.py | tee output.txt`.
+  5. Summarise consistency / contradiction — do not state guilt.</pre>
+            </div>
+        </section>
+
+        <section id="run" class="module-section">
+            <h2>The run: Approach → Action → Observation</h2>
+            <p>
+                This is the agent's reasoning loop. Each <strong>Observation</strong> below is verbatim from the real
+                <code>output.txt</code> — no edited numbers.
+            </p>
+
+            <h3>Step 1 — Ground the geography in real data</h3>
+            <p><strong>Approach.</strong> I need real Beijing coordinates so the distances are credible; parse a GeoLife trajectory.</p>
+            <div class="callout">
+<pre>Action:  parse_plt("data/.../010/Trajectory/20070804033032.plt")
+
+Observation:
+    Parsed 1116 GPS points (6 header lines skipped).
+    Sample row 1: lat=39.921712, lon=116.472343, alt=13.0, date=2007-08-04, time=03:30:32</pre>
+            </div>
+
+            <h3>Step 2 — Build the region grid and distance matrix</h3>
+            <p><strong>Approach.</strong> Bin space into regions around the anchor and compute how far apart they are, so I know what is reachable in one 10-minute slot (max 20&nbsp;km at 120&nbsp;km/h).</p>
+            <div class="callout">
+<pre>Action:  build_regions(anchor); haversine_distance_matrix()
+
+Observation:
+    Haversine distance matrix (km), max reach per 10 min = 20 km:
+                        HOME_NOR   MIDTOWN  CRIME_SC  ELSEWHER
+    HOME_NORTH               0.0      16.7      66.7      61.0
+    MIDTOWN                 16.7       0.0      50.0      53.8
+    CRIME_SCENE_SOUTH       66.7      50.0       0.0      61.2
+    -> CRIME_SCENE_SOUTH is 66.7 km from HOME: NOT reachable in one slot.</pre>
+            </div>
+
+            <h3>Step 3 — Encode evidence as a CSP and solve (scenario a)</h3>
+            <p><strong>Approach.</strong> Anchor HOME at 14:00 and 15:00 (hard); add the CCTV claim and each reachability hop as assumption literals; solve with CP-SAT.</p>
+            <div class="callout">
+<pre>Action:  solve_alibi(cctv = CRIME_SCENE_SOUTH @ 14:30)        [CP-SAT]
+
+Observation:
+    Solver status : INFEASIBLE
+    -- the evidence is mutually contradictory.</pre>
+            </div>
+
+            <h3>Step 4 — Extract the minimal conflict (UNSAT core)</h3>
+            <p><strong>Approach.</strong> Infeasible means the evidence clashes; extract the smallest conflicting set so I can name <em>which</em> pieces of evidence cannot co-exist.</p>
+            <div class="callout">
+<pre>Action:  solver.SufficientAssumptionsForInfeasibility()
+
+Observation:
+    Minimal conflicting constraint set (UNSAT core):
+       - CCTV: suspect at CRIME_SCENE_SOUTH at 14:30
+       - Reachability 14:00->14:10 (<= 20 km in 10 min)
+       - Reachability 14:10->14:20 (<= 20 km in 10 min)
+       - Reachability 14:20->14:30 (<= 20 km in 10 min)</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>&gt;&gt;&gt; Human-in-the-loop gate.</strong> The agent <em>stops</em> and reports a
+                    contradiction. It does not — must not — output a guilt verdict. The analyst decides next steps
+                    (is the CCTV timestamp reliable? re-examine the phone record?).
+                </p>
+            </div>
+
+            <h3>Step 5 — Sensitivity check (scenario b)</h3>
+            <p><strong>Approach.</strong> What if the CCTV time/place is revised to a reachable region (MIDTOWN, 16.7&nbsp;km from home)? Re-solve.</p>
+            <div class="callout">
+<pre>Action:  solve_alibi(cctv = MIDTOWN @ 14:30)                  [CP-SAT]
+
+Observation:
+    Solver status : OPTIMAL  (FEASIBLE)
+    Consistent timeline:
+       14:00 -> HOME_NORTH   14:10 -> MIDTOWN   14:20 -> HOME_NORTH
+       14:30 -> MIDTOWN      14:40 -> HOME_NORTH 14:50 -> HOME_NORTH  15:00 -> HOME_NORTH</pre>
+            </div>
+        </section>
+
+        <section id="result" class="module-section">
+            <h2>Done — the result</h2>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Scenario (a): INFEASIBLE — alibi contradicted.</strong> The phone-at-HOME anchors and the
+                    CCTV hit at CRIME_SCENE_SOUTH are physically irreconcilable at 120&nbsp;km/h. The solver returns the
+                    minimal conflicting evidence set <code>{CCTV@14:30, reachability 14:00→14:10, 14:10→14:20,
+                    14:20→14:30}</code> — a precise, court-ready statement of <em>what</em> clashes.
+                </p>
+            </div>
+            <p>
+                <strong>Scenario (b): FEASIBLE.</strong> Re-timing the CCTV hit to the reachable MIDTOWN district yields
+                a fully consistent HOME↔MIDTOWN timeline — proving the method does not simply always cry "contradiction".
+                The deliverable is a concrete assignment (or a named conflict), never a probability or a verdict.
+            </p>
+        </section>
+
+        <section id="guidance" class="module-section">
+            <h2>Guidance: reading the outcome</h2>
+            <ul>
+                <li><strong>Two terminal modes.</strong> <em>UNSAT</em> → the evidence is contradictory; report the named conflict. <em>SAT</em> → at least one consistent timeline exists; report it. Neither is a statement of guilt.</li>
+                <li><strong>The gate fires on UNSAT.</strong> The agent surfaces the minimal conflicting set and hands control back — it never escalates to a conclusion.</li>
+                <li><strong>Failure mode.</strong> The result is only as good as the inputs: a wrong CCTV timestamp, a spoofed phone location, or a too-coarse region grid can flip SAT/UNSAT. Treat the conflict set as a lead to verify the inputs, not as proof.</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Honest deviation (teaching note).</strong> The GPS trajectory is <em>real</em>; the criminal
+                    framing (suspect, CCTV, crime scene) is a constructed teaching scenario. Scenario (b) uses an
+                    in-window reachable district rather than the "15:30" idea from the brief, because the modelled hour
+                    ends at 15:00.
+                </p>
+            </div>
+        </section>
+
+        <section id="reproduce" class="module-section">
+            <h2>Reproduce it</h2>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Run it yourself:</strong> the script, the full real output, and the README are in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/01-csp-geolife"><code>examples/01-csp-geolife/</code></a>
+                    (<a href="https://github.com/AskOsama/DF-AI/blob/main/examples/01-csp-geolife/run.py"><code>run.py</code></a>,
+                    <a href="https://github.com/AskOsama/DF-AI/blob/main/examples/01-csp-geolife/output.txt"><code>output.txt</code></a>).
+                    See also the <a href="part4-csp-geolife.html">Part&nbsp;4 dataset &amp; encoding page</a> and the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a>.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Results-page navigation">
+            <a href="part5.html#worked-prompts" class="prev">
+                <span class="nav-label">← Back to</span>
+                <span class="nav-title">Part 5 — Worked prompts</span>
+            </a>
+            <a href="part5-optimization-govdocs1.html" class="next">
+                <span class="nav-label">Next verified run →</span>
+                <span class="nav-title">Optimization · GovDocs1</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;5 verified-run page for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html"><strong>Part 5 — Agentic Solutions</strong></a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

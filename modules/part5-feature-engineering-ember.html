@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 5 verified run — results & guidance: an agent runs EMBER-style static feature engineering and a trained classifier on real PE files, framed as Approach → Action → Observation → Done, with the genuine captured output including a leakage-trap demo.">
+    <title>Verified Run · Feature Engineering (EMBER) | DF-AI Part 5</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-5">
+    <div class="language-switcher">
+        <a href="part5-feature-engineering-ember_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part5.html">Part 5 — Agentic Solutions</a><span class="sep">›</span>
+            <a href="part5.html#worked-prompts">Worked prompts</a><span class="sep">›</span>
+            <span>Feature engineering — verified run</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 5 · Verified run — results &amp; guidance</div>
+        <h1>Feature Engineering — the Agent's Run on Real PE Files</h1>
+        <p class="module-lede">
+            The executed outcome behind the <a href="part5.html#worked-prompts">worked prompt</a> for feature
+            engineering. The pipeline really trained a classifier on EMBER-style features extracted from real Windows
+            binaries; below is the agent's loop — <strong>Approach → Action → Observation → Done</strong> — with the
+            genuine captured output, including a real leakage-trap demonstration. The feature families and model live
+            on the <a href="part4-feature-engineering-ember.html">Part&nbsp;4 dataset page</a>.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#overview">What was run</a></li>
+                <li><a href="#plan-prompt">Plan-phase prompt</a></li>
+                <li><a href="#execute-prompt">Execute-phase prompt</a></li>
+                <li><a href="#run">The run: Approach → Action → Observation</a></li>
+                <li><a href="#result">Done — the result</a></li>
+                <li><a href="#guidance">Guidance: reading the outcome</a></li>
+                <li><a href="#reproduce">Reproduce it</a></li>
+            </ol>
+        </nav>
+
+        <section id="overview" class="module-section">
+            <h2>What was run</h2>
+            <p>
+                <strong>Forensic question:</strong> an unknown executable is carved from unallocated space. <em>Is it
+                benign or packed/suspicious — decided without running it, from static byte/header features?</em> The
+                agent builds an EMBER-style feature matrix from real benign Windows PEs plus clearly-labelled synthetic
+                packed twins, trains LightGBM, scores an unknown, and then <strong>demonstrates the leakage trap for
+                real</strong>. <strong>Verified outcome:</strong> honest accuracy <strong>0.92</strong> / AUC
+                <strong>0.97</strong>; a leaky feature inflates accuracy to a perfect <strong>1.0</strong> — the cautionary
+                tale.
+            </p>
+        </section>
+
+        <section id="plan-prompt" class="module-section">
+            <h2>Plan-phase prompt</h2>
+            <p>What the analyst types to make the agent <em>design</em> the classifier (no code yet):</p>
+            <div class="callout">
+<pre>You are a forensic ML engineer. PLAN (do not write final code yet) a static
+malware/file-triage classifier in the EMBER style. Constraints:
+  - SAFETY: never download or execute live malware. Use either EMBER's
+    pre-extracted numeric vectors, or features from real benign PE files plus
+    clearly-labelled synthetic "packed" samples.
+  - Decide benign vs packed/suspicious WITHOUT running files.
+Deliver a plan covering:
+  1. Data sourcing: which safe corpus, how labelled, license + safety justification.
+  2. Feature engineering: exact families (byte histogram, windowed Shannon
+     entropy, printable-string stats, PE header fields, per-section entropy,
+     import/DLL counts) and how each is computed from raw bytes.
+  3. Matrix design: row = file, columns = named features, label vector.
+  4. Model (LightGBM GBDT; RandomForest fallback) and why no scaling.
+  5. Evaluation: stratified split, accuracy + ROC-AUC + report, importances,
+     per-file driver explanation.
+  6. A leakage-trap experiment: name >=2 leaky features (source-folder id, PE
+     timestamp); measure the inflation, then prove the honest number after removal.
+  7. Risks and what "good enough for triage" means (lead, not verdict).</pre>
+            </div>
+        </section>
+
+        <section id="execute-prompt" class="module-section">
+            <h2>Execute-phase prompt</h2>
+            <p>What the analyst types to run it:</p>
+            <div class="callout">
+<pre>Implement the approved plan as a single runnable run.py with NO required network
+access (build the corpus from local System32 PE files + synthetic packed twins).
+Print, in order: corpus summary; feature-matrix shape + class means proving the
+features separate the classes; train/test sizes; accuracy + ROC-AUC +
+classification report; top-8 named feature importances; a scored held-out unknown
+with verdict + probability + top-3 drivers; and the leakage demo (5-fold CV
+accuracy & AUC WITH vs WITHOUT the leaky feature, plus its importance rank).
+Fall back to RandomForest if lightgbm import fails, and to byte-only features if
+lief is unavailable. Run with `python3 run.py | tee output.txt` and report the
+REAL numbers — never fabricate.</pre>
+            </div>
+        </section>
+
+        <section id="run" class="module-section">
+            <h2>The run: Approach → Action → Observation</h2>
+            <p>Each <strong>Observation</strong> is verbatim from the real <code>output.txt</code>.</p>
+
+            <h3>Step 1 — Gather a safe labelled corpus</h3>
+            <p><strong>Approach.</strong> Never touch live malware. Use real benign PEs + clearly-labelled synthetic packed twins.</p>
+            <div class="callout">
+<pre>Action:  gather_corpus()
+
+Observation:
+    benign (REAL System32 PE) : 60
+    packed (SYNTHETIC)        : 60
+    PE parser (lief): available    classifier: LightGBM</pre>
+            </div>
+
+            <h3>Step 2 — Extract EMBER-style features (raw bytes → numbers)</h3>
+            <p><strong>Approach.</strong> Turn each file into a fixed numeric vector; confirm the engineered features actually separate the classes.</p>
+            <div class="callout">
+<pre>Action:  extract_features() -> matrix
+
+Observation:
+    feature matrix X : shape (120, 31)
+    families: byte-histogram(16), entropy summary(5), strings(2), PE hdr/sect/imports(7)
+    mean whole-file entropy  benign=4.659  packed=5.495   (separation visible)</pre>
+            </div>
+
+            <h3>Step 3 — Train and evaluate honestly</h3>
+            <p><strong>Approach.</strong> Stratified split, train LightGBM, report accuracy + ROC-AUC + the full classification report.</p>
+            <div class="callout">
+<pre>Action:  train_test_split(); LGBMClassifier.fit(); evaluate()
+
+Observation:
+    train 84 / test 36
+    HONEST test accuracy : 0.9167
+    HONEST test ROC-AUC  : 0.9722
+                  precision    recall  f1   support
+        benign      1.000     0.833  0.909    18
+        packed      0.857     1.000  0.923    18</pre>
+            </div>
+
+            <h3>Step 4 — Explain the drivers + score an unknown</h3>
+            <p><strong>Approach.</strong> Surface the top features for a human reviewer, then score one held-out unknown with its drivers.</p>
+            <div class="callout">
+<pre>Action:  feature_importance(); score_unknown("packed_043.bin")
+
+Observation:
+    top importances: byte_hist[9], pe_section_entropy_max, byte_entropy_win_max,
+                     byte_entropy_win_std, pe_timestamp ...
+    unknown packed_043.bin -> PACKED/SUSPICIOUS  P(packed)=1.000  (truth: packed)
+      drivers: pe_section_entropy_max(+65.79), byte_hist[9](+65.13), byte_entropy_win_std(+57.93)</pre>
+            </div>
+
+            <h3>Step 5 — The leakage trap (real demonstration)</h3>
+            <p><strong>Approach.</strong> Add a leaky feature (<code>source_folder_id</code>: benign=0, packed=1 — the "folder named evidence" shortcut) and compare honest vs leaky with 5-fold CV.</p>
+            <div class="callout">
+<pre>Action:  cross_val(honest); cross_val(with_leaky_feature)
+
+Observation:
+    WITHOUT leaky feat. (honest): accuracy=0.9417  AUC=0.9889
+    WITH leaky feature          : accuracy=1.0000  AUC=1.0000
+       -> leaky feature ranked #1 of 32 in importance (it dominates)
+    INFLATION from leakage      : accuracy +0.0583   AUC +0.0111</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>&gt;&gt;&gt; Human-in-the-loop gate.</strong> The verdict is a <em>lead, not a verdict</em> — it
+                    ranks files for an analyst to confirm. And the agent <em>must exclude</em> leaky metadata
+                    (<code>source_folder_id</code>, <code>pe_timestamp</code>) from the scoring model.
+                </p>
+            </div>
+        </section>
+
+        <section id="result" class="module-section">
+            <h2>Done — the result</h2>
+            <div class="callout">
+<pre>Honest model : accuracy 0.92 / AUC 0.97   (drivers = section & byte entropy)
+Unknown scored: PACKED, P=1.000, driven by high-entropy sections (crypter-like)
+Leakage trap : a folder-id feature -> accuracy 1.0000 / AUC 1.0000
+   LESSON: the leaky model learned the FOLDER, not the FILE. On genuinely
+   unsorted evidence the shortcut is gone and it collapses
+   -> drop folder/timestamp/source-feed metadata before training.</pre>
+            </div>
+            <p>
+                The headline for class: engineered features (section/byte entropy) genuinely separate packed from benign,
+                and the leakage demo shows <em>why a too-good number is a red flag</em> — the exact "feature that encodes
+                the answer" warning, measured in real percentages.
+            </p>
+        </section>
+
+        <section id="guidance" class="module-section">
+            <h2>Guidance: reading the outcome</h2>
+            <ul>
+                <li><strong>A lead, not a verdict.</strong> 0.92 accuracy ranks files for human review; it does not convict a file. Pair every score with the named drivers.</li>
+                <li><strong>Distrust the perfect score.</strong> The leaky model's 1.0 is the tell: it learned the intake folder, not the file. On unsorted evidence it collapses. Exclude folder/timestamp/source-feed features before training.</li>
+                <li><strong>Failure mode — unparseable files.</strong> If the PE parser returns nothing, the agent must not silently emit zeros and call it benign (zeroed structural features bias toward "benign / no imports"). It should flag "unparseable — manual review" and fall back to byte-only features with reduced confidence.</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Honest deviation (teaching note).</strong> The full multi-GB EMBER benchmark and its fragile
+                    <code>ember</code> pip package were deliberately skipped for a safe, reproducible local demo. The
+                    benign class is 60 <em>real</em> signed System32 PEs; the "packed" class is 60 <em>synthetic</em>
+                    twins (partially XOR-encrypted + high-entropy blobs), never executed. The same feature code is what
+                    EMBER applies at million-sample scale.
+                </p>
+            </div>
+        </section>
+
+        <section id="reproduce" class="module-section">
+            <h2>Reproduce it</h2>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Run it yourself:</strong> script, full output, and README in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/04-feature-engineering-ember"><code>examples/04-feature-engineering-ember/</code></a>
+                    (<a href="https://github.com/AskOsama/DF-AI/blob/main/examples/04-feature-engineering-ember/run.py"><code>run.py</code></a>,
+                    <a href="https://github.com/AskOsama/DF-AI/blob/main/examples/04-feature-engineering-ember/output.txt"><code>output.txt</code></a>).
+                    See also the <a href="part4-feature-engineering-ember.html">Part&nbsp;4 dataset &amp; encoding page</a>
+                    and the <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a>.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Results-page navigation">
+            <a href="part5-knowledge-openflights.html" class="prev">
+                <span class="nav-label">← Previous verified run</span>
+                <span class="nav-title">Knowledge &amp; reasoning · OpenFlights</span>
+            </a>
+            <a href="part5-search-enron.html" class="next">
+                <span class="nav-label">Next verified run →</span>
+                <span class="nav-title">Search engines · Enron</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;5 verified-run page for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html"><strong>Part 5 — Agentic Solutions</strong></a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

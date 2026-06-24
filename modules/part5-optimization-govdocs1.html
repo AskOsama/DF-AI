@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 5 verified run — results & guidance: an agent runs the triage-prioritisation optimization on 981 real GovDocs1 files, framed as Approach → Action → Observation → Done, with the genuine captured output.">
+    <title>Verified Run · Optimization (GovDocs1) | DF-AI Part 5</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-5">
+    <div class="language-switcher">
+        <a href="part5-optimization-govdocs1_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part5.html">Part 5 — Agentic Solutions</a><span class="sep">›</span>
+            <a href="part5.html#worked-prompts">Worked prompts</a><span class="sep">›</span>
+            <span>Optimization — verified run</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 5 · Verified run — results &amp; guidance</div>
+        <h1>Optimization — the Agent's Run on 981 Real Carved Files</h1>
+        <p class="module-lede">
+            The executed outcome behind the <a href="part5.html#worked-prompts">worked prompt</a> for optimization.
+            The pipeline really ran over one GovDocs1 subset; below is the agent's loop — <strong>Approach → Action →
+            Observation → Done</strong> — with the genuine captured output in each observation. The dataset, cost/value
+            encoding, and solvers are on the <a href="part4-optimization-govdocs1.html">Part&nbsp;4 dataset page</a>.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#overview">What was run</a></li>
+                <li><a href="#plan-prompt">Plan-phase prompt</a></li>
+                <li><a href="#execute-prompt">Execute-phase prompt</a></li>
+                <li><a href="#run">The run: Approach → Action → Observation</a></li>
+                <li><a href="#result">Done — the result</a></li>
+                <li><a href="#guidance">Guidance: reading the outcome</a></li>
+                <li><a href="#reproduce">Reproduce it</a></li>
+            </ol>
+        </nav>
+
+        <section id="overview" class="module-section">
+            <h2>What was run</h2>
+            <p>
+                <strong>Forensic question:</strong> a seized drive yields 981 carved files; an examiner has a 16-hour
+                (960-minute) review budget. <em>Which files to review first to maximise investigative value within the
+                budget — and how to split the work across two examiners?</em> The agent featurizes every file (cost,
+                value), races baselines against a provably-optimal knapsack, and produces a Pareto front of trade-offs.
+                <strong>Verified outcome:</strong> optimised triage ≈ <strong>5.6×</strong> the random baseline; the
+                knapsack strictly beats greedy at tight budgets; a 121-point NSGA-II Pareto front frames the human's
+                choice.
+            </p>
+        </section>
+
+        <section id="plan-prompt" class="module-section">
+            <h2>Plan-phase prompt</h2>
+            <p>What the analyst types to make the agent <em>plan</em> the triage (no execution yet):</p>
+            <div class="callout">
+<pre>You are a digital-forensics triage planner. A seized drive's files are extracted
+to data/corpus/. An examiner has a 16-hour budget (960 min). Produce a PLAN (do
+not execute) to decide which files to review first to maximise investigative
+value within budget.
+
+In your plan:
+  1. How you estimate a review COST in minutes from each file's type and size
+     (state the per-type base costs).
+  2. A transparent VALUE score = type prior + PII/keyword bonus (emails, IBANs,
+     Luhn-valid cards via byte sampling) + entropy term. List every weight — it
+     must be court-defensible, no hidden tuning.
+  3. The optimisation models: 0/1 knapsack (single budget), multiple-knapsack /
+     CP-SAT split for two examiners (2 x 480 min), NSGA-II for value / coverage /
+     time trade-off.
+  4. Baselines (greedy density, random, brute-force slice) and the acceptance
+     check (optimiser >= greedy).
+  5. Risks: the value model is a proxy — where could it mis-prioritise?
+
+Output numbered steps with the data structures and libraries (OR-Tools, DEAP,
+NumPy) you intend to use.</pre>
+            </div>
+        </section>
+
+        <section id="execute-prompt" class="module-section">
+            <h2>Execute-phase prompt</h2>
+            <p>What the analyst types to run it:</p>
+            <div class="callout">
+<pre>Execute the triage plan now. Walk data/corpus/, featurize every file into
+items.csv (id, path, ext, size_bytes, cost_minutes, n_emails, n_iban, n_cards,
+entropy, value_score) using the disclosed formulas. Then for a 960-minute
+budget: run greedy, random (seed 42), and a 15-item brute-force; run the
+OR-Tools 0/1 knapsack and assert value >= greedy, sweeping budgets
+{120,240,480,720,960} to show where it strictly wins; run the CP-SAT
+two-examiner split (2 x 480 min) with per-examiner load and value; run DEAP
+NSGA-II and print a Pareto front of (value, types, minutes). Save to output.txt.
+Do not fabricate any numbers — report exactly what the code produces.</pre>
+            </div>
+        </section>
+
+        <section id="run" class="module-section">
+            <h2>The run: Approach → Action → Observation</h2>
+            <p>Each <strong>Observation</strong> is verbatim from the real <code>output.txt</code>.</p>
+
+            <h3>Step 1 — Featurize the corpus</h3>
+            <p><strong>Approach.</strong> I can't review 981 files in 16&nbsp;h; first quantify a cost and a value for each file.</p>
+            <div class="callout">
+<pre>Action:  featurize("data/corpus")
+
+Observation:
+    files            : 981
+    distinct types   : 22  -> {pdf:200, html:181, txt:154, doc:111, jpg:89, ppt:88, xls:62 ...}
+    mean cost (min)  : 8.35   total : 8188.3 min (136.5 h to review ALL)
+    files w/ PII hit : 349    wrote items.csv</pre>
+            </div>
+
+            <h3>Step 2 — Cheap baseline first</h3>
+            <p><strong>Approach.</strong> Establish a greedy (value/cost) baseline and a random control before optimising.</p>
+            <div class="callout">
+<pre>Action:  greedy(items, 960);  random(items, 960, seed=42)
+
+Observation:
+    greedy (value/cost):  90 files,  959.8 min, value = 26954.5
+    random (seed=42)   : 112 files,  958.4 min, value =  4800.6</pre>
+            </div>
+
+            <h3>Step 3 — Provable optimum + where it beats greedy</h3>
+            <p><strong>Approach.</strong> Greedy is only a heuristic. Get the provable optimum and check it never loses; sweep budgets to expose where ordering matters.</p>
+            <div class="callout">
+<pre>Action:  ortools_knapsack(items, 960);  budget_sweep()
+
+Observation:
+    knapsack optimum : 90 files, 959.8 min, value = 26954.5  (>= greedy: PASS)
+    budget sweep  greedy     knapsack    gain
+       240 min    13758.5    13788.8    +30.2   <- knapsack WINS
+       480 min    18804.4    18844.4    +40.0   <- knapsack WINS
+       960 min    26954.5    26954.5     +0.0</pre>
+            </div>
+
+            <h3>Step 4 — Split work across two examiners</h3>
+            <p><strong>Approach.</strong> Two examiners are available; assign files to two 480-minute queues optimally.</p>
+            <div class="callout">
+<pre>Action:  cpsat_two_examiners(items, cap=480)
+
+Observation:
+    status = OPTIMAL
+    examiner 1: 42 files, load 479.9/480 min, value = 16134.0
+    examiner 2: 48 files, load 479.9/480 min, value = 10820.6  (total 26954.5)</pre>
+            </div>
+
+            <h3>Step 5 — Surface the trade-offs (Pareto front)</h3>
+            <p><strong>Approach.</strong> Value isn't the only goal — coverage and time matter too. Generate the non-dominated set.</p>
+            <div class="callout">
+<pre>Action:  nsga2_pareto(items, 960)
+
+Observation:
+    Pareto front size = 121; sample (value, types, minutes):
+        value=14963.4  types=18  minutes=663.8
+        value=12291.7  types=21  minutes=584.6
+        value= 6417.3  types=15  minutes=257.1</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>&gt;&gt;&gt; Human-in-the-loop gate.</strong> These are genuine trade-offs (more coverage
+                    costs value/time). The agent presents the Pareto options and <em>halts</em> — a qualified examiner
+                    picks the point (max value? max coverage? leave slack?). The optimiser frames the choice; the human
+                    owns the decision.
+                </p>
+            </div>
+        </section>
+
+        <section id="result" class="module-section">
+            <h2>Done — the result</h2>
+            <div class="callout">
+<pre>Optimised triage vs baselines (960 min budget):
+    random    value  4800.6
+    greedy    value 26954.5
+    knapsack  value 26954.5   (optimal; strictly beats greedy at 240/480 min)
+    -> ~5.6x the random baseline
+
+Two examiners (2 x 480 min): OPTIMAL split, total value 26954.5
+Pareto front: 121 defensible plans trading value / coverage / time</pre>
+            </div>
+            <p>
+                The headline for court: a <strong>ranked, budget-respecting examination order</strong> per examiner with
+                a defensible value model, plus a <strong>Pareto front</strong> so the lead picks the trade-off that fits
+                the case — not a single opaque "best" answer.
+            </p>
+        </section>
+
+        <section id="guidance" class="module-section">
+            <h2>Guidance: reading the outcome</h2>
+            <ul>
+                <li><strong>Greedy is strong but not optimal.</strong> At the full budget greedy ties the knapsack here, but the budget sweep proves the optimum strictly wins at tight budgets — exactly the regime where triage matters most.</li>
+                <li><strong>The human picks the Pareto point.</strong> The agent halts after NSGA-II; an examiner chooses value vs coverage vs slack. The score frames the choice; the human owns the legal/operational call.</li>
+                <li><strong>Failure mode — the value model is a proxy.</strong> A tiny image with no email/IBAN/card text (a scanned cheque, or a `.gz` that's really an encrypted archive scoring only on entropy) gets a low value and is deprioritised — the optimiser will confidently skip it. Mitigation: keep weights disclosed, always pair the plan with random spot-check sampling, and never treat "not selected" as "not evidence".</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Honest deviation (teaching note).</strong> The documented <code>subset0.zip</code> path
+                    404s; the run used the real <code>govdocs1/zipfiles/000.zip</code> (981 files). <code>python-magic</code>
+                    was unavailable, so file typing used extension + size. The knapsack==greedy tie at the full budget is
+                    a genuine result of this corpus's value distribution — the sweep is what surfaces the strict win.
+                </p>
+            </div>
+        </section>
+
+        <section id="reproduce" class="module-section">
+            <h2>Reproduce it</h2>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Run it yourself:</strong> script, full output, and README in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/02-optimization-govdocs1"><code>examples/02-optimization-govdocs1/</code></a>
+                    (<a href="https://github.com/AskOsama/DF-AI/blob/main/examples/02-optimization-govdocs1/run.py"><code>run.py</code></a>,
+                    <a href="https://github.com/AskOsama/DF-AI/blob/main/examples/02-optimization-govdocs1/output.txt"><code>output.txt</code></a>).
+                    See also the <a href="part4-optimization-govdocs1.html">Part&nbsp;4 dataset &amp; encoding page</a>
+                    and the <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a>.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Results-page navigation">
+            <a href="part5-csp-geolife.html" class="prev">
+                <span class="nav-label">← Previous verified run</span>
+                <span class="nav-title">Constraint satisfaction · GeoLife</span>
+            </a>
+            <a href="part5-knowledge-openflights.html" class="next">
+                <span class="nav-label">Next verified run →</span>
+                <span class="nav-title">Knowledge &amp; reasoning · OpenFlights</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;5 verified-run page for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html"><strong>Part 5 — Agentic Solutions</strong></a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

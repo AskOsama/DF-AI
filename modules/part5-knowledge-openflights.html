@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 5 verified run — results & guidance: an agent runs the knowledge-reasoning path inference over the real OpenFlights graph, framed as Approach → Action → Observation → Done, with the genuine captured output.">
+    <title>Verified Run · Knowledge &amp; Reasoning (OpenFlights) | DF-AI Part 5</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-5">
+    <div class="language-switcher">
+        <a href="part5-knowledge-openflights_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part5.html">Part 5 — Agentic Solutions</a><span class="sep">›</span>
+            <a href="part5.html#worked-prompts">Worked prompts</a><span class="sep">›</span>
+            <span>Knowledge &amp; reasoning — verified run</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 5 · Verified run — results &amp; guidance</div>
+        <h1>Knowledge &amp; Reasoning — the Agent's Run on a Real Flight Graph</h1>
+        <p class="module-lede">
+            The executed outcome behind the <a href="part5.html#worked-prompts">worked prompt</a> for knowledge
+            reasoning. The pipeline really ran over the full OpenFlights graph; below is the agent's loop —
+            <strong>Approach → Action → Observation → Done</strong> — with the genuine captured output in each
+            observation. The facts, rules, and graph build are on the
+            <a href="part4-knowledge-openflights.html">Part&nbsp;4 dataset page</a>.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#overview">What was run</a></li>
+                <li><a href="#plan-prompt">Plan-phase prompt</a></li>
+                <li><a href="#execute-prompt">Execute-phase prompt</a></li>
+                <li><a href="#run">The run: Approach → Action → Observation</a></li>
+                <li><a href="#result">Done — the result</a></li>
+                <li><a href="#guidance">Guidance: reading the outcome</a></li>
+                <li><a href="#reproduce">Reproduce it</a></li>
+            </ol>
+        </nav>
+
+        <section id="overview" class="module-section">
+            <h2>What was run</h2>
+            <p>
+                <strong>Forensic question:</strong> Subject&nbsp;X claims to be in Dubai; last confirmed at London
+                Heathrow (LHR); the crime scene is Bogotá (BOG). <em>Could X have reached BOG from LHR within ≤3
+                connections — and if so, via which hub and which real airlines?</em> The agent loads a flight knowledge
+                base, tests reachability, and surfaces an auditable derivation. <strong>Verified outcome:</strong> no
+                direct LHR→BOG flight, but BOG is reachable in <strong>one connection via Atlanta (Delta)</strong>; two
+                independent engines agree.
+            </p>
+        </section>
+
+        <section id="plan-prompt" class="module-section">
+            <h2>Plan-phase prompt</h2>
+            <p>What the analyst types to make the agent <em>plan</em> the inference (no execution yet):</p>
+            <div class="callout">
+<pre>Role: forensic-reasoning planner.
+Goal: PLAN (do not execute) a knowledge-representation pipeline that decides
+whether a suspect could have travelled from one airport to another within a
+bounded number of connections, using the OpenFlights route database.
+
+Produce a numbered plan that:
+  1. States the question precisely (LHR -> BOG, <= 3 connections = <= 4 legs)
+     and what a positive/negative answer implies for the Dubai alibi.
+  2. Identifies the data (routes.dat, airports.dat), columns, license (ODbL),
+     snapshot date, and how nulls (\N) are handled.
+  3. Specifies the FACT schema (airport/3, flight/3) and the RULES (reachable/2
+     base + recursive with a cycle guard; contradicts_alibi/1) in Datalog/Prolog.
+  4. Chooses data structures (directed multigraph) + reasoning strategy
+     (backward vs forward chaining) and justifies BOUNDING the search.
+  5. Defines how to extract an auditable derivation chain (GOAL/RULE/FACT tree)
+     and how to cross-validate two independent engines.
+  6. Lists verification checks (direct-edge check, both legs present, engine
+     agreement) and stop conditions.
+Output only the plan and its assumptions/risks; write no code yet.</pre>
+            </div>
+        </section>
+
+        <section id="execute-prompt" class="module-section">
+            <h2>Execute-phase prompt</h2>
+            <p>What the analyst types to run it:</p>
+            <div class="callout">
+<pre>Implement run.py and run it on the real OpenFlights data.
+  - Parse airports.dat -> airport(IATA,City,Country) (skip invalid IATA);
+    routes.dat -> flight(Airline,Src,Dst) (skip \N). Print fact/node/edge counts.
+  - Build a networkx.MultiDiGraph (airport attrs = city/country; edge = airline).
+  - Answer reachability LHR -> BOG within <= 4 legs: print whether a direct edge
+    exists; prove existence with bounded BFS; enumerate short paths with
+    all_simple_paths(cutoff=3); show one 1-connection path with the REAL airlines
+    on each leg and VERIFY both legs exist; report the hub with city/country.
+  - Print an auditable backward-chaining derivation chain (GOAL -> RULE -> FACT).
+  - If pyDatalog imports: assert flight/2 facts for the bounded candidate
+    subgraph, define recursive reachable/2, query reachable('LHR','BOG'), and
+    CROSS-CHECK it matches networkx; else document and rely on networkx.
+  - Save real output: python3 run.py | tee output.txt. Do not fabricate numbers.</pre>
+            </div>
+        </section>
+
+        <section id="run" class="module-section">
+            <h2>The run: Approach → Action → Observation</h2>
+            <p>Each <strong>Observation</strong> is verbatim from the real <code>output.txt</code>.</p>
+
+            <h3>Step 1 — Build the knowledge base</h3>
+            <p><strong>Approach.</strong> Parse the route/airport facts into a directed multigraph so reachability becomes a graph query.</p>
+            <div class="callout">
+<pre>Action:  parse_facts(); build_graph()
+
+Observation:
+    airport/3 facts parsed :   6072  (IATA -> City, Country)
+    flight/3  facts parsed :  66934  (Airline, Src, Dst)
+    LHR = London, United Kingdom    BOG = Bogota, Colombia</pre>
+            </div>
+
+            <h3>Step 2 — Cheapest disqualifier: a direct flight?</h3>
+            <p><strong>Approach.</strong> Before any search, check whether a direct LHR→BOG edge exists.</p>
+            <div class="callout">
+<pre>Action:  query_kb(flight, src='LHR', dst='BOG')
+
+Observation:
+    Direct flight LHR -> BOG exists? False</pre>
+            </div>
+
+            <h3>Step 3 — Is BOG reachable within the legal bound?</h3>
+            <p><strong>Approach.</strong> No direct flight — ask the reasoner whether BOG is reachable from LHR within 4 legs (≤3 connections).</p>
+            <div class="callout">
+<pre>Action:  query_kb(reachable, 'LHR', 'BOG', max_legs=4)
+
+Observation:
+    Bounded BFS: reachable within 4 legs? True
+    1-connection (2-leg) hubs LHR->hub->BOG: 16
+    Simple paths <= 3 legs: 35980  (209 are 1-connection)</pre>
+            </div>
+
+            <h3>Step 4 — Surface a concrete, verifiable route</h3>
+            <p><strong>Approach.</strong> Reachable — I need a real route to show. Find a 1-connection hub and confirm both legs exist with their operating airlines.</p>
+            <div class="callout">
+<pre>Action:  find_hubs(src='LHR', dst='BOG'); query_kb(flight, ...)
+
+Observation:
+    route : LHR -> ATL -> BOG   (London -> Atlanta -> Bogota)
+      leg LHR->ATL  airlines = AA, AF, AY, BA, DL, IB, KL, VS   edge_exists=True
+      leg ATL->BOG  airlines = DL                               edge_exists=True
+    HUB: ATL (Atlanta, United States)</pre>
+            </div>
+
+            <h3>Step 5 — Auditable derivation + cross-check</h3>
+            <p><strong>Approach.</strong> Build the backward-chaining proof tree and cross-check with a second engine (pyDatalog) before reporting.</p>
+            <div class="callout">
+<pre>Action:  derive_chain('LHR','BOG'); crosscheck(networkx, pyDatalog)
+
+Observation:
+    GOAL: reachable('LHR','BOG')
+      RULE: reachable('LHR','BOG') :- flight(_,'LHR','ATL'), reachable('ATL','BOG').
+      |- flight('AA','LHR','ATL')          [FACT from routes.dat]
+      |- subgoal reachable('ATL','BOG')
+         |- flight('DL','ATL','BOG')       [FACT from routes.dat]
+    pyDatalog reachable('LHR','BOG') = True ;  networkx = True
+    CROSS-CHECK: pyDatalog == networkx ?  True</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>&gt;&gt;&gt; Human-in-the-loop gate.</strong> The agent never records a conclusion. A positive
+                    reachability result is an <em>investigative lead</em> requiring analyst sign-off before it enters a
+                    case file. Reachability ≠ proof of travel: it shows X <em>could</em> have flown the route, not that X
+                    <em>did</em>.
+                </p>
+            </div>
+        </section>
+
+        <section id="result" class="module-section">
+            <h2>Done — the result</h2>
+            <div class="callout">
+<pre>DERIVED: reachable('LHR','BOG') = TRUE  via  LHR --AA--> ATL --DL--> BOG
+   - no direct flight; 1 connection; hub = Atlanta (ATL)
+   - every edge is a named, real airline service from routes.dat
+   - two independent engines agree (networkx == pyDatalog)
+=> The "Dubai" alibi does NOT make BOG physically unreachable.</pre>
+            </div>
+            <p>
+                The pedagogical payoff: the engine outputs not a probability but a <strong>path whose every edge is a
+                named real airline service</strong>, with a derivation that cites the exact rule applied at each step —
+                an auditable chain an opposing expert can read line by line.
+            </p>
+        </section>
+
+        <section id="guidance" class="module-section">
+            <h2>Guidance: reading the outcome</h2>
+            <ul>
+                <li><strong>Reachable ≠ travelled.</strong> The result is a lead: X <em>could</em> have flown LHR→ATL→BOG. It does not prove X did, and it requires human sign-off.</li>
+                <li><strong>The chain is the value.</strong> Because every step traces to a fact/rule, the conclusion is auditable — the whole reason to prefer rule-based reasoning over a black box for evidence work.</li>
+                <li><strong>Failure mode — snapshot completeness.</strong> The conclusion is only as complete as the route snapshot (here ~June 2014). Routes added later (e.g. a new direct LHR→BOG) or seasonal/cancelled routes are invisible, so the model can both miss real options and assert routes no longer flown. Codeshares, minimum connection times, visas, and seat availability are not modelled. Always cite the snapshot date.</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Honest deviation (teaching note).</strong> The flight graph is real; the suspect/alibi framing
+                    is a constructed teaching scenario. pyDatalog runs on a bounded candidate subgraph (1,430 deduped
+                    edges among 185 airports on ≤3-leg paths) because naïve recursion over all 66,934 edges blows up;
+                    networkx remains authoritative over the full graph, and the two agree.
+                </p>
+            </div>
+        </section>
+
+        <section id="reproduce" class="module-section">
+            <h2>Reproduce it</h2>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Run it yourself:</strong> script, full output, and README in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/03-knowledge-openflights"><code>examples/03-knowledge-openflights/</code></a>
+                    (<a href="https://github.com/AskOsama/DF-AI/blob/main/examples/03-knowledge-openflights/run.py"><code>run.py</code></a>,
+                    <a href="https://github.com/AskOsama/DF-AI/blob/main/examples/03-knowledge-openflights/output.txt"><code>output.txt</code></a>).
+                    See also the <a href="part4-knowledge-openflights.html">Part&nbsp;4 dataset &amp; encoding page</a>
+                    and the <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a>.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Results-page navigation">
+            <a href="part5-optimization-govdocs1.html" class="prev">
+                <span class="nav-label">← Previous verified run</span>
+                <span class="nav-title">Optimization · GovDocs1</span>
+            </a>
+            <a href="part5-feature-engineering-ember.html" class="next">
+                <span class="nav-label">Next verified run →</span>
+                <span class="nav-title">Feature engineering · EMBER</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;5 verified-run page for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html"><strong>Part 5 — Agentic Solutions</strong></a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

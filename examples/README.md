@@ -23,6 +23,20 @@ Each example pairs with its Part 4 sub-page (`modules/part4-*.html`) and the Par
 | [04](04-feature-engineering-ember/) | Feature engineering | **EMBER-style** on 60 real Windows PEs + 60 synthetic packed | LightGBM **acc 0.92 / AUC 0.97**; top drivers = section/byte entropy; **leakage trap demo**: a leaky feature inflates accuracy +0.058 to a perfect 1.0. |
 | [05](05-search-enron/) | Search engines | **Enron emails** (CMU) — 80,000 messages indexed | BM25 inverted index (145k terms) built in ~4 s; real ranked hits (Kaminski "LJM/Raptor valuations"); refinement + Fastow sender-filter. |
 
+## Published on the course site
+
+Each example is also published as a styled **Part 5 "verified run" results page**, framing the
+outcome as the agent's loop (Approach → Action → Observation → Done) with the real output:
+
+- 01 → [`modules/part5-csp-geolife.html`](../modules/part5-csp-geolife.html)
+- 02 → [`modules/part5-optimization-govdocs1.html`](../modules/part5-optimization-govdocs1.html)
+- 03 → [`modules/part5-knowledge-openflights.html`](../modules/part5-knowledge-openflights.html)
+- 04 → [`modules/part5-feature-engineering-ember.html`](../modules/part5-feature-engineering-ember.html)
+- 05 → [`modules/part5-search-enron.html`](../modules/part5-search-enron.html)
+
+They are linked from the Part 5 "Five prompts on real data" section
+(`modules/part5.html#worked-prompts`).
+
 ## Quick start (any example)
 
 ```bash

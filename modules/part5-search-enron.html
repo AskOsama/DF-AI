@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 5 verified run — results & guidance: an agent builds a BM25 inverted index over 80,000 real Enron emails and runs ranked e-discovery queries, framed as Approach → Action → Observation → Done, with the genuine captured output.">
+    <title>Verified Run · Search Engines (Enron) | DF-AI Part 5</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+</head>
+<body class="module module-5">
+    <div class="language-switcher">
+        <a href="part5-search-enron_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <nav class="module-breadcrumb">
+        <div class="crumbs">
+            <a href="../index.html">Home</a><span class="sep">›</span>
+            <a href="part5.html">Part 5 — Agentic Solutions</a><span class="sep">›</span>
+            <a href="part5.html#worked-prompts">Worked prompts</a><span class="sep">›</span>
+            <span>Search engines — verified run</span>
+        </div>
+    </nav>
+
+    <header class="module-header">
+        <div class="module-eyebrow">Part 5 · Verified run — results &amp; guidance</div>
+        <h1>Search Engines — the Agent's Run on 80,000 Real Enron Emails</h1>
+        <p class="module-lede">
+            The executed outcome behind the <a href="part5.html#worked-prompts">worked prompt</a> for search. The
+            pipeline really built a BM25 inverted index over the Enron corpus and ran ranked e-discovery queries; below
+            is the agent's loop — <strong>Approach → Action → Observation → Done</strong> — with the genuine captured
+            output. The indexing model and ranking are on the
+            <a href="part4-search-enron.html">Part&nbsp;4 dataset page</a>.
+        </p>
+    </header>
+
+    <main>
+        <nav class="module-toc" aria-label="Table of contents">
+            <h4>On this page</h4>
+            <ol>
+                <li><a href="#overview">What was run</a></li>
+                <li><a href="#plan-prompt">Plan-phase prompt</a></li>
+                <li><a href="#execute-prompt">Execute-phase prompt</a></li>
+                <li><a href="#run">The run: Approach → Action → Observation</a></li>
+                <li><a href="#result">Done — the result</a></li>
+                <li><a href="#guidance">Guidance: reading the outcome</a></li>
+                <li><a href="#reproduce">Reproduce it</a></li>
+            </ol>
+        </nav>
+
+        <section id="overview" class="module-section">
+            <h2>What was run</h2>
+            <p>
+                <strong>Forensic question:</strong> under a litigation hold, surface every internal email discussing the
+                off-balance-sheet special-purpose entities and the Raptor/LJM hedges, <em>ranked by relevance</em> so
+                counsel reviews the most probative documents first. The agent builds a BM25 inverted index over 80,000
+                real Enron messages, runs a broad query, then refines it. <strong>Verified outcome:</strong> sub-second
+                ranked retrieval surfacing genuine valuation memos (Kaminski's "LJM/Raptor valuations"), with query
+                refinement and a custodian pivot to Fastow.
+            </p>
+        </section>
+
+        <section id="plan-prompt" class="module-section">
+            <h2>Plan-phase prompt</h2>
+            <p>What the analyst types to make the agent <em>plan</em> the search (no code yet):</p>
+            <div class="callout">
+<pre>You are an e-discovery analyst supporting a litigation hold on the Enron matter.
+Goal: surface every internal email discussing the off-balance-sheet
+special-purpose entities and the Raptor / LJM hedging vehicles, RANKED by
+relevance so counsel reviews the most probative documents first.
+
+Produce a PLAN only (no execution). Specify:
+  1. Dataset acquisition: source, license, size, maildir/RFC-822 format. Note
+     key custodians (and verify whether Fastow/Causey mailboxes even exist).
+  2. Ingestion: how you parse each message, which fields you keep, and how you
+     bound memory/time (message cap; walk priority custodians first).
+  3. Index design: tokenization (\w+), normalization (lowercase, stopwords,
+     Snowball stem), postings term -> [(doc_id, tf, positions)], ranking model.
+     Justify BM25 (k1=1.5, b=0.75) over TF-IDF for email.
+  4. Query design: an initial broad query + >=2 refinements (tighter accounting
+     terms; a sender/custodian filter).
+  5. Output: a ranked top-N table with date/from/subject + a KWIC snippet.
+  6. The human-in-the-loop gate: the ranking is a starting point for REVIEW
+     ORDER, not a coverage/responsiveness guarantee.
+Return the plan as numbered steps with the data structures named.</pre>
+            </div>
+        </section>
+
+        <section id="execute-prompt" class="module-section">
+            <h2>Execute-phase prompt</h2>
+            <p>What the analyst types to run it:</p>
+            <div class="callout">
+<pre>Execute the e-discovery search plan now, end to end, with real output.
+  1. Build the venv; install rank-bm25 + nltk; download stopwords + punkt.
+  2. Download and extract the Enron corpus to data/maildir/. If full extraction
+     is too slow, extract the scenario custodians only and SAY SO.
+  3. Implement run.py: parse with email.parser, preprocess, build
+     BM25Okapi(tokenized_corpus, k1=1.5, b=0.75), confirm key custodians are
+     indexed (print counts).
+  4. Run "raptor LJM special purpose entity mark to market" and print the TOP 10
+     as rank/score/date/from/subject + a ~120-char KWIC snippet. Real values only.
+  5. Refine: (a) a tighter accounting query, (b) a sender filter From~"fastow".
+     Print the new tops and how the ranking changed.
+  6. python3 run.py | tee output.txt. Report indexed-message count, the real top
+     hits, and any deviation. Do not fabricate any score or sender.</pre>
+            </div>
+        </section>
+
+        <section id="run" class="module-section">
+            <h2>The run: Approach → Action → Observation</h2>
+            <p>Each <strong>Observation</strong> is verbatim from the real <code>output.txt</code>.</p>
+
+            <h3>Step 1 — Ingest and build the index</h3>
+            <p><strong>Approach.</strong> Parse the maildir (priority custodians first, capped for time/memory), then build the BM25 inverted index.</p>
+            <div class="callout">
+<pre>Action:  ingest(maildir, cap=80000); build_bm25_index()
+
+Observation:
+    Parsed 80,000 messages.  Key custodians present:
+       kaminski-v 28465 | kean-s 19245 | lay-k 5937 | skilling-j 4139 | buy-r 2429 ...
+    80,000 docs, 17,414,728 tokens, 145,360 unique terms.
+    BM25 build time 3.7s | avgdl 217.7 | k1=1.5, b=0.75</pre>
+            </div>
+
+            <h3>Step 2 — Broad query (see what surfaces)</h3>
+            <p><strong>Approach.</strong> Start broad on the scenario terms to see what the corpus surfaces — and what noise comes with it.</p>
+            <div class="callout">
+<pre>Action:  search("raptor LJM special purpose entity mark to market")   [ranked in 0.176s]
+
+Observation (top hits):
+   4  26.17  j.kaminski@enron.com   FW: LJM/Raptor valuations
+  10  23.48  j.kaminski@enron.com   LJM/Raptor valuations
+   1  29.09  pr <.palmer@enron.com> FW: Erroneous press     <- NOISE (PR thread, repeats "LJM")
+   2  29.01  mark.koenig@enron.com  FW: Erroneous press     <- NOISE
+   -> true gold (Kaminski valuations) is crowded by high-frequency PR chatter.</pre>
+            </div>
+
+            <h3>Step 3 — Refine with accounting vocabulary</h3>
+            <p><strong>Approach.</strong> The PR chatter crowds out the substantive memos; tighten with disclosure/accounting terms the probative docs share but the press chatter does not.</p>
+            <div class="callout">
+<pre>Action:  search("raptor LJM hedge off balance sheet special purpose entity
+                 accounting restatement")
+
+Observation:
+   1  42.97  chairman.ken@enron.com  SEC Information/Earnings Restatement
+      KWIC: ...related party and off-balance sheet transactions...
+   -> ranking shifts hard: only 3/10 carry over from Q1, 7 are new; the
+      disclosure/restatement core now dominates.</pre>
+            </div>
+
+            <h3>Step 4 — Pivot to a custodian (sender filter)</h3>
+            <p><strong>Approach.</strong> Pivot from topic to custodian — find anything authored by Fastow, even though his mailbox isn't in the corpus.</p>
+            <div class="callout">
+<pre>Action:  search("raptor LJM special purpose entity mark to market", sender~"fastow")
+
+Observation:
+   1  16.65  andrew.fastow@enron.com  FW: Monday Meeting
+      KWIC: ...it looks like LJM is be[ing favoured]...
+   -> 5 real Fastow messages (sitting in OTHER custodians' boxes); custodian
+      pivot succeeds despite the missing mailbox.</pre>
+            </div>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>&gt;&gt;&gt; Human-in-the-loop gate.</strong> BM25 gives <em>review order</em>, not a
+                    responsiveness ruling. The analyst decides where the responsive set ends, whether to broaden
+                    custodians, and whether near-duplicate forwarded copies count once or many times. The score never
+                    closes the matter.
+                </p>
+            </div>
+        </section>
+
+        <section id="result" class="module-section">
+            <h2>Done — the result</h2>
+            <div class="callout">
+<pre>Index: 80,000 messages, 145,360 terms, sub-second retrieval (0.176s).
+Q1 broad  : top score 29.09 — Kaminski "LJM/Raptor valuations" + PR noise.
+Q2 refined: top score 42.97 — Ken Lay "SEC Information/Earnings Restatement";
+            7/10 hits new vs Q1 (tighter terms re-rank the set).
+Sender    : From~"fastow" -> 5 real Fastow originals (top "FW: Monday Meeting").
+=> a ranked review queue counsel works top-down, instead of scanning 500k files.</pre>
+            </div>
+            <p>
+                The headline: build the index once, then retrieve ranked hits in milliseconds. The agent's value is
+                iterating — search, read, refine, pivot — to push probative documents to the top of the review queue.
+            </p>
+        </section>
+
+        <section id="guidance" class="module-section">
+            <h2>Guidance: reading the outcome</h2>
+            <ul>
+                <li><strong>Ranking is review order, not coverage.</strong> The top-N is where to start reading, not a guarantee of completeness. The human decides where the responsive set ends.</li>
+                <li><strong>Refinement is the skill.</strong> The broad query surfaced PR noise at #1–3; adding accounting terms re-ranked the substantive disclosure memos to the top. Teaching point: iterate the query, don't trust the first list.</li>
+                <li><strong>Failure mode — no semantics.</strong> Keyword/stem ranking has no meaning model: a memo saying "the structured-finance vehicles we used to keep debt off the books" without ever typing <em>raptor</em>, <em>LJM</em>, or <em>SPE</em> ranks low or misses; high-frequency mentions in irrelevant PR chatter rank spuriously high (exactly the #1–3 in Q1). Mitigation: query expansion / synonyms, phrase &amp; proximity queries, and ultimately human review.</li>
+            </ul>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>Honest deviation (teaching note).</strong> The <code>fastow-a</code> and <code>causey-r</code>
+                    mailboxes do not exist in the public CMU/FERC release; Fastow still surfaces via the sender filter
+                    because his mail sits in others' boxes. Indexing was capped at 80,000 messages (priority custodians
+                    walked first) because full extraction stalled on the Windows mount. Near-duplicate forwarded copies
+                    are left in, to show students the sent/inbox artefact.
+                </p>
+            </div>
+        </section>
+
+        <section id="reproduce" class="module-section">
+            <h2>Reproduce it</h2>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Run it yourself:</strong> script, full output (with the complete top-10 tables), and README in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/05-search-enron"><code>examples/05-search-enron/</code></a>
+                    (<a href="https://github.com/AskOsama/DF-AI/blob/main/examples/05-search-enron/run.py"><code>run.py</code></a>,
+                    <a href="https://github.com/AskOsama/DF-AI/blob/main/examples/05-search-enron/output.txt"><code>output.txt</code></a>).
+                    See also the <a href="part4-search-enron.html">Part&nbsp;4 dataset &amp; encoding page</a> and the
+                    <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a>.
+                </p>
+            </div>
+        </section>
+
+        <nav class="module-nav" aria-label="Results-page navigation">
+            <a href="part5-feature-engineering-ember.html" class="prev">
+                <span class="nav-label">← Previous verified run</span>
+                <span class="nav-title">Feature engineering · EMBER</span>
+            </a>
+            <a href="part5.html#worked-prompts" class="next">
+                <span class="nav-label">Back to →</span>
+                <span class="nav-title">Part 5 — Worked prompts</span>
+            </a>
+        </nav>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>About this page</h3>
+                <p>A Part&nbsp;5 verified-run page for <a href="../index.html">Digital Forensics Data &amp; AI</a>. CC BY 4.0.</p>
+            </div>
+            <div class="footer-links">
+                <h3>The five parts</h3>
+                <ul>
+                    <li><a href="part1.html">Part 1 — Foundations</a></li>
+                    <li><a href="part2.html">Part 2 — The Data</a></li>
+                    <li><a href="part3.html">Part 3 — Privacy &amp; Admissibility</a></li>
+                    <li><a href="part4.html">Part 4 — In-House AI Tools</a></li>
+                    <li><a href="part5.html"><strong>Part 5 — Agentic Solutions</strong></a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>License</h3>
+                <p>CC BY 4.0. Attribution: "DF-AI Course Materials, licensed under CC BY 4.0."</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Digital Forensics &amp; AI · Open Educational Resource</p>
+        </div>
+    </footer>
+</body>
+</html>

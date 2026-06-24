@@ -497,6 +497,19 @@
                 &rarr; Observation &mdash; showing how the agent decomposes that prompt into calls on the very tools
                 you built. Read each trace as an audit log: every action is named, every observation recorded.
             </p>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>Verified runs — results &amp; guidance:</strong> every prompt below was actually executed on
+                    its real dataset. Each links to a results page that walks the agent's run
+                    (Approach&nbsp;→&nbsp;Action&nbsp;→&nbsp;Observation&nbsp;→&nbsp;Done) with the genuine captured
+                    output:
+                    <a href="part5-csp-geolife.html">CSP&nbsp;·&nbsp;GeoLife</a>,
+                    <a href="part5-optimization-govdocs1.html">Optimization&nbsp;·&nbsp;GovDocs1</a>,
+                    <a href="part5-knowledge-openflights.html">Knowledge&nbsp;·&nbsp;OpenFlights</a>,
+                    <a href="part5-feature-engineering-ember.html">Feature engineering&nbsp;·&nbsp;EMBER</a>, and
+                    <a href="part5-search-enron.html">Search&nbsp;·&nbsp;Enron</a>.
+                </p>
+            </div>
 
             <h3>1 · Constraint satisfaction — alibi check (GeoLife GPS)</h3>
             <div class="callout callout-story">
@@ -527,7 +540,8 @@ Final answer: Alibi inconsistent — phone log and CCTV cannot both be true; no
             <p>
                 <strong>Limit:</strong> the agent reports UNSAT <em>with</em> the conflict set, never "guilty"; move
                 the CCTV time later and it returns a satisfying timeline instead. The honest output is the conflict,
-                not a verdict. Full pipeline: <a href="part4-csp-geolife.html">Constraint satisfaction · GeoLife</a>.
+                not a verdict. Full pipeline: <a href="part4-csp-geolife.html">Constraint satisfaction · GeoLife</a>
+                · <strong>Results &amp; guidance:</strong> <a href="part5-csp-geolife.html">the verified run →</a>
             </p>
 
             <h3>2 · Optimization — triage prioritisation (GovDocs1)</h3>
@@ -557,7 +571,8 @@ Final answer: ranked queues per examiner + the Pareto front; optimiser beats gre
             <p>
                 <strong>Limit:</strong> the agent presents the front but the <em>choice</em> of trade-off is the
                 human's &mdash; an agent that silently picks one point is hiding a judgement call. Full pipeline:
-                <a href="part4-optimization-govdocs1.html">Optimization · GovDocs1</a>.
+                <a href="part4-optimization-govdocs1.html">Optimization · GovDocs1</a>
+                · <strong>Results &amp; guidance:</strong> <a href="part5-optimization-govdocs1.html">the verified run →</a>
             </p>
 
             <h3>3 · Knowledge &amp; reasoning — path inference (OpenFlights)</h3>
@@ -584,7 +599,8 @@ with the route graph. Every edge is a named real airline service.</pre>
             <p>
                 <strong>Limit:</strong> the conclusion is only as complete as the route snapshot &mdash; a "no path
                 found" means "not in this graph", not "impossible in the world". The agent must state the data's date.
-                Full pipeline: <a href="part4-knowledge-openflights.html">Knowledge &amp; reasoning · OpenFlights</a>.
+                Full pipeline: <a href="part4-knowledge-openflights.html">Knowledge &amp; reasoning · OpenFlights</a>
+                · <strong>Results &amp; guidance:</strong> <a href="part5-knowledge-openflights.html">the verified run →</a>
             </p>
 
             <h3>4 · Feature engineering — static malware triage (EMBER)</h3>
@@ -613,7 +629,8 @@ Final answer: Malware, confidence 0.987, driven by packing + process-injection i
             <p>
                 <strong>Limit:</strong> this is a <em>lead to verify</em>, not a verdict &mdash; and the agent must
                 exclude leak-prone features (the PE timestamp) or its confidence is an artefact of the time-split.
-                Full pipeline: <a href="part4-feature-engineering-ember.html">Feature engineering · EMBER</a>.
+                Full pipeline: <a href="part4-feature-engineering-ember.html">Feature engineering · EMBER</a>
+                · <strong>Results &amp; guidance:</strong> <a href="part5-feature-engineering-ember.html">the verified run →</a>
             </p>
 
             <h3>5 · Search engines — ranked e-discovery (Enron)</h3>
@@ -642,7 +659,8 @@ Final answer: ranked hit list with metadata + KWIC snippets for counsel to revie
             <p>
                 <strong>Limit:</strong> ranking is a starting point, not a completeness guarantee &mdash; the agent
                 loops (refine, re-query) and a human still decides when coverage is adequate for disclosure. Full
-                pipeline: <a href="part4-search-enron.html">Search engines · Enron</a>.
+                pipeline: <a href="part4-search-enron.html">Search engines · Enron</a>
+                · <strong>Results &amp; guidance:</strong> <a href="part5-search-enron.html">the verified run →</a>
             </p>
 
             <div class="callout callout-discuss">
