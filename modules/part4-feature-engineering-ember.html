@@ -165,6 +165,15 @@ print(f"malware probability = {score:.3f}")              # -> 0.987</pre>
             </p>
             <div class="callout callout-demo">
                 <p>
+                    <strong>Runnable example &amp; verified output:</strong> the script, the real captured
+                    output, and the plan/execute prompts are in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/04-feature-engineering-ember"><code>examples/04-feature-engineering-ember/</code></a>.
+                    LightGBM scores accuracy 0.92 / AUC 0.97 on real PE features, and the leakage demo
+                    inflates accuracy to a perfect 1.0 — exactly the trap to teach.
+                </p>
+            </div>
+            <div class="callout callout-demo">
+                <p>
                     <strong>How an agent runs this:</strong> see the
                     <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
                     ReAct trace that featurizes then classifies an unknown artefact without executing it.

@@ -9,3 +9,10 @@ desktop.ini
 *~
 .idea/
 .vscode/
+
+# Runnable examples — keep scripts/docs/outputs, exclude heavy data & envs
+examples/**/.venv/
+examples/**/data/
+examples/**/__pycache__/
+examples/**/*.zip
+examples/**/*.tar.gz

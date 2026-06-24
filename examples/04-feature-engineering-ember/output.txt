@@ -1,0 +1,83 @@
+
+========================================================================
+STEP 1 — Gather a SAFE labeled corpus (real benign + synthetic packed)
+========================================================================
+[gather] copying 60 REAL benign PE files from /mnt/c/Windows/System32
+[gather] generated 60 SYNTHETIC packed variants (mixed light/heavy packing)
+  benign (REAL System32 PE) : 60
+  packed (SYNTHETIC)        : 60
+  PE parser (lief)          : available
+  classifier                : LightGBM
+
+========================================================================
+STEP 2 — Extract EMBER-style features  (raw bytes -> numeric vector)
+========================================================================
+  feature matrix X : shape (120, 31)  (n_samples x n_features)
+  labels y         : 60 benign, 60 packed
+  feature families : byte-histogram(16), entropy summary(5), strings(2), PE header/sections/imports(7)
+  mean whole-file entropy  benign=4.659  packed=5.495
+  mean recoverable imports benign=98.2  packed=98.4
+
+========================================================================
+STEP 3 — Train / test split + train classifier
+========================================================================
+  train: 84 samples   test: 36 samples
+  HONEST test accuracy : 0.9167
+  HONEST test ROC-AUC  : 0.9722
+  classification report:
+              precision    recall  f1-score   support
+
+      benign      1.000     0.833     0.909        18
+      packed      0.857     1.000     0.923        18
+
+    accuracy                          0.917        36
+   macro avg      0.929     0.917     0.916        36
+weighted avg      0.929     0.917     0.916        36
+
+
+========================================================================
+STEP 4 — Top feature importances (mapped to human names)
+========================================================================
+  byte_hist[9]                    97.0000 #######################################
+  pe_section_entropy_max          72.0000 #############################
+  byte_entropy_win_max            52.0000 #####################
+  byte_entropy_win_std            42.0000 #################
+  pe_timestamp                    28.0000 ###########
+  byte_hist[15]                   26.0000 ##########
+  frac_high_entropy_windows       21.0000 ########
+  byte_hist[11]                   17.0000 #######
+
+========================================================================
+STEP 5 — Score one held-out UNKNOWN sample
+========================================================================
+  [most-suspicious] file = packed_043.bin
+     verdict   : PACKED/SUSPICIOUS   P(packed)=1.000   (ground truth: packed)
+     top drivers: pe_section_entropy_max(+65.79), byte_hist[9](+65.13), byte_entropy_win_std(+57.93)
+  [most-benign] file = benign_051.bin
+     verdict   : BENIGN   P(packed)=0.000   (ground truth: benign)
+     top drivers: byte_hist[9](-74.75), byte_entropy_win_max(-46.93), pe_timestamp(-46.89)
+
+========================================================================
+STEP 6 — LEAKAGE TRAP (real demonstration, 5-fold cross-validation)
+========================================================================
+  We add a LEAKY feature 'source_folder_id': every benign file gets
+  id=0, every packed file gets id=1 -- exactly the 'folder named
+  evidence' shortcut. In a real case the analyst's intake script wrote
+  benign and suspicious files to different folders, so the folder id
+  is PERFECTLY correlated with the label. The model can cheat.
+
+  We compare HONEST vs LEAKY feature sets with 5-fold CV (stable est.)
+
+  WITHOUT leaky feat. (honest): accuracy=0.9417  AUC=0.9889
+  WITH leaky feature          : accuracy=1.0000  AUC=1.0000
+     -> leaky feature ranked #1 of 32 in importance (it dominates)
+  INFLATION from leakage      : accuracy +0.0583   AUC +0.0111
+
+  LESSON: the leaky model looks great offline but learned the FOLDER,
+          not the FILE. On genuinely unknown evidence -- where every
+          file is 'unsorted' -- the shortcut is gone and it collapses.
+          -> drop folder/timestamp/source-feed metadata before training.
+
+========================================================================
+DONE
+========================================================================

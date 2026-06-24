@@ -1,0 +1,61 @@
+
+======================================================================
+STEP 1 -- PARSE FACTS AND BUILD KNOWLEDGE BASE (networkx MultiDiGraph)
+======================================================================
+airport/3 facts parsed :   6072  (IATA -> City, Country)
+flight/3  facts parsed :  66934  (Airline, Src, Dst)
+graph nodes (airports) :   6072
+graph edges (flights)  :  66934
+  LHR = London, United Kingdom
+  BOG = Bogota, Colombia
+
+======================================================================
+STEP 2 -- REACHABILITY LHR -> BOG  (<= 3 connections)
+======================================================================
+Direct flight LHR -> BOG exists? False
+Bounded BFS: LHR -> BOG reachable within 4 legs? True
+1-connection (2-leg) hubs LHR->hub->BOG: 16
+Simple paths LHR -> BOG with <= 3 legs: 35980
+  2 leg(s) (1 connection(s)): 209 path(s)
+  3 leg(s) (2 connection(s)): 35771 path(s)
+
+-- Shortest path found --
+  route : LHR -> ATL -> BOG
+  cities: London -> Atlanta -> Bogota
+    leg LHR->ATL  airlines=AA,AF,AY,BA,DL,IB,KL,VS        edge_exists=True
+    leg ATL->BOG  airlines=DL                             edge_exists=True
+
+-- A representative 1-CONNECTION (2-leg) path with real airlines --
+  route : LHR -> ATL -> BOG
+    LHR (London) -> ATL (Atlanta) : airlines = AA, AF, AY, BA, DL, IB, KL, VS
+    ATL (Atlanta) -> BOG (Bogota) : airlines = DL
+  VERIFIED both legs present in KB: True
+  HUB / connecting airport: ATL (Atlanta, United States)
+
+======================================================================
+STEP 2d -- AUDITABLE DERIVATION CHAIN (backward-chaining proof tree)
+======================================================================
+GOAL: reachable('LHR', 'BOG')   (can X get from LHR to BOG?)
+  RULE: reachable('LHR','BOG') :- flight(_,'LHR','ATL'), reachable('ATL','BOG').
+  |- flight('AA', 'LHR', 'ATL')   [FACT from routes.dat]
+  |- subgoal: reachable('ATL', 'BOG')
+     RULE: reachable('ATL','BOG') :- flight(_,'ATL','BOG').
+     |- flight('DL', 'ATL', 'BOG')   [FACT from routes.dat]
+
+=> DERIVED: reachable('LHR', 'BOG') is TRUE via LHR -> ATL -> BOG
+=> contradicts_alibi(X) :- reachable(LHR, BOG), claims_location(X, DXB),
+                          not necessarily_at(X, DXB).
+   The 'Dubai' alibi does NOT make BOG physically unreachable.
+
+======================================================================
+STEP 3 -- DECLARATIVE RULE REASONING (pyDatalog) + CROSS-CHECK
+======================================================================
+Asserting bounded KB: 185 airports on candidate paths.
+Asserted 1430 flight/2 facts (deduped edges on candidate paths).
+pyDatalog query  reachable('LHR','BOG')  -> True  (answer set: [()])
+networkx says reachable: True
+CROSS-CHECK: pyDatalog == networkx ?  True
+
+======================================================================
+DONE
+======================================================================

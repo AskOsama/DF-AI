@@ -1,0 +1,45 @@
+======================================================================
+DF-AI 02 -- Triage Prioritisation Optimization (GovDocs1 / 000.zip)
+======================================================================
+
+[1] FEATURIZE
+    files            : 981
+    distinct types   : 22  -> {'pdf': 200, 'html': 181, 'txt': 154, 'doc': 111, 'jpg': 89, 'ppt': 88, 'xls': 62, 'gif': 23} ...
+    mean cost (min)  : 8.35
+    total cost (min) : 8188.3  (136.5 h to review ALL)
+    files w/ PII hit : 349
+    wrote items.csv  : /mnt/d/courses/DF-AI/examples/02-optimization-govdocs1/items.csv
+
+[2] BASELINES  (budget = 960 min = 16 h)
+    greedy (value/cost):   90 files,   959.8 min, value = 26954.5
+    random (seed=42)   :  112 files,   958.4 min, value = 4800.6
+    brute-force slice  : 15 items, budget=106.4 min -> optimum value = 9938.7 (11 files); greedy-on-slice = 9896.5
+
+[3] OR-TOOLS 0/1 KNAPSACK  (budget = 960 min)
+    knapsack optimum   :   90 files,   959.8 min, value = 26954.5
+    vs greedy value    : 26954.5  -> knapsack gains +0.0 (+0.00%)
+    CHECK knapsack >= greedy : PASS
+    budget sweep  greedy   knapsack    gain
+       120 min    10549.1    10549.1     +0.0
+       240 min    13758.5    13788.8    +30.2  <- knapsack WINS
+       480 min    18804.4    18844.4    +40.0  <- knapsack WINS
+       720 min    23278.9    23278.9     -0.0
+       960 min    26954.5    26954.5     +0.0
+
+[4] TWO-EXAMINER SPLIT  (2 x 480 min via CP-SAT)
+    examiner 1:   42 files, load  479.9/480 min, value = 16134.0
+    examiner 2:   48 files, load  479.9/480 min, value = 10820.6
+    CP-SAT status=OPTIMAL, total value = 26954.5 (single-knapsack@960 was 26954.5)
+
+[5] DEAP NSGA-II MULTI-OBJECTIVE  (max value, max types, min minutes)
+    corpus has 22 distinct types; budget = 960 min
+    Pareto front size = 121; sample (value, types, minutes):
+        value=14963.4   types=18   minutes=  663.8
+        value=13644.6   types=19   minutes=  545.4
+        value=12291.7   types=21   minutes=  584.6
+        value=10681.0   types=18   minutes=  379.2
+        value= 6417.3   types=15   minutes=  257.1
+
+======================================================================
+DONE -- all stages executed on real GovDocs1 files.
+======================================================================

@@ -1,0 +1,117 @@
+##############################################################################################################
+# DF-AI 05 — Inverted Index + BM25 ranked search over the Enron corpus (e-discovery)
+##############################################################################################################
+
+[1/4] Ingesting from /mnt/d/courses/DF-AI/examples/05-search-enron/data/maildir (cap = 80,000 messages; priority custodians walked first)...
+      Parsed 80,000 messages in 319.9s.
+      Key custodians present in index:
+         [OK ] skilling-j     4139 msgs
+         [OK ] lay-k          5937 msgs
+         [OK ] kaminski-v    28465 msgs
+         [OK ] buy-r          2429 msgs
+         [OK ] haedicke-m     5246 msgs
+         [OK ] derrick-j      1766 msgs
+         [OK ] sanders-r      7329 msgs
+         [OK ] delainey-d     3566 msgs
+         [OK ] whalley-g      1878 msgs
+         [OK ] kean-s        19245 msgs
+
+[2/4] Preprocessing (lowercase / \w+ tokenize / drop stopwords / Snowball stem) and building BM25Okapi inverted index...
+      Tokenized corpus: 80,000 docs, 17,414,728 tokens, 145,360 unique terms.
+      Tokenize time: 13.0s   |   BM25 index build time: 3.7s
+      Avg doc length (tokens): 217.7   |   BM25 params k1=1.5, b=0.75
+
+[3/4] PRIMARY e-discovery query
+      raw    : "raptor LJM special purpose entity mark to market"
+      stemmed: ['raptor', 'ljm', 'special', 'purpos', 'entiti', 'mark', 'market']
+      Ranked 80,000 docs in 0.176s (sub-second retrieval).
+
+==============================================================================================================
+TOP 10 — Query 1: raptor LJM special purpose entity mark to market
+==============================================================================================================
+ #    score  date                             from                          subject
+--------------------------------------------------------------------------------------------------------------
+ 1    29.09  Fri, 26 Oct 2001 16:53:11 -070…  pr <.palmer@enron.com>        FW: Erroneous press
+      KWIC: ...rom: Watkins, Sherron Sent: Thursday, October 25, 2001 11:30 AM To: Koenig, Mark; Palmer, Mark A. (PR) Cc: McMahon, Jeff...
+ 2    29.01  Thu, 25 Oct 2001 09:46:28 -070…  mark.koenig@enron.com         FW: Erroneous press
+      KWIC: FYI. I am definitely not responding to this -----Original Message----- From: Watkins, Sherron Sent: Thursday, October 25...
+ 3    29.01  Thu, 25 Oct 2001 09:46:28 -070…  mark.koenig@enron.com         FW: Erroneous press
+      KWIC: FYI. I am definitely not responding to this -----Original Message----- From: Watkins, Sherron Sent: Thursday, October 25...
+ 4    26.17  Tue, 6 Nov 2001 07:46:08 -0800…  j.kaminski@enron.com          FW: LJM/Raptor valuations
+      KWIC: ...ent: Tuesday, November 06, 2001 9:10 AM To: Kaminski, Vince J Subject: FW: LJM/Raptor valuations -----Original Message--...
+ 5    25.60  Tue, 6 Nov 2001 07:10:07 -0800…  j.kaminski@enron.com          FW: LJM/Raptor valuations
+      KWIC: ...From: Kaminski, Vince J Sent: Monday, October 08, 2001 1:37 PM To: 'vkaminski@aol.com' Subject: FW: LJM/Raptor valuation...
+ 6    25.60  Tue, 6 Nov 2001 07:10:07 -0800…  j.kaminski@enron.com          FW: LJM/Raptor valuations
+      KWIC: ...From: Kaminski, Vince J Sent: Monday, October 08, 2001 1:37 PM To: 'vkaminski@aol.com' Subject: FW: LJM/Raptor valuation...
+ 7    24.77  Mon, 8 Oct 2001 11:37:21 -0700…  j.kaminski@enron.com          FW: LJM/Raptor valuations
+      KWIC: ...om: Kaminski, Vince J Sent: Thursday, October 04, 2001 8:28 AM To: Siurek, Ryan Cc: Kaminski, Vince J; Buy, Rick; Port,...
+ 8    24.67  Thu, 1 Nov 2001 07:19:22 -0800…  rick.buy@enron.com            FW: LJM/Raptor valuations
+      KWIC: ...om: Kaminski, Vince J Sent: Thursday, October 04, 2001 8:28 AM To: Siurek, Ryan Cc: Kaminski, Vince J; Buy, Rick; Port,...
+ 9    24.31  Fri, 28 Dec 2001 14:07:51 -080…  j.kaminski@enron.com          FW: Raptors
+      KWIC: ...i, Vince J <Vince.J.Kaminski@ENRON.com> To: LJM Litigation <ljm.litigation@ENRON.com> CC: Cooley, Jan <Jan.Cooley@ENRON....
+10    23.48  Thu, 4 Oct 2001 06:27:34 -0700…  j.kaminski@enron.com          LJM/Raptor valuations
+      KWIC: Ryan, In the follow up to the meeting we had on Wednesday I would like to reinforce one point I made. I feel strongly th...
+--------------------------------------------------------------------------------------------------------------
+
+[4/4] QUERY REFINEMENT
+
+   (4a) Tighter query (added: hedge / off balance sheet / restatement)
+        raw    : "raptor LJM hedge off balance sheet special purpose entity accounting restatement"
+        stemmed: ['raptor', 'ljm', 'hedg', 'balanc', 'sheet', 'special', 'purpos', 'entiti', 'account', 'restat']
+
+==============================================================================================================
+TOP 10 — Query 2 (refined accounting terms)
+==============================================================================================================
+ #    score  date                             from                          subject
+--------------------------------------------------------------------------------------------------------------
+ 1    42.97  Thu, 8 Nov 2001 15:35:50 -0800…  chairman.ken@enron.com        SEC Information/Earnings Restatement
+      KWIC: ...information about our related party and off-balance sheet transactions. We have made this information available both on...
+ 2    42.97  Thu, 8 Nov 2001 15:35:50 -0800…  chairman.ken@enron.com        SEC Information/Earnings Restatement
+      KWIC: ...information about our related party and off-balance sheet transactions. We have made this information available both on...
+ 3    42.97  Thu, 8 Nov 2001 15:35:50 -0800…  chairman.ken@enron.com        SEC Information/Earnings Restatement
+      KWIC: ...information about our related party and off-balance sheet transactions. We have made this information available both on...
+ 4    42.97  Thu, 8 Nov 2001 15:35:50 -0800…  chairman.ken@enron.com        SEC Information/Earnings Restatement
+      KWIC: ...information about our related party and off-balance sheet transactions. We have made this information available both on...
+ 5    42.97  Thu, 8 Nov 2001 15:35:50 -0800…  chairman.ken@enron.com        SEC Information/Earnings Restatement
+      KWIC: ...information about our related party and off-balance sheet transactions. We have made this information available both on...
+ 6    29.19  Fri, 26 Oct 2001 16:53:11 -070…  pr <.palmer@enron.com>        FW: Erroneous press
+      KWIC: ...is reporting that we have dissolved the LJM partnerships, ended all relationships with the LJM entities, etc. All that w...
+ 7    29.11  Thu, 25 Oct 2001 09:46:28 -070…  mark.koenig@enron.com         FW: Erroneous press
+      KWIC: ...is reporting that we have dissolved the LJM partnerships, ended all relationships with the LJM entities, etc. All that w...
+ 8    29.11  Thu, 25 Oct 2001 09:46:28 -070…  mark.koenig@enron.com         FW: Erroneous press
+      KWIC: ...is reporting that we have dissolved the LJM partnerships, ended all relationships with the LJM entities, etc. All that w...
+ 9    26.85  Mon, 26 Nov 2001 17:36:38 -080…  vkaminski@aol.com             Fwd: FYI
+      KWIC: ...rs in the dark because it could exploit accounting loopholes for subsidiaries that are available to most publicly traded...
+10    26.85  Mon, 26 Nov 2001 17:36:38 -080…  vkaminski@aol.com             Fwd: FYI
+      KWIC: ...rs in the dark because it could exploit accounting loopholes for subsidiaries that are available to most publicly traded...
+--------------------------------------------------------------------------------------------------------------
+
+   (4b) Sender-filtered: Query 1 ranking, restricted to From contains 'fastow'
+
+==============================================================================================================
+TOP 5 — Query 1 filtered to From~'fastow'
+==============================================================================================================
+ #    score  date                             from                          subject
+--------------------------------------------------------------------------------------------------------------
+ 1    16.65  Mon, 16 Apr 2001 12:25:00 -070…  andrew.fastow@enron.com       FW: Monday Meeting
+      KWIC: ...nnumerable hours with management. While Mark says that he doesn't want LJM to have an advantage, it looks like LJM is be...
+ 2     2.01  Tue, 26 Jun 2001 15:37:11 -070…  andrew.fastow@enron.com       FW: MD PRC Committee
+      KWIC: ...problem with Ben Glisan being deleted, especially without a chance to comment. I believe he is as critical to the organi...
+ 3     0.00  Sun, 10 Jun 2001 18:01:24 -070…  andrew.fastow@enron.com       Op Ed satire
+      KWIC: Nothing to do except things like this when you're trapped inside by a flood.
+ 4     0.00  Wed, 24 Oct 2001 13:02:54 -070…  andrew.fastow@enron.com       FW: Status CEG/CEG-Rio Transaction
+      KWIC: ...From: Stabler, Frank Sent: Wednesday, October 24, 2001 2:32 PM To: Fastow, Andrew; Donahue, Jeff; Ricky Waddell/Enron@En...
+ 5     0.00  Wed, 24 Oct 2001 13:02:54 -070…  andrew.fastow@enron.com       FW: Status CEG/CEG-Rio Transaction
+      KWIC: ...From: Stabler, Frank Sent: Wednesday, October 24, 2001 2:32 PM To: Fastow, Andrew; Donahue, Jeff; Ricky Waddell/Enron@En...
+--------------------------------------------------------------------------------------------------------------
+
+==============================================================================================================
+RANKING-CHANGE NOTES
+==============================================================================================================
+ - Query 1 top score: 29.09   Query 2 top score: 42.97
+ - 3/10 documents stay in the top-10 across Q1 -> Q2; 7 new docs enter on the tighter terms.
+ - Sender filter (From~'fastow') returned 5 hits, pivoting from a topical view to a custodian-centric view.
+ - HUMAN-IN-THE-LOOP: BM25 ranking is a *starting point* for review order, not a coverage guarantee.
+   The analyst, not the score, decides where the responsive set ends.
+
+Done.

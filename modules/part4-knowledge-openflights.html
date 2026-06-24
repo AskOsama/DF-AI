@@ -177,6 +177,15 @@ print(paths[0])     # -> ['LHR', 'MAD', 'BOG']</pre>
             </div>
             <div class="callout callout-demo">
                 <p>
+                    <strong>Runnable example &amp; verified output:</strong> the script, the real captured
+                    output, and the plan/execute prompts are in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/03-knowledge-openflights"><code>examples/03-knowledge-openflights/</code></a>.
+                    Over 66,934 real routes the run finds no direct LHR→BOG but a 1-stop path via Atlanta
+                    (Delta), with an auditable fact/rule chain (pyDatalog ↔ networkx cross-checked).
+                </p>
+            </div>
+            <div class="callout callout-demo">
+                <p>
                     <strong>How an agent runs this:</strong> see the
                     <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
                     ReAct trace that queries the knowledge base and surfaces the underlying flight facts.

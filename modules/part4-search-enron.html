@@ -175,6 +175,15 @@ top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:10]</pr
             </p>
             <div class="callout callout-demo">
                 <p>
+                    <strong>Runnable example &amp; verified output:</strong> the script, the real captured
+                    output, and the plan/execute prompts are in
+                    <a href="https://github.com/AskOsama/DF-AI/tree/main/examples/05-search-enron"><code>examples/05-search-enron/</code></a>.
+                    An 80,000-message BM25 index (built in ~4&nbsp;s) returns real ranked e-discovery hits
+                    (e.g. Kaminski's "LJM/Raptor valuations").
+                </p>
+            </div>
+            <div class="callout callout-demo">
+                <p>
                     <strong>How an agent runs this:</strong> see the
                     <a href="part5.html#worked-prompts">Part&nbsp;5 worked prompts</a> for the analyst request and the
                     ReAct trace that indexes, runs a ranked query, and refines it when the top hits look off-topic.
