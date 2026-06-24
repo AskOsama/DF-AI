@@ -70,6 +70,7 @@
                 <li><a href="#cross-domain">Where forensics sits</a></li>
                 <li><a href="#frameworks">Open-source frameworks</a></li>
                 <li><a href="#anatomy">Anatomy of a forensic triage agent</a></li>
+                <li><a href="#methodology">The method: plan → execute → observe</a></li>
                 <li><a href="#worked-prompts">Five prompts on real data</a></li>
                 <li><a href="#failure-modes">Failure modes &amp; limits</a></li>
                 <li><a href="#takeaways">Recap &amp; further practice</a></li>
@@ -487,10 +488,106 @@
             </div>
         </section>
 
+        <section id="methodology" class="module-section">
+            <h2>The method: plan → execute → observe</h2>
+            <p>
+                The <a href="#worked-prompts">five worked prompts</a> below are not ad-hoc &mdash; every one of them
+                follows the same repeatable method, and so should the agent you point at your own case. It is
+                <span class="term">ReAct</span> from the <a href="#react">trace above</a>, wrapped in the discipline that
+                evidence work demands: you <strong>plan before you run</strong>, you <strong>run and capture real
+                output</strong>, you read the run as <strong>Approach&nbsp;→&nbsp;Action&nbsp;→&nbsp;Observation&nbsp;→
+                &nbsp;Done</strong>, and you keep a human at the controls. Four stages.
+            </p>
+
+            <h3>Stage 1 — the plan-phase prompt</h3>
+            <p>
+                First you ask the agent to <em>plan, not execute</em>. A good plan-phase prompt pins down five things so
+                nothing is improvised later: the <strong>data</strong> (which open dataset, its licence), the
+                <strong>encoding</strong> (how raw records become the tool's structures), the <strong>tools</strong>
+                (which solver / library, run locally), the <strong>expected outputs</strong>, and &mdash; the part that
+                keeps it admissible &mdash; the <strong>reporting rule</strong>: the deliverable is a
+                <em>consistency check</em> or an <em>investigative lead</em>, never a verdict.
+            </p>
+            <div class="callout">
+<pre>PLAN — do not execute yet.
+Goal:       &lt;the forensic question, stated precisely&gt;
+1. Data:    which open dataset grounds this? licence? format? how to download?
+2. Encoding: how do raw records become &lt;variables / items / facts / features / postings&gt;?
+3. Tooling: which local tool/library, and why it is defensible.
+4. Outputs: exactly what the run should print.
+5. Reporting rule: report consistency / a ranked lead — NEVER a guilt verdict.
+Return numbered steps with the tools/commands you will use. Write no code yet.</pre>
+            </div>
+
+            <h3>Stage 2 — the execute-phase prompt</h3>
+            <p>
+                Only once the plan is approved do you tell the agent to carry it out &mdash; and to capture the
+                <em>real</em> output, never invented numbers. The captured log is the evidence that the analysis
+                actually ran.
+            </p>
+            <div class="callout">
+<pre>EXECUTE the approved plan now.
+- Build the environment and install the named tools.
+- Download the dataset (say so and fall back honestly if it fails).
+- Write run.py exactly as planned; run it and capture: `python3 run.py | tee output.txt`.
+- Report the REAL output — do not fabricate any number or result.</pre>
+            </div>
+
+            <h3>Stage 3 — the run: Approach → Action → Observation → Done</h3>
+            <p>
+                The run itself is read as a loop. Each step is an <strong>Approach</strong> (the agent's reasoning &mdash;
+                what it decides to do and why), an <strong>Action</strong> (the named tool call), and an
+                <strong>Observation</strong> (the real result that comes back). The next Approach must take that
+                Observation into account, so a wrong turn is corrected by the next fact rather than carried forward.
+                The loop ends at <strong>Done</strong> &mdash; the headline result. Read top to bottom it is the agent's
+                working memory; read afterward it is an <strong>audit log</strong>.
+            </p>
+            <div class="callout">
+<pre>Approach:     &lt;what I decide to do next, and why&gt;
+Action:       &lt;the named tool call&gt;
+Observation:  &lt;the REAL output that came back&gt;
+Approach:     &lt;what that observation makes me do next&gt;
+Action:       ...
+Observation:  ...
+   >>> HUMAN-IN-THE-LOOP GATE: stop and hand a lead/contradiction to the analyst <<<
+Done:         &lt;the headline result — consistency, ranking, derivation, verdict-as-lead&gt;</pre>
+            </div>
+
+            <h3>Stage 4 — the guidance that makes it defensible</h3>
+            <p>
+                The method is only safe with three habits, which every results page documents explicitly:
+            </p>
+            <div class="callout callout-warn">
+                <p>
+                    <strong>1. The human-in-the-loop gate.</strong> The agent surfaces a contradiction, a ranked lead, or
+                    a Pareto choice and <em>stops</em> &mdash; a person makes the call that becomes evidence.
+                    <strong>2. The failure mode, stated up front.</strong> Name how this tool can be wrong (a spoofed
+                    clock, a proxy value model, a stale route snapshot, keyword search without semantics) so nobody
+                    over-trusts it. <strong>3. Honest deviations.</strong> Write down where reality differed from the
+                    plan (a 404'd download path, a missing mailbox, a synthetic sample) &mdash; the disclosure is what
+                    keeps the result auditable.
+                </p>
+            </div>
+            <div class="callout callout-demo">
+                <p>
+                    <strong>The five prompts below apply this method end-to-end.</strong> Each carries its plan-phase
+                    prompt, execute-phase prompt, and ReAct trace, and links to a
+                    <strong>verified run</strong> &mdash; the same method walked Approach&nbsp;→&nbsp;Action&nbsp;→
+                    &nbsp;Observation&nbsp;→&nbsp;Done with the genuine captured output:
+                    <a href="part5-csp-geolife.html">CSP&nbsp;·&nbsp;GeoLife</a>,
+                    <a href="part5-optimization-govdocs1.html">Optimization&nbsp;·&nbsp;GovDocs1</a>,
+                    <a href="part5-knowledge-openflights.html">Knowledge&nbsp;·&nbsp;OpenFlights</a>,
+                    <a href="part5-feature-engineering-ember.html">Feature engineering&nbsp;·&nbsp;EMBER</a>,
+                    <a href="part5-search-enron.html">Search&nbsp;·&nbsp;Enron</a>.
+                </p>
+            </div>
+        </section>
+
         <section id="worked-prompts" class="module-section">
             <h2>Five prompts on real data</h2>
             <p>
-                Each tool from <a href="part4.html">Part&nbsp;4</a> now has a worked pipeline over a real,
+                These apply <a href="#methodology">the method above</a> end-to-end. Each tool from
+                <a href="part4.html">Part&nbsp;4</a> now has a worked pipeline over a real,
                 open-access dataset &mdash; download, encoding, algorithm and final output are documented on the
                 Part&nbsp;4 sub-pages. Here we close the loop: for each one, the natural-language <strong>prompt</strong>
                 an analyst would actually type, and the <strong>ReAct trace</strong> &mdash; Thought &rarr; Action
