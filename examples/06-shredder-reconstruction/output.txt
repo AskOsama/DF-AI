@@ -1,0 +1,57 @@
+======================================================================
+STEP 1 -- OBTAIN REAL DOCUMENT IMAGE (grayscale)
+======================================================================
+source : REAL govdocs1 document 000013.pdf (a U.S. Federal Register page), page 1 rendered to grayscale at 150 dpi via PyMuPDF
+image shape (H x W): (1650, 1275) dtype: uint8
+pixel range: min 0 max 255 mean 231.1
+trimmed blank margins: width 1275 -> 1087 columns
+
+======================================================================
+STEP 2 -- SHRED INTO 32 VERTICAL STRIPS (strip-cut), shuffle seed=42
+======================================================================
+strip width (px): 33
+ground-truth order (original): [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+shuffled pile -> original idx: [31, 19, 7, 27, 26, 18, 5, 22, 28, 10, 24, 23, 20, 9, 6, 16, 3, 0, 15, 17, 25, 12, 21, 11, 14, 30, 2, 4, 29, 1, 13, 8]
+saved shuffled-strips image -> data/shredded.png
+
+======================================================================
+STEP 3 -- ENCODE MATCH COST (asymmetric N x N edge-cost matrix C)
+======================================================================
+C shape: (32, 32) (C[i][j] = right-edge(i) vs left-edge(j) mismatch)
+diagonal sentinel (forbidden self-follow): 140292.19
+sample costs:
+  C[0][1] = 6294.481   C[1][0] = 8112.134   (asymmetric)
+  C[0][2] = 6313.281   C[5][7] = 6831.230
+  min off-diagonal C = 6.450
+
+======================================================================
+STEP 4 -- OPTIMISE: find the order minimising total adjacent-edge cost
+======================================================================
+[greedy NN] best total cost = 124659.210
+[OR-Tools TSP] solver status = ROUTING_SUCCESS
+[OR-Tools TSP] total cost   = 117551.188
+
+======================================================================
+STEP 5 -- EVALUATE (neighbour-adjacency accuracy vs ground truth)
+======================================================================
+ground-truth total edge cost (optimum target): 120880.152
+[greedy NN]   adjacency accuracy =  90.3%  (28/31 correct neighbours, as-is)
+              PERFECT? False
+[OR-Tools TSP] adjacency accuracy =  96.8%  (30/31 correct neighbours, as-is)
+              PERFECT? False
+
+cost comparison (lower = better; optimum ~ ground-truth):
+  ground-truth : 120880.152
+  OR-Tools TSP : 117551.188
+  greedy NN    : 124659.210
+
+======================================================================
+STEP 6 -- RECOVERED ORDER + RECONSTRUCTED IMAGE
+======================================================================
+recovered order (OR-Tools TSP), as ORIGINAL strip indices:
+  [24, 25, 26, 27, 28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+saved reconstructed image -> data/reconstructed.png
+
+======================================================================
+DONE
+======================================================================

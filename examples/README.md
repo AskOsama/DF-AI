@@ -1,7 +1,8 @@
 # DF-AI — Runnable Worked Examples
 
-Five end-to-end, **actually executed** pipelines — one per Part 4 technique — each over a
-real, open-access digital-forensics dataset. Every folder contains:
+Six end-to-end, **actually executed** pipelines over real, open-access digital-forensics
+data — one per Part 4 technique, plus a second optimization example (shredded-document
+reconstruction). Every folder contains:
 
 - **`run.py`** — the script that was run (copy-paste reproducible).
 - **`output.txt`** — the *real* captured output from running it (no fabricated numbers).
@@ -13,7 +14,7 @@ real, open-access digital-forensics dataset. Every folder contains:
 Each example pairs with its Part 4 sub-page (`modules/part4-*.html`) and the Part 5
 "Five prompts on real data" section (`modules/part5.html#worked-prompts`).
 
-## The five examples
+## The examples
 
 | # | Technique | Dataset (real, open-access) | What the verified run showed |
 |---|-----------|------------------------------|------------------------------|
@@ -22,6 +23,7 @@ Each example pairs with its Part 4 sub-page (`modules/part4-*.html`) and the Par
 | [03](03-knowledge-openflights/) | Knowledge & reasoning | **OpenFlights** — 66,934 real routes | No direct LHR→BOG; reachable in **1 stop via Atlanta (Delta)**; auditable GOAL/RULE/FACT chain; pyDatalog ↔ networkx cross-check passed. |
 | [04](04-feature-engineering-ember/) | Feature engineering | **EMBER-style** on 60 real Windows PEs + 60 synthetic packed | LightGBM **acc 0.92 / AUC 0.97**; top drivers = section/byte entropy; **leakage trap demo**: a leaky feature inflates accuracy +0.058 to a perfect 1.0. |
 | [05](05-search-enron/) | Search engines | **Enron emails** (CMU) — 80,000 messages indexed | BM25 inverted index (145k terms) built in ~4 s; real ranked hits (Kaminski "LJM/Raptor valuations"); refinement + Fastow sender-filter. |
+| [06](06-shredder-reconstruction/) | Optimization (matching) | **Shredded document** — a real U.S. Federal Register page (govdocs1 `000013.pdf`) strip-cut into 32 strips | Reconstruction as edge-cost **TSP** (OR-Tools): **96.8%** adjacency accuracy (30/31), beating greedy (90.3%); recovers the true strip order (rotated at the open-path cut). Dataset/approach sourced via `paper-search` + `git-search`. |
 
 ## Published on the course site
 
