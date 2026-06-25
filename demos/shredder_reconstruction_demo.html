@@ -71,6 +71,18 @@
         @media(max-width:720px){.stage{grid-template-columns:1fr}}
         .legend{font-size:.74rem;color:var(--ink2);margin-top:.4rem}
         .swatch{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:middle;margin:0 .2rem 0 .6rem}
+        .logcard h3{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+        .dlrow{margin-left:auto;display:flex;gap:.4rem}
+        .btn.dl{font-size:.78rem;padding:.32rem .6rem}
+        .logbox{height:190px;overflow:auto;background:#10202a;color:#dfeaec;border:1px solid var(--rule);
+                border-radius:3px;padding:.5rem .6rem;font-family:"Geist Mono",ui-monospace,monospace;
+                font-size:.78rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+        .logbox .ln{display:block}
+        .logbox .seed{color:#e8d999}
+        .logbox .scan{color:#9fb6bd}
+        .logbox .commit{color:#8fd6b0}
+        .logbox .twoopt{color:#e3a39c}
+        .logbox .done{color:#fff;font-weight:600}
         .banner{margin-top:1rem;padding:.7rem .9rem;border-radius:4px;font-weight:600;display:none}
         .banner.show{display:block}
         .banner.ok{background:rgba(44,106,91,.12);border:1px solid var(--good);color:var(--good)}
@@ -156,6 +168,17 @@
         </div>
     </div>
 
+    <div class="vizcard logcard">
+        <h3>Search log
+            <span class="dlrow">
+                <button class="btn sec dl" id="btnDlTxt">⬇ Log (.txt)</button>
+                <button class="btn sec dl" id="btnDlJson">⬇ Data (.json)</button>
+                <button class="btn sec dl" id="btnDlPng">⬇ Page (.png)</button>
+            </span>
+        </h3>
+        <div class="logbox" id="log"></div>
+    </div>
+
     <div class="vizcard">
         <h3>Objective function over the search</h3>
         <canvas id="chart" width="1040" height="200"></canvas>
@@ -183,7 +206,8 @@ const pileX=ctx2("pile"),reconX=ctx2("recon"),chartX=ctx2("chart"),
 const els={phase:$("sPhase"),iter:$("sIter"),pos:$("sPos"),obj:$("sObj"),acc:$("sAcc"),
            bar:$("bar"),banner:$("banner"),run:$("btnRun"),step:$("btnStep"),reshuffle:$("btnReshuffle"),
            speed:$("speed"),nstrips:$("nstrips"),title:$("inspectTitle"),
-           rTry:$("rTry"),rCost:$("rCost"),rCostFill:$("rCostFill"),rBest:$("rBest")};
+           rTry:$("rTry"),rCost:$("rCost"),rCostFill:$("rCostFill"),rBest:$("rBest"),
+           log:$("log"),dlTxt:$("btnDlTxt"),dlJson:$("btnDlJson"),dlPng:$("btnDlPng")};
 
 // ---- source image ----
 let SW=0,SH=0,srcData=null;
@@ -297,6 +321,16 @@ function renderChart(){
     chartX.fillStyle="#36505b";chartX.font="11px monospace";chartX.fillText("cost "+Math.round(pts[li]).toLocaleString(),Math.min(X(li)-10,W-90),Y(pts[li])-8);
 }
 
+function log(action, text, rec){
+    const ms=Math.round((typeof performance!=="undefined"?performance.now():0)-S.t0);
+    S.log.push(Object.assign({i:S.iter, ms, phase:S.phase, action, text}, rec||{}));
+    const line=document.createElement("span");
+    line.className="ln "+action;
+    line.textContent=`[${String(S.log.length).padStart(3,"0")}] ${text}`;
+    els.log.appendChild(line);
+    while(els.log.childElementCount>600) els.log.removeChild(els.log.firstChild);
+    els.log.scrollTop=els.log.scrollHeight;
+}
 function setStats(){
     els.phase.textContent=S.phase;
     els.iter.textContent=S.iter;
@@ -318,7 +352,8 @@ function reset(reseed){
        gCands:[],gCosts:[],gIdx:0,gBestCost:Infinity,gBestCand:null,startId:bestStartId(Pb),
        order:[...Pb.pile],curObj:null,bestObj:null,bestOrder:null,acc:null,progress:0,
        running:false,tick:0,objHist:[],objShuffled:pathCost(Pb.pile,Pb.C),
-       gtCost:pathCost([...Array(N).keys()],Pb.C),twoOptStartIdx:-1,scanI:1};
+       gtCost:pathCost([...Array(N).keys()],Pb.C),twoOptStartIdx:-1,scanI:1,
+       log:[],t0:(typeof performance!=="undefined"?performance.now():0)};
     S.acc=accuracy(S.order,N);S.curObj=S.objShuffled;
     renderPile(null,null);renderRecon(S.order,null);renderSeam(null,null);renderBars();renderChart();
     seamX.clearRect(0,0,1,1);curX.getContext;  // noop guard
@@ -328,6 +363,7 @@ function reset(reseed){
     els.rCostFill.style.width="0";els.rBest.textContent="—";
     els.title.textContent="Inspecting the match — try each piece, check the edge overlap";
     els.banner.classList.remove("show");els.run.textContent="▶ Run";els.run.disabled=false;els.step.disabled=false;
+    els.log.innerHTML="";
     setStats();
 }
 
@@ -344,6 +380,7 @@ function greedyTick(){
         renderEdge(curX,S.cur,"R");renderSeam(S.cur,null);renderRecon(S.order,1);renderPile(null,null);
         els.title.textContent="Seeded position 1 — now scanning candidates for position 2";
         els.rTry.innerHTML="Seed strip placed at position 1 (best starting edge).";
+        log("seed",`seed · pos 1 ← #${S.startId} (best starting edge)`,{pos:1,strip:S.startId});
         newScan();S.subphase="scan";S.phase="greedy";S.iter++;S.progress=0.5/N;setStats();return true;
     }
     if(S.subphase==="scan"){
@@ -357,6 +394,8 @@ function greedyTick(){
         const tested=S.gCosts.filter(v=>v!=null),mx=Math.max(...tested),mn=Math.min(...tested);
         els.rCostFill.style.width=(100*(1-(cost-mn)/((mx-mn)||1))).toFixed(0)+"%"; // fuller = better
         els.rBest.textContent=`#${S.gBestCand} · ${Math.round(S.gBestCost).toLocaleString()}`;
+        log("scan",`scan · pos ${S.placeAt+1} · try #${c} → cost ${Math.round(cost).toLocaleString()} (best #${S.gBestCand})`,
+            {pos:S.placeAt+1,candidate:c,cost:Math.round(cost),best:S.gBestCand});
         S.iter++;S.gIdx++;
         if(S.gIdx>=S.gCands.length)S.subphase="commit";
         setStats();return true;
@@ -368,6 +407,8 @@ function greedyTick(){
         renderRecon(S.order,S.placeAt<N?S.placeAt:null);renderPile(null,S.gBestCand);
         els.rTry.innerHTML=`✓ Matched <span class="mono">#${S.gBestCand}</span> into position `+
             `<strong>${S.placed.length}</strong> (lowest edge cost).`;
+        log("commit",`commit · pos ${S.placed.length} ← #${S.gBestCand} (cost ${Math.round(S.gBestCost).toLocaleString()})`,
+            {pos:S.placed.length,strip:S.gBestCand,cost:Math.round(S.gBestCost)});
         S.progress=0.5*(S.placed.length/N);S.iter++;
         if(S.placed.length>=N){
             S.curObj=pathCost(S.placed,C);S.bestObj=S.curObj;S.bestOrder=[...S.placed];
@@ -392,13 +433,16 @@ function twoOptTick(){
         if(applied)break;i++;if(i>=N-1)i=1;scanned++;
     }
     if(applied){
+        const prevObj=S.curObj;
         S.scanI=1;S.curObj=pathCost(o,C);if(S.curObj<S.bestObj){S.bestObj=S.curObj;S.bestOrder=[...o];}
         S.acc=accuracy(o,N);S.objHist.push(S.curObj);S.iter++;
         S.progress=Math.min(0.99,S.progress+(1-S.progress)*0.16);
         // show the two new seams being tested
-        const i2=S.lastSeg.i,j2=S.lastSeg.j;
+        const i2=S.lastSeg.i,j2=S.lastSeg.j,delta=Math.round(S.curObj-prevObj);
         if(i2-1>=0){renderEdge(curX,o[i2-1],"R");renderEdge(candX,o[i2],"L");renderSeam(o[i2-1],o[i2]);}
         els.rTry.innerHTML=`2-opt: flipped segment <span class="mono">[${i2}…${j2}]</span> — total edge cost dropped.`;
+        log("twoopt",`2-opt · flip [${i2}…${j2}] · Δ${delta} → total ${Math.round(S.curObj).toLocaleString()}`,
+            {i:i2,j:j2,delta,objective:Math.round(S.curObj)});
         renderRecon(o,null);renderChart();setStats();return true;
     }
     return false;
@@ -413,6 +457,8 @@ function finish(){
     els.banner.textContent=`Done — adjacency accuracy ${pct}%  ·  objective ${Math.round(S.bestObj).toLocaleString()} `+
         `(ground-truth ${Math.round(S.gtCost).toLocaleString()}).  Reshuffle to watch a fresh scramble.`;
     els.banner.classList.add("show");
+    log("done",`DONE · accuracy ${pct}% · objective ${Math.round(S.bestObj).toLocaleString()} (gt ${Math.round(S.gtCost).toLocaleString()})`,
+        {accuracy:+pct,objective:Math.round(S.bestObj),groundTruth:Math.round(S.gtCost),order:S.order.slice()});
 }
 function oneStep(){
     if(S.phase==="ready"||S.phase==="greedy")return greedyTick();
@@ -439,6 +485,35 @@ els.run.addEventListener("click",run);
 els.step.addEventListener("click",()=>{if(!S.running)oneStep();});
 els.reshuffle.addEventListener("click",()=>reset(true));
 els.nstrips.addEventListener("change",()=>reset(false));
+
+// ---- downloads ----
+function save(filename, blob){
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();
+    document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+const tag=()=>`N${P().N}-seed${P().seed}`;
+els.dlTxt.addEventListener("click",()=>{
+    const head=[`DF-AI shredded-page reconstruction — search log`,
+        `document : ${PAGE.docId}`,`strips N : ${P().N}    shuffle seed : ${P().seed}`,
+        `objective: edge cost = sum over adjacent strips of mean squared (right col vs left col)`,
+        `shuffled cost ${Math.round(S.objShuffled)} | ground-truth cost ${Math.round(S.gtCost)}`,
+        `steps    : ${S.log.length}`,`${"-".repeat(60)}`];
+    const body=S.log.map((r,n)=>`[${String(n+1).padStart(3,"0")}] +${r.ms}ms  ${r.text}`);
+    save(`shredder-log-${tag()}.txt`, new Blob([head.concat(body).join("\n")+"\n"],{type:"text/plain"}));
+});
+els.dlJson.addEventListener("click",()=>{
+    const data={docId:PAGE.docId,N:P().N,seed:P().seed,
+        objectiveDefinition:"sum over adjacent strips of mean squared diff (right col of i vs left col of j)",
+        groundTruthCost:Math.round(S.gtCost),shuffledCost:Math.round(S.objShuffled),
+        finalObjective:S.bestObj==null?null:Math.round(S.bestObj),
+        accuracy:S.acc,finalOrder:S.order.slice(),objectiveHistory:S.objHist.map(v=>Math.round(v)),
+        steps:S.log};
+    save(`shredder-data-${tag()}.json`, new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));
+});
+els.dlPng.addEventListener("click",()=>{
+    $("recon").toBlob(b=>{ if(b) save(`shredder-page-${tag()}.png`, b); }, "image/png");
+});
 
 function boot(){
     if(!PAGE){els.honest.textContent="Demo data (shredder_page_data.js) failed to load.";return;}
