@@ -13,6 +13,12 @@ baseline**. Everything below is computed at run time; no metric is fabricated.
 
 ## Overview
 
+> **▶ Watch it:** an animated browser version of this search lives at
+> [`demos/shredder_reconstruction_demo.html`](../../demos/shredder_reconstruction_demo.html)
+> — the page shreds, then greedy + 2-opt run live with an objective-function chart, an
+> iteration counter, and an accelerating progress bar. (In-browser stand-in for the
+> OR-Tools TSP used here.)
+
 **Forensic scenario.** A shredder destroyed a document. Investigators recover the
 pile of paper strips. Can we **reconstruct the page** so its text becomes
 readable again? Strip-cut (a.k.a. straight-cut) shredding leaves the *content of
