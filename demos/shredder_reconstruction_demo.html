@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Interactive demo: watch an optimizer reassemble a strip-shredded document. Greedy + 2-opt run live in your browser with an objective-function chart, iteration counter, and an accelerating progress bar.">
+    <meta name="description" content="Interactive demo: watch an optimizer reassemble a strip-shredded document. For every position it tries each candidate strip, checks the edge overlap at the seam, scores it, and keeps the best — greedy + 2-opt live, with an objective chart and an accelerating progress bar.">
     <title>Reassembling a Shredded Page — Optimization Demo | DF-AI</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/landing.css">
@@ -17,17 +17,16 @@
         *{box-sizing:border-box}
         body{margin:0;background:var(--paper);color:var(--ink);
              font-family:Geist,Inter,system-ui,-apple-system,sans-serif;line-height:1.5}
-        .wrap{max-width:1060px;margin:0 auto;padding:1.4rem 1.1rem 3rem}
+        .wrap{max-width:1080px;margin:0 auto;padding:1.4rem 1.1rem 3rem}
         .demo-header h1{font-family:Fraunces,Georgia,serif;font-size:1.9rem;margin:.2rem 0 .3rem}
         .docid{display:inline-block;font-family:"Geist Mono",ui-monospace,monospace;font-size:.82rem;
                background:var(--vellum);border:1px solid var(--rule);border-radius:3px;
                padding:.25rem .55rem;color:var(--ink2)}
-        .lede{color:var(--ink2);margin:.55rem 0 0;max-width:70ch}
+        .lede{color:var(--ink2);margin:.55rem 0 0;max-width:74ch}
         .note{margin:.8rem 0 0;font-size:.83rem;color:var(--ink2);border-left:3px solid var(--accent);
-              background:var(--paper2);padding:.5rem .7rem;border-radius:0 3px 3px 0;max-width:80ch}
+              background:var(--paper2);padding:.5rem .7rem;border-radius:0 3px 3px 0;max-width:82ch}
 
-        .panel{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;
-               padding:.9rem 1rem;margin-top:1rem}
+        .panel{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.9rem 1rem;margin-top:1rem}
         .controls{display:flex;flex-wrap:wrap;gap:.7rem 1rem;align-items:flex-end}
         .cg{display:flex;flex-direction:column;gap:.25rem}
         .cg label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
@@ -40,24 +39,36 @@
         .btn.sec:hover{background:var(--paper)}
         .btn:disabled{opacity:.45;cursor:not-allowed}
 
-        .barwrap{margin-top:.9rem;height:16px;background:var(--paper);border:1px solid var(--rule);
-                 border-radius:9px;overflow:hidden}
-        .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#c98f33);
-             transition:width .12s linear}
+        .barwrap{margin-top:.9rem;height:16px;background:var(--paper);border:1px solid var(--rule);border-radius:9px;overflow:hidden}
+        .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#c98f33);transition:width .12s linear}
 
         .status-bar{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
-        .stat{flex:1 1 110px;background:var(--paper2);border:1px solid var(--rule);border-radius:4px;
-              padding:.5rem .6rem;text-align:center}
-        .stat .v{font-family:"Geist Mono",monospace;font-size:1.15rem;font-weight:600;color:var(--ink)}
+        .stat{flex:1 1 110px;background:var(--paper2);border:1px solid var(--rule);border-radius:4px;padding:.5rem .6rem;text-align:center}
+        .stat .v{font-family:"Geist Mono",monospace;font-size:1.12rem;font-weight:600;color:var(--ink)}
         .stat .v.good{color:var(--good)} .stat .v.warn{color:var(--warn)}
         .stat .l{font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);margin-top:.15rem}
 
-        .stage{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
-        @media(max-width:820px){.stage{grid-template-columns:1fr}}
-        .vizcard{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.7rem .8rem}
+        .vizcard{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.7rem .8rem;margin-top:1rem}
         .vizcard h3{margin:.1rem 0 .55rem;font-size:.95rem;font-family:Fraunces,serif}
-        canvas{display:block;max-width:100%;height:auto;background:#fff;border:1px solid var(--rule);border-radius:3px}
-        .chartcard{margin-top:1rem}
+        canvas{display:block;max-width:100%;background:#fff;border:1px solid var(--rule);border-radius:3px}
+
+        /* candidate inspector */
+        .inspect{display:grid;grid-template-columns:auto auto auto 1fr;gap:.9rem;align-items:end}
+        @media(max-width:720px){.inspect{grid-template-columns:1fr 1fr}}
+        .icol{display:flex;flex-direction:column;gap:.3rem;align-items:center}
+        .icol .cap{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+        .icol.seam .cap{color:var(--accent);font-weight:600}
+        .readout{align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;gap:.35rem}
+        .rline{font-size:.86rem}
+        .rline .mono{font-family:"Geist Mono",monospace}
+        .costbar{height:12px;background:var(--paper);border:1px solid var(--rule);border-radius:7px;overflow:hidden}
+        .costbar > div{height:100%;width:0;background:var(--accent)}
+        .pill{display:inline-block;font-family:"Geist Mono",monospace;font-size:.78rem;padding:.1rem .45rem;
+              border-radius:10px;border:1px solid var(--rule2)}
+        .pill.best{background:rgba(44,106,91,.14);border-color:var(--good);color:var(--good)}
+
+        .stage{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+        @media(max-width:720px){.stage{grid-template-columns:1fr}}
         .legend{font-size:.74rem;color:var(--ink2);margin-top:.4rem}
         .swatch{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:middle;margin:0 .2rem 0 .6rem}
         .banner{margin-top:1rem;padding:.7rem .9rem;border-radius:4px;font-weight:600;display:none}
@@ -74,16 +85,18 @@
         <h1>Reassembling a Shredded Page</h1>
         <span class="docid" id="docId">loading…</span>
         <p class="lede">
-            A strip-shredder cut this page into vertical strips and jumbled them. Watch an optimizer put it back
-            together: it scores how well each strip's <em>right</em> edge matches every other strip's <em>left</em>
-            edge, then searches for the ordering that minimises total edge mismatch — the <strong>objective
-            function</strong>. Hit <strong>Run</strong> and watch the cost fall and the page emerge.
+            A strip-shredder cut this page into vertical strips and jumbled them. Watch the optimizer
+            <strong>work</strong>: for each position it tries every leftover strip as the next piece, lines up the
+            <em>seam</em> to <strong>check the edge overlap</strong>, scores the mismatch, and keeps the best match —
+            then moves on. That's a greedy <span class="mono">argmin</span> over candidates; 2-opt then polishes. Hit
+            <strong>Run</strong>.
         </p>
         <p class="note" id="honest">
             Runs <strong>greedy nearest-neighbour → 2-opt local search</strong> live in your browser — an in-browser
             stand-in for the OR-Tools TSP used in the
-            <a href="../examples/06-shredder-reconstruction/" >examples/06</a> Python run. Real public-domain page;
-            accuracy varies per shuffle, so feel free to <strong>Reshuffle</strong> and re-watch.
+            <a href="../examples/06-shredder-reconstruction/">examples/06</a> Python run. Real public-domain page;
+            accuracy varies per shuffle, so feel free to <strong>Reshuffle</strong> and re-watch. More strips → a
+            longer scan.
         </p>
     </div>
 
@@ -93,13 +106,13 @@
             <button class="btn sec" id="btnStep">Step</button>
             <button class="btn sec" id="btnReshuffle">↻ Reshuffle</button>
             <div class="cg">
-                <label for="speed">Base speed (slower → faster)</label>
-                <input type="range" id="speed" min="0" max="100" value="55">
+                <label for="speed">Scan speed (slow → fast)</label>
+                <input type="range" id="speed" min="0" max="100" value="62">
             </div>
             <div class="cg">
                 <label for="nstrips">Strips</label>
                 <select id="nstrips">
-                    <option>12</option><option>16</option><option selected>24</option><option>32</option><option>40</option>
+                    <option>12</option><option selected>16</option><option>24</option><option>32</option><option>40</option>
                 </select>
             </div>
         </div>
@@ -107,27 +120,45 @@
         <div class="status-bar">
             <div class="stat"><div class="v" id="sPhase">idle</div><div class="l">Phase</div></div>
             <div class="stat"><div class="v" id="sIter">0</div><div class="l">Iteration</div></div>
+            <div class="stat"><div class="v" id="sPos">—</div><div class="l">Placing position</div></div>
             <div class="stat"><div class="v" id="sObj">—</div><div class="l">Objective (edge cost)</div></div>
-            <div class="stat"><div class="v" id="sBest">—</div><div class="l">Best so far</div></div>
             <div class="stat"><div class="v" id="sAcc">—</div><div class="l">Adjacency accuracy</div></div>
         </div>
         <div class="banner ok" id="banner"></div>
     </div>
 
-    <div class="stage">
-        <div class="vizcard">
-            <h3>Shredded pile (input)</h3>
-            <canvas id="pile" width="320" height="520"></canvas>
+    <div class="vizcard">
+        <h3 id="inspectTitle">Inspecting the match — try each piece, check the edge overlap</h3>
+        <div class="inspect">
+            <div class="icol"><canvas id="curEdge" width="44" height="360"></canvas><span class="cap">current piece (right edge)</span></div>
+            <div class="icol seam"><canvas id="seam" width="150" height="360"></canvas><span class="cap">▶ seam: edge overlap</span></div>
+            <div class="icol"><canvas id="candEdge" width="44" height="360"></canvas><span class="cap">candidate (left edge)</span></div>
+            <div class="readout">
+                <div class="rline" id="rTry">Press <strong>Run</strong> to start the scan.</div>
+                <div class="rline">edge-mismatch cost <span class="mono" id="rCost">—</span></div>
+                <div class="costbar"><div id="rCostFill"></div></div>
+                <div class="rline">best match so far: <span class="pill best" id="rBest">—</span></div>
+                <div class="rline" style="color:var(--ink2);font-size:.78rem">
+                    lower cost = edges line up better. Bars below: every candidate's cost for this position.</div>
+            </div>
         </div>
-        <div class="vizcard">
+        <canvas id="candbars" width="1040" height="92" style="margin-top:.7rem"></canvas>
+    </div>
+
+    <div class="stage">
+        <div class="vizcard" style="margin-top:0">
+            <h3>Shredded pile (input) — candidate <span style="color:var(--accent)">▢</span>, best <span style="color:var(--good)">▢</span></h3>
+            <canvas id="pile" width="320" height="460"></canvas>
+        </div>
+        <div class="vizcard" style="margin-top:0">
             <h3>Reconstruction (live)</h3>
-            <canvas id="recon" width="320" height="520"></canvas>
+            <canvas id="recon" width="320" height="460"></canvas>
         </div>
     </div>
 
-    <div class="vizcard chartcard">
+    <div class="vizcard">
         <h3>Objective function over the search</h3>
-        <canvas id="chart" width="1000" height="220"></canvas>
+        <canvas id="chart" width="1040" height="200"></canvas>
         <div class="legend">
             <span class="swatch" style="background:#9c6b1e"></span>total edge cost (lower = better)
             <span class="swatch" style="background:#2c6a5b"></span>ground-truth cost (target)
@@ -142,250 +173,270 @@
 <script>
 (function(){
 "use strict";
-const $ = id => document.getElementById(id);
-const PAGE = window.SHREDDER_PAGE;
-$("docId").textContent = "Source: " + (PAGE ? PAGE.docId : "(missing page data)");
+const $=id=>document.getElementById(id);
+const PAGE=window.SHREDDER_PAGE;
+$("docId").textContent="Source: "+(PAGE?PAGE.docId:"(missing page data)");
 
-// ---- DOM ----
-const pileC=$("pile"), reconC=$("recon"), chartC=$("chart");
-const pileX=pileC.getContext("2d"), reconX=reconC.getContext("2d"), chartX=chartC.getContext("2d");
-const els={phase:$("sPhase"),iter:$("sIter"),obj:$("sObj"),best:$("sBest"),acc:$("sAcc"),
-           bar:$("bar"),banner:$("banner"),run:$("btnRun"),step:$("btnStep"),
-           reshuffle:$("btnReshuffle"),speed:$("speed"),nstrips:$("nstrips")};
+const ctx2=id=>$(id).getContext("2d");
+const pileX=ctx2("pile"),reconX=ctx2("recon"),chartX=ctx2("chart"),
+      seamX=ctx2("seam"),curX=ctx2("curEdge"),candX=ctx2("candEdge"),barsX=ctx2("candbars");
+const els={phase:$("sPhase"),iter:$("sIter"),pos:$("sPos"),obj:$("sObj"),acc:$("sAcc"),
+           bar:$("bar"),banner:$("banner"),run:$("btnRun"),step:$("btnStep"),reshuffle:$("btnReshuffle"),
+           speed:$("speed"),nstrips:$("nstrips"),title:$("inspectTitle"),
+           rTry:$("rTry"),rCost:$("rCost"),rCostFill:$("rCostFill"),rBest:$("rBest")};
 
-// ---- source image (decoded once) ----
-let SRC=null, SW=0, SH=0, srcData=null;   // srcData: grayscale Uint8 [SH*SW]
-const srcCanvas=document.createElement("canvas"), srcCtx=srcCanvas.getContext("2d");
+// ---- source image ----
+let SW=0,SH=0,srcData=null;
+const srcCanvas=document.createElement("canvas"),srcCtx=srcCanvas.getContext("2d");
+let S=null,timer=null;
 
-// ---- search state ----
-let S=null, timer=null;
-
-function rngFrom(seed){ // small deterministic PRNG (mulberry32)
-    let a=seed>>>0; return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
-        t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
-}
+const mulberry=seed=>{let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};};
 function shuffle(arr,rnd){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
 
-function buildProblem(N, seed){
-    const strip_w=Math.floor(SW/N), usable=strip_w*N;
-    // left/right innermost columns per original strip
-    const left=[], right=[];
+function buildProblem(N,seed){
+    const strip_w=Math.floor(SW/N);
+    const left=[],right=[];
     for(let i=0;i<N;i++){
-        const lc=new Float32Array(SH), rc=new Float32Array(SH);
-        const lx=i*strip_w, rx=i*strip_w+strip_w-1;
-        for(let y=0;y<SH;y++){ lc[y]=srcData[y*SW+lx]; rc[y]=srcData[y*SW+rx]; }
-        left.push(lc); right.push(rc);
+        const lc=new Float32Array(SH),rc=new Float32Array(SH),lx=i*strip_w,rx=i*strip_w+strip_w-1;
+        for(let y=0;y<SH;y++){lc[y]=srcData[y*SW+lx];rc[y]=srcData[y*SW+rx];}
+        left.push(lc);right.push(rc);
     }
-    // asymmetric cost C[i][j] = mean_y (right_i - left_j)^2
-    const C=[]; let big=0;
-    for(let i=0;i<N;i++){
-        const row=new Float32Array(N);
-        for(let j=0;j<N;j++){
-            if(i===j){row[j]=0;continue;}
-            let s=0; const ri=right[i], lj=left[j];
-            for(let y=0;y<SH;y++){const d=ri[y]-lj[y]; s+=d*d;}
-            row[j]=s/SH; if(row[j]>big)big=row[j];
-        }
-        C.push(row);
-    }
-    big=big*10+1; for(let i=0;i<N;i++)C[i][i]=big;
-    const pile=shuffle([...Array(N).keys()], rngFrom(seed)); // pile[k] = original strip id at pile slot k
-    return {N,strip_w,usable,C,big,pile,seed};
+    const C=[];let big=0;
+    for(let i=0;i<N;i++){const row=new Float32Array(N);
+        for(let j=0;j<N;j++){if(i===j){continue;}let s=0;const ri=right[i],lj=left[j];
+            for(let y=0;y<SH;y++){const d=ri[y]-lj[y];s+=d*d;}row[j]=s/SH;if(row[j]>big)big=row[j];}
+        C.push(row);}
+    big=big*10+1;for(let i=0;i<N;i++)C[i][i]=big;
+    const pile=shuffle([...Array(N).keys()],mulberry(seed));
+    return {N,strip_w,K:Math.min(8,strip_w),C,big,pile,seed};
 }
+const pathCost=(o,C)=>{let s=0;for(let k=0;k+1<o.length;k++)s+=C[o[k]][o[k+1]];return s;};
+function bestStartId(P){const {N,C}=P;let bid=0,bc=Infinity;
+    for(let s=0;s<N;s++){const u=new Array(N).fill(false);u[s]=true;let cur=s,c=0;
+        for(let t=0;t<N-1;t++){let nb=-1,nc=Infinity;for(let j=0;j<N;j++)if(!u[j]&&C[cur][j]<nc){nc=C[cur][j];nb=j;}
+            u[nb]=true;c+=nc;cur=nb;}
+        if(c<bc){bc=c;bid=s;}}
+    return bid;}
+function accuracy(o,N){let f=0,b=0;for(let k=0;k+1<o.length;k++){if(o[k+1]===o[k]+1)f++;if(o[k+1]===o[k]-1)b++;}return Math.max(f,b)/(N-1);}
 
-function pathCost(order,C){let s=0;for(let k=0;k+1<order.length;k++)s+=C[order[k]][order[k+1]];return s;}
-function greedyBestStart(P){
-    const {N,C}=P; let best=null,bestCost=Infinity;
-    for(let start=0;start<N;start++){
-        const used=new Array(N).fill(false); used[start]=true; const order=[start]; let cur=start,cost=0;
-        for(let s=0;s<N-1;s++){let nb=-1,nc=Infinity;
-            for(let j=0;j<N;j++)if(!used[j]&&C[cur][j]<nc){nc=C[cur][j];nb=j;}
-            order.push(nb);used[nb]=true;cost+=nc;cur=nb;}
-        if(cost<bestCost){bestCost=cost;best=order;}
-    }
-    return best;
-}
-// adjacency accuracy vs ground-truth identity, mirror-aware
-function accuracy(order,N){
-    let fwd=0,bwd=0; for(let k=0;k+1<order.length;k++){
-        if(order[k+1]===order[k]+1)fwd++; if(order[k+1]===order[k]-1)bwd++; }
-    return Math.max(fwd,bwd)/(N-1);
-}
+// ---- rendering helpers ----
+function dims(P){const Hd=460,sw=Math.max(5,Math.round(P.strip_w*Hd/SH));return{Hd,sw,W:sw*P.N};}
+const pilePos=(P,id)=>P.pile.indexOf(id);
+function drawStrip(c,id,dx,sw,Hd){c.drawImage(srcCanvas,id*P().strip_w,0,P().strip_w,SH,dx,0,sw,Hd);}
+const P=()=>S.P;
 
-// ---- rendering ----
-function dims(P){
-    const Hd=520, sw=Math.max(5,Math.round(P.strip_w*Hd/SH)); // display strip width
-    return {Hd, sw, W: sw*P.N};
-}
-function fitCanvas(c, W, H){ c.width=W; c.height=H; }
-function drawStrip(ctx, origId, dx, sw, Hd, strip_w){
-    ctx.drawImage(srcCanvas, origId*strip_w, 0, strip_w, SH, dx, 0, sw, Hd);
-}
-function renderPile(P){
-    const {sw,Hd,W}=dims(P); fitCanvas(pileC,W,Hd);
+function renderPile(testId,bestId){
+    const {sw,Hd,W}=dims(P());if(pileX.canvas.width!==W){pileX.canvas.width=W;pileX.canvas.height=Hd;}
     pileX.fillStyle="#fff";pileX.fillRect(0,0,W,Hd);
-    for(let k=0;k<P.N;k++){ drawStrip(pileX,P.pile[k],k*sw,sw,Hd,P.strip_w);
-        pileX.strokeStyle="rgba(0,0,0,.18)";pileX.strokeRect(k*sw+.5,.5,sw-1,Hd-1); }
+    for(let k=0;k<P().N;k++){drawStrip(pileX,P().pile[k],k*sw,sw,Hd);
+        pileX.strokeStyle="rgba(0,0,0,.14)";pileX.strokeRect(k*sw+.5,.5,sw-1,Hd-1);}
+    const mark=(id,col)=>{if(id==null)return;const k=pilePos(P(),id);if(k<0)return;
+        pileX.lineWidth=2.5;pileX.strokeStyle=col;pileX.strokeRect(k*sw+1.5,1.5,sw-3,Hd-3);pileX.lineWidth=1;};
+    mark(bestId,"#2c6a5b");mark(testId,"#9c6b1e");
 }
-function renderRecon(P, order, hi){
-    const {sw,Hd,W}=dims(P); if(reconC.width!==W)fitCanvas(reconC,W,Hd);
+function renderRecon(order,fillNext){
+    const {sw,Hd,W}=dims(P());if(reconX.canvas.width!==W){reconX.canvas.width=W;reconX.canvas.height=Hd;}
     reconX.fillStyle="#fff";reconX.fillRect(0,0,W,Hd);
-    for(let p=0;p<order.length;p++){
-        const id=order[p]; if(id==null)continue;
-        drawStrip(reconX,id,p*sw,sw,Hd,P.strip_w);
+    for(let p=0;p<order.length;p++){const id=order[p];if(id==null)continue;drawStrip(reconX,id,p*sw,sw,Hd);}
+    if(fillNext!=null&&fillNext<P().N){reconX.setLineDash([4,3]);reconX.strokeStyle="#9c6b1e";
+        reconX.strokeRect(fillNext*sw+1,1,sw-2,Hd-2);reconX.setLineDash([]);}
+}
+function renderEdge(c,id,side){ // side 'R' or 'L': show the K boundary columns, zoomed
+    const K=P().K,zw=c.canvas.width,zh=c.canvas.height;
+    const sx=side==="R"?(id*P().strip_w+P().strip_w-K):(id*P().strip_w);
+    c.fillStyle="#fff";c.fillRect(0,0,zw,zh);
+    c.drawImage(srcCanvas,sx,0,K,SH,0,0,zw,zh);
+    c.strokeStyle=side==="R"?"#9c6b1e":"#2c6a5b";c.lineWidth=2;
+    if(side==="R")c.strokeRect(zw-1.5,0,1.5,zh); else c.strokeRect(0,0,1.5,zh);c.lineWidth=1;
+}
+function renderSeam(curId,candId){
+    const K=P().K,W=seamX.canvas.width,H=seamX.canvas.height,half=Math.floor((W-3)/2);
+    seamX.fillStyle="#fff";seamX.fillRect(0,0,W,H);
+    if(curId==null){seamX.fillStyle="#a0adb2";seamX.font="12px monospace";seamX.fillText("seed strip",18,H/2);return;}
+    // right K cols of current | left K cols of candidate
+    seamX.drawImage(srcCanvas,curId*P().strip_w+P().strip_w-K,0,K,SH,0,0,half,H);
+    if(candId!=null)seamX.drawImage(srcCanvas,candId*P().strip_w,0,K,SH,half+3,0,half,H);
+    // divider
+    seamX.fillStyle="#9c6b1e";seamX.fillRect(half,0,3,H);
+    // per-row difference heat strip on the far right
+    if(candId!=null){const rc=new Float32Array(SH);let mx=1;
+        for(let y=0;y<SH;y++){const d=Math.abs(srcData[y*SW+curId*P().strip_w+P().strip_w-1]-srcData[y*SW+candId*P().strip_w]);rc[y]=d;if(d>mx)mx=d;}
+        for(let y=0;y<H;y++){const sy=Math.floor(y*SH/H),v=rc[sy]/mx;
+            seamX.fillStyle=`rgba(162,59,52,${0.05+0.85*v})`;seamX.fillRect(W-4,y,4,1);}
     }
-    if(hi){ reconX.lineWidth=2;
-        if(hi.type==="place"){reconX.strokeStyle="#9c6b1e";reconX.strokeRect(hi.p*sw+1,1,sw-2,Hd-2);}
-        if(hi.type==="seg"){reconX.strokeStyle="#a23b34";reconX.strokeRect(hi.i*sw+1,1,(hi.j-hi.i+1)*sw-2,Hd-2);}
+}
+function renderBars(){
+    const W=barsX.canvas.width,H=barsX.canvas.height;barsX.clearRect(0,0,W,H);
+    const cands=S.gCands,costs=S.gCosts;if(!cands||!cands.length)return;
+    const tested=costs.filter(v=>v!=null);if(!tested.length){return;}
+    const mx=Math.max(...tested),mn=Math.min(...tested),sp=(mx-mn)||1;
+    const bw=W/cands.length;
+    for(let i=0;i<cands.length;i++){
+        if(costs[i]==null)continue;
+        const h=8+(H-16)*(1-(costs[i]-mn)/sp); // lower cost = taller bar (better)
+        let col="#c9b27a"; if(cands[i]===S.gBestCand)col="#2c6a5b"; if(i===S.gIdx-1)col="#9c6b1e";
+        barsX.fillStyle=col;barsX.fillRect(i*bw+1,H-h,Math.max(1,bw-2),h);
     }
-    reconX.lineWidth=1;
+    barsX.fillStyle="#36505b";barsX.font="10px monospace";
+    barsX.fillText("candidates for this position (taller = better match)",6,11);
 }
 function renderChart(){
-    const W=chartC.width,H=chartC.height,pad=28; chartX.clearRect(0,0,W,H);
-    const pts=S.objHist; if(!pts.length)return;
-    const maxv=Math.max(S.objShuffled, ...pts, S.gtCost), minv=Math.min(S.gtCost, ...pts);
-    const span=(maxv-minv)||1;
-    const X=i=>pad+(W-2*pad)*(pts.length<=1?0:i/(pts.length-1));
-    const Y=v=>H-pad-(H-2*pad)*((v-minv)/span);
-    // ground-truth target line
+    const W=chartX.canvas.width,H=chartX.canvas.height,pad=26;chartX.clearRect(0,0,W,H);
+    const pts=S.objHist;if(pts.length<1){chartX.fillStyle="#a0adb2";chartX.font="12px monospace";
+        chartX.fillText("objective plotted once the first full ordering exists…",pad,H/2);return;}
+    const maxv=Math.max(S.objShuffled,...pts,S.gtCost),minv=Math.min(S.gtCost,...pts),sp=(maxv-minv)||1;
+    const X=i=>pad+(W-2*pad)*(pts.length<=1?0:i/(pts.length-1)),Y=v=>H-pad-(H-2*pad)*((v-minv)/sp);
     chartX.strokeStyle="#2c6a5b";chartX.setLineDash([5,4]);chartX.beginPath();
     chartX.moveTo(pad,Y(S.gtCost));chartX.lineTo(W-pad,Y(S.gtCost));chartX.stroke();chartX.setLineDash([]);
-    // 2-opt start marker
     if(S.twoOptStartIdx>=0){const x=X(S.twoOptStartIdx);chartX.strokeStyle="rgba(162,59,52,.5)";
-        chartX.beginPath();chartX.moveTo(x,pad-6);chartX.lineTo(x,H-pad);chartX.stroke();}
-    // objective polyline
+        chartX.beginPath();chartX.moveTo(x,pad-4);chartX.lineTo(x,H-pad);chartX.stroke();}
     chartX.strokeStyle="#9c6b1e";chartX.lineWidth=2;chartX.beginPath();
-    pts.forEach((v,i)=>{const x=X(i),y=Y(v);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});
-    chartX.stroke();chartX.lineWidth=1;
-    // current dot
-    const li=pts.length-1;chartX.fillStyle="#9c6b1e";chartX.beginPath();
-    chartX.arc(X(li),Y(pts[li]),3.5,0,7);chartX.fill();
-    chartX.fillStyle="#36505b";chartX.font="11px monospace";
-    chartX.fillText("cost "+Math.round(pts[li]).toLocaleString(),X(li)-10,Y(pts[li])-8);
+    pts.forEach((v,i)=>{const x=X(i),y=Y(v);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});chartX.stroke();chartX.lineWidth=1;
+    const li=pts.length-1;chartX.fillStyle="#9c6b1e";chartX.beginPath();chartX.arc(X(li),Y(pts[li]),3.5,0,7);chartX.fill();
+    chartX.fillStyle="#36505b";chartX.font="11px monospace";chartX.fillText("cost "+Math.round(pts[li]).toLocaleString(),Math.min(X(li)-10,W-90),Y(pts[li])-8);
 }
 
 function setStats(){
     els.phase.textContent=S.phase;
     els.iter.textContent=S.iter;
+    els.pos.textContent=S.placeAt==null?"—":(S.placeAt+1)+"/"+P().N;
     els.obj.textContent=S.curObj==null?"—":Math.round(S.curObj).toLocaleString();
-    els.best.textContent=S.bestObj==null?"—":Math.round(S.bestObj).toLocaleString();
-    const a=S.acc; const ae=els.acc;
-    ae.textContent=a==null?"—":(a*100).toFixed(1)+"%";
-    ae.className="v"+(a==null?"":(a>=0.999?" good":(a<0.6?" warn":"")));
+    const a=S.acc;els.acc.textContent=a==null?"—":(a*100).toFixed(1)+"%";
+    els.acc.className="v"+(a==null?"":(a>=0.999?" good":(a<0.6?" warn":"")));
     els.bar.style.width=(S.progress*100).toFixed(1)+"%";
 }
 
-// ---- search lifecycle ----
+// ---- lifecycle ----
 function reset(reseed){
     if(timer){clearTimeout(timer);timer=null;}
     const N=parseInt(els.nstrips.value,10);
-    const seed=reseed?((Math.random()*1e9)>>>0):(S?S.P.seed:12345);
-    const P=buildProblem(N,seed);
-    const greedy=greedyBestStart(P);
-    S={P, greedy, order:new Array(N).fill(null), gOrder:[], // current shown order (greedy build partial)
-       phase:"ready", iter:0, gi:0, curObj:null, bestObj:null, bestOrder:null,
-       acc:null, progress:0, running:false, tick:0,
-       objHist:[], objShuffled:pathCost(P.pile,P.C), gtCost:pathCost([...Array(N).keys()],P.C),
-       twoOptStartIdx:-1, scanI:1};
-    renderPile(P);
-    // start the reconstruction view from the shuffled pile so the change is visible
-    S.order=[...P.pile]; S.curObj=S.objShuffled; S.acc=accuracy(S.order,N);
-    renderRecon(P,S.order,null); renderChart(); setStats();
-    els.banner.classList.remove("show");
-    els.run.textContent="▶ Run"; els.run.disabled=false; els.step.disabled=false;
+    const seed=reseed?((Math.random()*1e9)>>>0):(S?S.P.seed:123457);
+    const Pb=buildProblem(N,seed);
+    S={P:Pb,phase:"ready",subphase:"seed",iter:0,
+       placed:[],used:new Array(N).fill(false),cur:null,placeAt:0,
+       gCands:[],gCosts:[],gIdx:0,gBestCost:Infinity,gBestCand:null,startId:bestStartId(Pb),
+       order:[...Pb.pile],curObj:null,bestObj:null,bestOrder:null,acc:null,progress:0,
+       running:false,tick:0,objHist:[],objShuffled:pathCost(Pb.pile,Pb.C),
+       gtCost:pathCost([...Array(N).keys()],Pb.C),twoOptStartIdx:-1,scanI:1};
+    S.acc=accuracy(S.order,N);S.curObj=S.objShuffled;
+    renderPile(null,null);renderRecon(S.order,null);renderSeam(null,null);renderBars();renderChart();
+    seamX.clearRect(0,0,1,1);curX.getContext;  // noop guard
+    curX.fillStyle="#fff";curX.fillRect(0,0,curX.canvas.width,curX.canvas.height);
+    candX.fillStyle="#fff";candX.fillRect(0,0,candX.canvas.width,candX.canvas.height);
+    els.rTry.innerHTML="Press <strong>Run</strong> to start the scan.";els.rCost.textContent="—";
+    els.rCostFill.style.width="0";els.rBest.textContent="—";
+    els.title.textContent="Inspecting the match — try each piece, check the edge overlap";
+    els.banner.classList.remove("show");els.run.textContent="▶ Run";els.run.disabled=false;els.step.disabled=false;
+    setStats();
 }
 
-function greedyStep(){
-    // reveal greedy order one strip at a time
-    const P=S.P;
-    if(S.gi===0){ S.gOrder=[]; }
-    S.gOrder.push(S.greedy[S.gi]); S.gi++;
-    S.order=[...S.gOrder, ...new Array(P.N-S.gOrder.length).fill(null)];
-    renderRecon(P,S.order,{type:"place",p:S.gOrder.length-1});
-    if(S.gOrder.length===P.N){
-        S.curObj=pathCost(S.greedy,P.C); S.bestObj=S.curObj; S.bestOrder=[...S.greedy];
-        S.order=[...S.greedy]; S.acc=accuracy(S.order,P.N);
-        S.objHist.push(S.objShuffled); S.objHist.push(S.curObj);
-        S.twoOptStartIdx=S.objHist.length-1;
-        S.phase="2-opt"; S.scanI=1;
-    } else {
-        S.phase="greedy"; S.curObj=pathCost(S.gOrder,P.C);
+function newScan(){ // set up the candidate list for the next position
+    const N=P().N;S.gCands=[];for(let j=0;j<N;j++)if(!S.used[j])S.gCands.push(j);
+    S.gCosts=new Array(S.gCands.length).fill(null);S.gIdx=0;S.gBestCost=Infinity;S.gBestCand=null;
+}
+
+function greedyTick(){
+    const C=P().C,N=P().N;
+    if(S.subphase==="seed"){
+        S.placed=[S.startId];S.used[S.startId]=true;S.cur=S.startId;S.placeAt=1;
+        S.order=[S.startId,...new Array(N-1).fill(null)];
+        renderEdge(curX,S.cur,"R");renderSeam(S.cur,null);renderRecon(S.order,1);renderPile(null,null);
+        els.title.textContent="Seeded position 1 — now scanning candidates for position 2";
+        els.rTry.innerHTML="Seed strip placed at position 1 (best starting edge).";
+        newScan();S.subphase="scan";S.phase="greedy";S.iter++;S.progress=0.5/N;setStats();return true;
     }
-    S.iter++; S.progress=0.40*(S.gOrder.length/P.N);
-    renderChart(); setStats();
+    if(S.subphase==="scan"){
+        const c=S.gCands[S.gIdx],cost=C[S.cur][c];S.gCosts[S.gIdx]=cost;
+        if(cost<S.gBestCost){S.gBestCost=cost;S.gBestCand=c;}
+        renderEdge(curX,S.cur,"R");renderEdge(candX,c,"L");renderSeam(S.cur,c);
+        renderPile(c,S.gBestCand);renderBars();
+        els.rTry.innerHTML=`Trying candidate <span class="mono">#${c}</span> at position <strong>${S.placeAt+1}</strong> `+
+            `(${S.gIdx+1}/${S.gCands.length})`;
+        els.rCost.textContent=Math.round(cost).toLocaleString();
+        const tested=S.gCosts.filter(v=>v!=null),mx=Math.max(...tested),mn=Math.min(...tested);
+        els.rCostFill.style.width=(100*(1-(cost-mn)/((mx-mn)||1))).toFixed(0)+"%"; // fuller = better
+        els.rBest.textContent=`#${S.gBestCand} · ${Math.round(S.gBestCost).toLocaleString()}`;
+        S.iter++;S.gIdx++;
+        if(S.gIdx>=S.gCands.length)S.subphase="commit";
+        setStats();return true;
+    }
+    if(S.subphase==="commit"){
+        S.placed.push(S.gBestCand);S.used[S.gBestCand]=true;S.cur=S.gBestCand;
+        S.order=[...S.placed,...new Array(N-S.placed.length).fill(null)];
+        S.placeAt=S.placed.length;S.curObj=pathCost(S.placed,C);S.acc=accuracy(S.placed,N);
+        renderRecon(S.order,S.placeAt<N?S.placeAt:null);renderPile(null,S.gBestCand);
+        els.rTry.innerHTML=`✓ Matched <span class="mono">#${S.gBestCand}</span> into position `+
+            `<strong>${S.placed.length}</strong> (lowest edge cost).`;
+        S.progress=0.5*(S.placed.length/N);S.iter++;
+        if(S.placed.length>=N){
+            S.curObj=pathCost(S.placed,C);S.bestObj=S.curObj;S.bestOrder=[...S.placed];
+            S.objHist.push(S.objShuffled);S.objHist.push(S.curObj);S.twoOptStartIdx=S.objHist.length-1;
+            S.phase="2-opt";S.subphase="";S.scanI=1;S.order=[...S.placed];
+            els.title.textContent="Greedy order built — 2-opt now refines by testing segment flips";
+        } else { newScan();S.subphase="scan"; }
+        renderChart();setStats();return true;
+    }
+    return false;
 }
 
-function twoOptStep(){
-    // one first-improvement segment reversal; returns true if a move was applied
-    const P=S.P, C=P.C, order=S.order, N=P.N;
-    const cost=(a,b)=> (a<0||b<0)?0:C[order[a]][order[b]];
-    let applied=false, scanned=0;
-    let i=S.scanI;
-    while(scanned<N){ // rotate scan start across calls so the chart gets many small steps
-        for(let j=i+1;j<N;j++){
-            const a=i-1, b=j+1;
+function twoOptTick(){
+    const C=P().C,N=P().N,o=S.order;const cost=(a,b)=>(a<0||b>=N)?0:C[o[a]][o[b]];
+    let applied=false;let i=S.scanI,scanned=0;
+    while(scanned<N){
+        for(let j=i+1;j<N;j++){const a=i-1,b=j+1;
             const before=cost(a,i)+cost(j,b);
-            const after=(a<0?0:C[order[a]][order[j]])+(b>=N?0:C[order[i]][order[b]]);
-            if(after<before-1e-6){
-                let lo=i,hi=j; while(lo<hi){const t=order[lo];order[lo]=order[hi];order[hi]=t;lo++;hi--;}
-                applied=true; S.lastSeg={i,j}; break;
-            }
-        }
-        if(applied)break;
-        i++; if(i>=N-1)i=1; scanned++;
+            const after=(a<0?0:C[o[a]][o[j]])+(b>=N?0:C[o[i]][o[b]]);
+            if(after<before-1e-6){let lo=i,hi=j;while(lo<hi){const t=o[lo];o[lo]=o[hi];o[hi]=t;lo++;hi--;}
+                applied=true;S.lastSeg={i,j};break;}}
+        if(applied)break;i++;if(i>=N-1)i=1;scanned++;
     }
-    S.scanI = applied ? 1 : S.scanI; // restart scan after a move
     if(applied){
-        S.curObj=pathCost(order,P.C);
-        if(S.curObj<S.bestObj){S.bestObj=S.curObj;S.bestOrder=[...order];}
-        S.acc=accuracy(order,N);
-        S.objHist.push(S.curObj);
-        S.iter++;
-        // diminishing-returns progress that eases toward 100% (so the bar "speeds up" then settles)
-        S.progress=Math.min(0.99, S.progress + (1-S.progress)*0.16);
-        renderRecon(P,order,{type:"seg",i:S.lastSeg.i,j:S.lastSeg.j});
-        renderChart(); setStats();
-        return true;
+        S.scanI=1;S.curObj=pathCost(o,C);if(S.curObj<S.bestObj){S.bestObj=S.curObj;S.bestOrder=[...o];}
+        S.acc=accuracy(o,N);S.objHist.push(S.curObj);S.iter++;
+        S.progress=Math.min(0.99,S.progress+(1-S.progress)*0.16);
+        // show the two new seams being tested
+        const i2=S.lastSeg.i,j2=S.lastSeg.j;
+        if(i2-1>=0){renderEdge(curX,o[i2-1],"R");renderEdge(candX,o[i2],"L");renderSeam(o[i2-1],o[i2]);}
+        els.rTry.innerHTML=`2-opt: flipped segment <span class="mono">[${i2}…${j2}]</span> — total edge cost dropped.`;
+        renderRecon(o,null);renderChart();setStats();return true;
     }
     return false;
 }
 
 function finish(){
-    S.phase="done"; S.running=false; S.progress=1; S.order=S.bestOrder||S.order;
-    S.acc=accuracy(S.order,S.P.N);
-    renderRecon(S.P,S.order,null); renderChart(); setStats();
-    els.run.textContent="▶ Run"; els.step.disabled=true;
+    S.phase="done";S.running=false;S.progress=1;S.order=S.bestOrder||S.order;S.acc=accuracy(S.order,P().N);
+    renderRecon(S.order,null);renderChart();setStats();
+    els.run.textContent="▶ Run";els.step.disabled=true;
+    els.title.textContent="Done — page reconstructed";
     const pct=(S.acc*100).toFixed(1);
     els.banner.textContent=`Done — adjacency accuracy ${pct}%  ·  objective ${Math.round(S.bestObj).toLocaleString()} `+
         `(ground-truth ${Math.round(S.gtCost).toLocaleString()}).  Reshuffle to watch a fresh scramble.`;
     els.banner.classList.add("show");
 }
-
 function oneStep(){
-    if(S.phase==="ready"||S.phase==="greedy") { greedyStep(); return true; }
-    if(S.phase==="2-opt"){ if(twoOptStep())return true; finish(); return false; }
+    if(S.phase==="ready"||S.phase==="greedy")return greedyTick();
+    if(S.phase==="2-opt"){if(twoOptTick())return true;finish();return false;}
     return false;
 }
-
 function loop(){
     if(!S.running)return;
-    const more=oneStep();
-    if(!more){return;}
+    const more=oneStep();if(!more)return;
     S.tick++;
-    const base=610-parseInt(els.speed.value,10)*5.5;        // slider → 60..610ms
-    const delay=Math.max(14, base*Math.pow(0.97,S.tick));   // accelerate as it runs
-    timer=setTimeout(loop, delay);
+    const base=560-parseInt(els.speed.value,10)*5.0;            // slider → ~60..560ms
+    const isCommit=(S.subphase==="scan"&&S.gIdx===0);           // just committed → brief pause
+    let delay=Math.max(14,base*Math.pow(0.985,S.tick));
+    if(isCommit)delay=Math.max(delay,220);
+    timer=setTimeout(loop,delay);
 }
-
 function run(){
     if(S.phase==="done")reset(false);
-    if(S.running){ S.running=false; els.run.textContent="▶ Resume"; if(timer)clearTimeout(timer); return; }
-    S.running=true; els.run.textContent="❚❚ Pause"; S.tick=0; loop();
+    if(S.running){S.running=false;els.run.textContent="▶ Resume";if(timer)clearTimeout(timer);return;}
+    S.running=true;els.run.textContent="❚❚ Pause";S.tick=0;loop();
 }
 
-// ---- wire up ----
 els.run.addEventListener("click",run);
-els.step.addEventListener("click",()=>{ if(S.running)return; oneStep(); });
+els.step.addEventListener("click",()=>{if(!S.running)oneStep();});
 els.reshuffle.addEventListener("click",()=>reset(true));
 els.nstrips.addEventListener("change",()=>reset(false));
 
@@ -393,11 +444,9 @@ function boot(){
     if(!PAGE){els.honest.textContent="Demo data (shredder_page_data.js) failed to load.";return;}
     const img=new Image();
     img.onload=function(){
-        SW=img.naturalWidth; SH=img.naturalHeight;
-        srcCanvas.width=SW; srcCanvas.height=SH; srcCtx.drawImage(img,0,0);
-        const d=srcCtx.getImageData(0,0,SW,SH).data;     // data-URI source → never tainted
-        srcData=new Uint8Array(SW*SH);
-        for(let p=0,q=0;p<d.length;p+=4,q++)srcData[q]=d[p]; // R channel (grayscale)
+        SW=img.naturalWidth;SH=img.naturalHeight;srcCanvas.width=SW;srcCanvas.height=SH;srcCtx.drawImage(img,0,0);
+        const d=srcCtx.getImageData(0,0,SW,SH).data;srcData=new Uint8Array(SW*SH);
+        for(let p=0,q=0;p<d.length;p+=4,q++)srcData[q]=d[p];
         reset(false);
     };
     img.src=PAGE.dataUrl;
