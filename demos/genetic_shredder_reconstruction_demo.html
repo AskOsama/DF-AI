@@ -114,9 +114,18 @@
         <div class="banner" id="banner"></div>
     </div>
 
+    <div class="banner warn show" style="margin-top:1rem">
+        ⚠ <strong>Expected-failure demo (not a bug).</strong> This runs a real genetic algorithm on the real shredded
+        PDF <em>text</em> page — and it will <strong>stay scrambled at ~0%</strong>. A GA optimises the edge-cost
+        objective globally, but on a whitespace-heavy text page the lowest-cost arrangement isn't the true page, so it
+        converges to a wrong one. The point is to <em>see</em> the objective fall while accuracy doesn't. For
+        reconstructions that actually work, see the <a href="shredder_reconstruction_demo.html">strip-cut demo (96%)</a>
+        and <a href="harder_shredder_reconstruction_demo.html">greedy-from-a-corner (coarse grid)</a>.
+    </div>
+
     <div class="stage">
         <div class="vizcard" style="margin-top:0"><h3>Shredded pile (tiles, shuffled)</h3><canvas id="pile" width="340" height="300"></canvas></div>
-        <div class="vizcard" style="margin-top:0"><h3>Best individual so far (live)</h3><canvas id="recon" width="340" height="300"></canvas></div>
+        <div class="vizcard" style="margin-top:0"><h3>Best individual — stays scrambled on purpose ⚠</h3><canvas id="recon" width="340" height="300"></canvas></div>
     </div>
 
     <div class="vizcard"><h3>The objective falls — but the answer doesn't follow</h3>
