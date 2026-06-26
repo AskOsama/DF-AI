@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Genetic algorithm reconstructing a cross-cut shredded image. Watch a population of candidate arrangements evolve over generations — the best edge cost falls and the picture assembles itself.">
+    <title>Genetic Algorithm — Cross-cut Reconstruction | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+    <style>
+        :root{--ink:#14242e;--ink2:#36505b;--paper:#f6f2e9;--paper2:#fbf8f0;--vellum:#fffdf7;
+              --rule:#d6cdb8;--rule2:#a89a78;--accent:#9c6b1e;--good:#2c6a5b;--warn:#a23b34;}
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--paper);color:var(--ink);font-family:Geist,Inter,system-ui,sans-serif;line-height:1.5}
+        .wrap{max-width:1080px;margin:0 auto;padding:1.4rem 1.1rem 3rem}
+        .demo-header h1{font-family:Fraunces,Georgia,serif;font-size:1.9rem;margin:.2rem 0 .3rem}
+        .docid{display:inline-block;font-family:"Geist Mono",ui-monospace,monospace;font-size:.82rem;
+               background:var(--vellum);border:1px solid var(--rule);border-radius:3px;padding:.25rem .55rem;color:var(--ink2)}
+        .lede{color:var(--ink2);margin:.55rem 0 0;max-width:80ch}
+        .note{margin:.8rem 0 0;font-size:.83rem;color:var(--ink2);border-left:3px solid var(--accent);
+              background:var(--paper2);padding:.5rem .7rem;border-radius:0 3px 3px 0;max-width:84ch}
+        .algoswitch{margin:.6rem 0 0;font-size:.85rem}
+        .algoswitch a{color:var(--accent);text-decoration:none;font-weight:600}
+        .algoswitch a:hover{text-decoration:underline}
+        .algoswitch .cur{background:var(--ink);color:var(--vellum);padding:.12rem .5rem;border-radius:3px}
+        .panel{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.9rem 1rem;margin-top:1rem}
+        .controls{display:flex;flex-wrap:wrap;gap:.7rem 1rem;align-items:flex-end}
+        .cg{display:flex;flex-direction:column;gap:.25rem}
+        .cg label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+        .cg input[type=range]{width:130px}
+        .cg select{padding:.3rem .4rem;border:1px solid var(--rule2);border-radius:3px;background:var(--paper2)}
+        .btn{font:inherit;font-size:.9rem;padding:.5rem .95rem;border:1px solid var(--ink);border-radius:3px;background:var(--ink);color:var(--vellum);cursor:pointer}
+        .btn:hover{background:#21323d}.btn.sec{background:var(--vellum);color:var(--ink)}.btn.sec:hover{background:var(--paper)}
+        .btn:disabled{opacity:.45;cursor:not-allowed}.btn.dl{font-size:.78rem;padding:.32rem .6rem}
+        .barwrap{margin-top:.9rem;height:16px;background:var(--paper);border:1px solid var(--rule);border-radius:9px;overflow:hidden}
+        .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#c98f33);transition:width .12s linear}
+        .status-bar{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1rem}
+        .stat{flex:1 1 100px;background:var(--paper2);border:1px solid var(--rule);border-radius:4px;padding:.45rem .55rem;text-align:center}
+        .stat .v{font-family:"Geist Mono",monospace;font-size:1.02rem;font-weight:600;color:var(--ink)}
+        .stat .v.good{color:var(--good)}.stat .v.warn{color:var(--warn)}
+        .stat .l{font-size:.62rem;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);margin-top:.15rem}
+        .vizcard{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.7rem .8rem;margin-top:1rem}
+        .vizcard h3{margin:.1rem 0 .55rem;font-size:.95rem;font-family:Fraunces,serif;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+        .dlrow{margin-left:auto;display:flex;gap:.4rem}
+        canvas{display:block;max-width:100%;background:#fff;border:1px solid var(--rule);border-radius:3px}
+        .stage{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+        @media(max-width:760px){.stage{grid-template-columns:1fr}}
+        .logbox{height:170px;overflow:auto;background:#10202a;color:#dfeaec;border:1px solid var(--rule);border-radius:3px;
+                padding:.5rem .6rem;font-family:"Geist Mono",ui-monospace,monospace;font-size:.78rem;line-height:1.5}
+        .logbox .ln{display:block}.logbox .gen{color:#9fb6bd}.logbox .newbest{color:#ffe08a;font-weight:600}.logbox .done{color:#fff;font-weight:600}
+        .legend{font-size:.74rem;color:var(--ink2);margin-top:.4rem}
+        .banner{margin-top:1rem;padding:.7rem .9rem;border-radius:4px;font-weight:600;display:none}
+        .banner.show{display:block}.banner.ok{background:rgba(44,106,91,.12);border:1px solid var(--good);color:var(--good)}
+        .banner.warn{background:rgba(162,59,52,.1);border:1px solid var(--warn);color:var(--warn)}
+        .back-link{display:inline-block;margin-top:1.6rem;color:var(--accent);text-decoration:none;font-weight:600}
+        .back-link:hover{text-decoration:underline}
+        code{font-family:"Geist Mono",monospace;font-size:.85em}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="demo-header">
+        <h1>Genetic Algorithm — Cross-cut Reconstruction</h1>
+        <span class="docid" id="docId">—</span>
+        <div class="algoswitch">Algorithm:
+            <a href="harder_shredder_reconstruction_demo.html">Greedy raster-fill</a> ·
+            <span class="cur">Genetic algorithm</span>
+        </div>
+        <p class="lede">
+            Greedy places each tile once and never reconsiders, so on a fine grid one wrong tile cascades. A
+            <strong>genetic algorithm</strong> keeps a whole <em>population</em> of candidate arrangements and
+            <strong>evolves</strong> them — selection, crossover, mutation, plus a little local refinement (memetic) —
+            generation after generation, keeping the best. Watch the best edge cost fall and the picture assemble.
+        </p>
+        <p class="note" id="honest">
+            Reconstruction by <strong>edge matching</strong> only works when tiles are <em>distinctive</em>. On the
+            content-rich image the GA reaches near-perfect at a modest grid; on the <strong>document page</strong> it
+            struggles — blank whitespace makes many tiles interchangeable, so even the optimal-cost arrangement isn't
+            the true one (that's the honest limit, and why the strip-cut demo works but cross-cut text is hard).
+            Fine grids are harder for the generic operators — raise the grid to watch accuracy fall (scalability).
+            Uses the Gallagher prediction-based edge dissimilarity.
+        </p>
+    </div>
+
+    <div class="panel">
+        <div class="controls">
+            <button class="btn" id="btnRun">▶ Run</button>
+            <button class="btn sec" id="btnStep">Step gen</button>
+            <button class="btn sec" id="btnReshuffle">↻ New puzzle</button>
+            <div class="cg"><label for="speed">Speed</label><input type="range" id="speed" min="0" max="100" value="70"></div>
+            <div class="cg"><label for="image">Image</label>
+                <select id="image"><option value="dense" selected>Content-rich (GA reconstructs)</option>
+                    <option value="doc">Document page (hard)</option></select></div>
+            <div class="cg"><label for="grid">Grid</label>
+                <select id="grid"><option value="3,4">3 × 4 — 12</option><option value="4,6" selected>4 × 6 — 24</option>
+                    <option value="5,7">5 × 7 — 35</option><option value="6,8">6 × 8 — 48</option><option value="8,10">8 × 10 — 80</option></select></div>
+            <div class="cg"><label for="pop">Population</label>
+                <select id="pop"><option>80</option><option selected>140</option><option>220</option></select></div>
+            <div class="cg"><label for="mut">Mutation</label><input type="range" id="mut" min="5" max="90" value="50"></div>
+        </div>
+        <div class="barwrap"><div class="bar" id="bar"></div></div>
+        <div class="status-bar">
+            <div class="stat"><div class="v" id="sPhase">idle</div><div class="l">Phase</div></div>
+            <div class="stat"><div class="v" id="sGen">—</div><div class="l">Generation</div></div>
+            <div class="stat"><div class="v" id="sPop">—</div><div class="l">Population</div></div>
+            <div class="stat"><div class="v" id="sCost">—</div><div class="l">Best edge cost</div></div>
+            <div class="stat"><div class="v" id="sAcc">—</div><div class="l">Best accuracy</div></div>
+            <div class="stat"><div class="v" id="sEval">—</div><div class="l">Evaluations</div></div>
+            <div class="stat"><div class="v" id="sFact">—</div><div class="l">Search space N!</div></div>
+        </div>
+        <div class="banner" id="banner"></div>
+    </div>
+
+    <div class="stage">
+        <div class="vizcard" style="margin-top:0"><h3>Shredded pile (tiles, shuffled)</h3><canvas id="pile" width="340" height="300"></canvas></div>
+        <div class="vizcard" style="margin-top:0"><h3>Best individual so far (live)</h3><canvas id="recon" width="340" height="300"></canvas></div>
+    </div>
+
+    <div class="vizcard"><h3>Best edge cost per generation (lower = better)</h3>
+        <canvas id="chart" width="1040" height="180"></canvas>
+        <div class="legend">Each generation keeps the fittest arrangement. The curve falls as the population evolves toward a clean assembly; a flat tail means it has converged.</div>
+    </div>
+
+    <div class="vizcard logcard"><h3>Evolution log
+        <span class="dlrow">
+            <button class="btn sec dl" id="btnDlTxt">⬇ Log (.txt)</button>
+            <button class="btn sec dl" id="btnDlJson">⬇ Data (.json)</button>
+            <button class="btn sec dl" id="btnDlPng">⬇ Image (.png)</button>
+        </span></h3>
+        <div class="logbox" id="log"></div>
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to the course</a>
+</div>
+
+<script src="shredder_page_data.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const ctx=id=>$(id).getContext("2d");
+const pileX=ctx("pile"),reconX=ctx("recon"),chartX=ctx("chart");
+const els={phase:$("sPhase"),gen:$("sGen"),pop:$("sPop"),cost:$("sCost"),acc:$("sAcc"),eval:$("sEval"),fact:$("sFact"),
+           bar:$("bar"),banner:$("banner"),run:$("btnRun"),step:$("btnStep"),reshuffle:$("btnReshuffle"),
+           speed:$("speed"),image:$("image"),grid:$("grid"),popSel:$("pop"),mut:$("mut"),log:$("log"),docId:$("docId"),
+           dlTxt:$("btnDlTxt"),dlJson:$("btnDlJson"),dlPng:$("btnDlPng")};
+const PAGE=window.SHREDDER_PAGE;
+
+let SW=0,SH=0,srcData=null;
+const srcCanvas=document.createElement("canvas"),srcCtx=srcCanvas.getContext("2d");
+let S=null,timer=null;
+const mul=s=>{let a=s>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};};
+function shuffle(a,r){for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ---------- build the source image (dense procedural, or the document page) ----------
+function makeDense(seed){
+    const W=512,H=384,r=mul(seed),arr=new Float32Array(W*H);
+    const waves=[];for(let i=0;i<40;i++)waves.push([0.02+r()*0.16,0.02+r()*0.16,r()*6.283,6+r()*18]);
+    const blobs=[];for(let i=0;i<60;i++)blobs.push([r()*W,r()*H,15+r()*55,(r()*2-1)*60]);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){let v=128;
+        for(const[fx,fy,ph,a]of waves)v+=a*Math.sin(fx*x+fy*y+ph);
+        for(const[cx,cy,s,a]of blobs){const dx=x-cx,dy=y-cy;v+=a*Math.exp(-(dx*dx+dy*dy)/(2*s*s));}
+        v+=(r()*2-1)*5;arr[y*W+x]=v<0?0:v>255?255:v;}
+    SW=W;SH=H;srcCanvas.width=W;srcCanvas.height=H;
+    const im=srcCtx.createImageData(W,H);for(let i=0;i<W*H;i++){const g=arr[i]|0;im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=g;im.data[i*4+3]=255;}
+    srcCtx.putImageData(im,0,0);srcData=new Uint8Array(W*H);for(let i=0;i<W*H;i++)srcData[i]=arr[i]|0;
+    els.docId.textContent="Source: procedurally-generated content-rich image (seed "+seed+")";
+}
+function loadDoc(cb){
+    const img=new Image();img.onload=function(){SW=img.naturalWidth;SH=img.naturalHeight;
+        srcCanvas.width=SW;srcCanvas.height=SH;srcCtx.drawImage(img,0,0);
+        const d=srcCtx.getImageData(0,0,SW,SH).data;srcData=new Uint8Array(SW*SH);
+        for(let p=0,q=0;p<d.length;p+=4,q++)srcData[q]=d[p];
+        els.docId.textContent="Source: "+(PAGE?PAGE.docId:"document")+" (text whitespace → hard)";cb();};
+    img.src=PAGE.dataUrl;
+}
+const px=(x,y)=>srcData[y*SW+x];
+
+// ---------- problem (tiles + Gallagher cost) ----------
+function buildProblem(R,C,seed){
+    const rowH=Math.floor(SH/R),colW=Math.floor(SW/C),N=R*C;
+    const rc1=[],rc2=[],lc1=[],lc2=[],br1=[],br2=[],tr1=[],tr2=[];
+    for(let id=0;id<N;id++){const r=Math.floor(id/C),c=id%C,x0=c*colW,y0=r*rowH;
+        const a=new Float32Array(rowH),b=new Float32Array(rowH),e=new Float32Array(rowH),f=new Float32Array(rowH);
+        for(let y=0;y<rowH;y++){a[y]=px(x0+colW-1,y0+y);b[y]=px(x0+colW-2,y0+y);e[y]=px(x0,y0+y);f[y]=px(x0+1,y0+y);}
+        rc1.push(a);rc2.push(b);lc1.push(e);lc2.push(f);
+        const t=new Float32Array(colW),u=new Float32Array(colW),v=new Float32Array(colW),w=new Float32Array(colW);
+        for(let x=0;x<colW;x++){t[x]=px(x0+x,y0+rowH-1);u[x]=px(x0+x,y0+rowH-2);v[x]=px(x0+x,y0);w[x]=px(x0+x,y0+1);}
+        br1.push(t);br2.push(u);tr1.push(v);tr2.push(w);}
+    const H=new Float32Array(N*N),V=new Float32Array(N*N);
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+        let s=0;for(let y=0;y<rowH;y++){s+=Math.abs((2*rc1[i][y]-rc2[i][y])-lc1[j][y])+Math.abs((2*lc1[j][y]-lc2[j][y])-rc1[i][y]);}
+        H[i*N+j]=s/rowH;
+        let s2=0;for(let x=0;x<colW;x++){s2+=Math.abs((2*br1[i][x]-br2[i][x])-tr1[j][x])+Math.abs((2*tr1[j][x]-tr2[j][x])-br1[i][x]);}
+        V[i*N+j]=s2/colW;}
+    const pile=shuffle([...Array(N).keys()],mul(seed^0x9e3779b9));
+    let lf=0;for(let k=1;k<=N;k++)lf+=Math.log10(k);
+    return {R,C,N,rowH,colW,H,V,pile,seed,log10fact:lf};
+}
+function fitness(p){const {R,C,N,H,V}=S.P;let s=0;
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){const pos=r*C+c,q=p[pos];
+        if(c<C-1)s+=H[q*N+p[pos+1]];if(r<R-1)s+=V[q*N+p[pos+C]];}return s;}
+function accOf(p){let k=0;for(let i=0;i<p.length;i++)if(p[i]===i)k++;return k/p.length;}
+
+// GA operators
+function ox(a,b,r){const N=a.length;let i=Math.floor(r()*N),j=Math.floor(r()*N);if(i>j){const t=i;i=j;j=t;}
+    const ch=new Array(N).fill(-1),have=new Uint8Array(N);
+    for(let k=i;k<=j;k++){ch[k]=a[k];have[a[k]]=1;}
+    let k=(j+1)%N;for(let s=0;s<N;s++){const g=b[(j+1+s)%N];if(!have[g]){ch[k]=g;have[g]=1;k=(k+1)%N;}}
+    return ch;}
+function localSwap(p,r,tries){let f=fitness(p);const N=p.length;
+    for(let t=0;t<tries;t++){const i=Math.floor(r()*N),j=Math.floor(r()*N);if(i===j)continue;
+        const tmp=p[i];p[i]=p[j];p[j]=tmp;const nf=fitness(p);if(nf<f)f=nf;else{p[j]=p[i];p[i]=tmp;}}
+    return f;}
+
+// ---------- rendering ----------
+function dims(){const Hd=300,w=Math.round(Hd*SW/SH);return{Hd,W:w,cw:w/S.P.C,ch:Hd/S.P.R};}
+function fragRect(id){const r=Math.floor(id/S.P.C),c=id%S.P.C;return[c*S.P.colW,r*S.P.rowH,S.P.colW,S.P.rowH];}
+function drawFrag(c2,id,dx,dy,dw,dh){const[sx,sy,sw,sh]=fragRect(id);c2.drawImage(srcCanvas,sx,sy,sw,sh,dx,dy,dw,dh);}
+function renderPile(){const {Hd,W,cw,ch}=dims();if(pileX.canvas.width!==W){pileX.canvas.width=W;pileX.canvas.height=Hd;}
+    pileX.fillStyle="#fff";pileX.fillRect(0,0,W,Hd);for(let k=0;k<S.P.N;k++){const r=Math.floor(k/S.P.C),c=k%S.P.C;
+        drawFrag(pileX,S.P.pile[k],c*cw,r*ch,cw-1,ch-1);pileX.strokeStyle="rgba(0,0,0,.1)";pileX.strokeRect(c*cw+.5,r*ch+.5,cw-1,ch-1);}}
+function renderRecon(p){const {Hd,W,cw,ch}=dims();if(reconX.canvas.width!==W){reconX.canvas.width=W;reconX.canvas.height=Hd;}
+    reconX.fillStyle="#fff";reconX.fillRect(0,0,W,Hd);
+    for(let pos=0;pos<p.length;pos++){const id=p[pos],r=Math.floor(pos/S.P.C),c=pos%S.P.C;drawFrag(reconX,id,c*cw,r*ch,cw,ch);
+        reconX.strokeStyle=(id===pos)?"rgba(44,106,91,.45)":"rgba(162,59,52,.4)";reconX.strokeRect(c*cw+.5,r*ch+.5,cw-1,ch-1);}}
+function renderChart(){const W=chartX.canvas.width,Hd=chartX.canvas.height,pad=24;chartX.clearRect(0,0,W,Hd);
+    const pts=S.hist;if(!pts.length){chartX.fillStyle="#a0adb2";chartX.font="12px monospace";chartX.fillText("best edge cost appears as generations run…",pad,Hd/2);return;}
+    const mx=Math.max(...pts),mn=Math.min(...pts),sp=(mx-mn)||1;
+    const X=i=>pad+(W-2*pad)*(pts.length<=1?0:i/(pts.length-1)),Y=v=>Hd-pad-(Hd-2*pad)*((v-mn)/sp);
+    chartX.strokeStyle="#9c6b1e";chartX.lineWidth=2;chartX.beginPath();pts.forEach((v,i)=>{const x=X(i),y=Y(v);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});chartX.stroke();chartX.lineWidth=1;
+    chartX.fillStyle="#36505b";chartX.font="11px monospace";chartX.fillText("best "+Math.round(pts[pts.length-1]).toLocaleString(),W-130,16);}
+function fmtFact(lf){const e=Math.floor(lf),m=Math.pow(10,lf-e);return lf<6?Math.round(Math.pow(10,lf)).toLocaleString():`${m.toFixed(1)}e${e}`;}
+function setStats(){els.phase.textContent=S.phase;els.gen.textContent=S.gen;els.pop.textContent=S.popSize;
+    els.cost.textContent=S.bestFit==null?"—":Math.round(S.bestFit).toLocaleString();
+    const a=S.bestAcc;els.acc.textContent=a==null?"—":(a*100).toFixed(1)+"%";
+    els.acc.className="v"+(a==null?"":(a>=0.9?" good":(a<0.4?" warn":"")));
+    els.eval.textContent=S.evals.toLocaleString();els.fact.textContent=S.P?fmtFact(S.P.log10fact):"—";
+    els.bar.style.width=((S.progress||0)*100).toFixed(1)+"%";}
+
+// log
+function logLine(cls,text){S.log.push({gen:S.gen,ms:Math.round(performance.now()-S.t0),cls,text});
+    const el=document.createElement("div");el.className="ln "+cls;el.textContent=`[${String(S.log.length).padStart(3,"0")}] ${text}`;
+    els.log.appendChild(el);while(els.log.childElementCount>250)els.log.removeChild(els.log.firstChild);els.log.scrollTop=els.log.scrollHeight;}
+
+// ---------- GA lifecycle ----------
+function initPop(){const r=mul((S.P.seed^0x1234567)>>>0),N=S.P.N;S.pop=[];S.fit=[];
+    for(let i=0;i<S.popSize;i++){const p=shuffle([...Array(N).keys()],r);S.pop.push(p);S.fit.push(fitness(p));S.evals++;}
+    let bi=0;for(let i=1;i<S.popSize;i++)if(S.fit[i]<S.fit[bi])bi=i;
+    S.bestPerm=S.pop[bi].slice();S.bestFit=S.fit[bi];S.bestAcc=accOf(S.bestPerm);S.hist=[S.bestFit];S.stag=0;}
+function stepGen(){
+    const N=S.P.N,r=S.rng,mut=parseInt(els.mut.value,10)/100;
+    // rank for tournament
+    const np=[S.bestPerm.slice()];                          // elitism
+    const pick=()=>{let b=Math.floor(r()*S.popSize);for(let t=0;t<3;t++){const k=Math.floor(r()*S.popSize);if(S.fit[k]<S.fit[b])b=k;}return S.pop[b];};
+    while(np.length<S.popSize){const ch=ox(pick(),pick(),r);
+        if(r()<mut){const m=1+(r()<0.4?1:0);for(let q=0;q<m;q++){const i=Math.floor(r()*N),j=Math.floor(r()*N);const t=ch[i];ch[i]=ch[j];ch[j]=t;}}
+        np.push(ch);}
+    S.pop=np;S.fit=new Array(S.popSize);for(let i=0;i<S.popSize;i++){S.fit[i]=fitness(S.pop[i]);S.evals++;}
+    // memetic local search on the top individuals
+    const order=[...Array(S.popSize).keys()].sort((a,b)=>S.fit[a]-S.fit[b]);
+    const elite=Math.max(3,Math.floor(S.popSize/12));
+    for(let e=0;e<elite;e++){const idx=order[e];S.fit[idx]=localSwap(S.pop[idx],r,4*N);S.evals+=4*N;}
+    let bi=0;for(let i=1;i<S.popSize;i++)if(S.fit[i]<S.fit[bi])bi=i;
+    S.gen++;let improved=false;
+    if(S.fit[bi]<S.bestFit-1e-9){S.bestFit=S.fit[bi];S.bestPerm=S.pop[bi].slice();S.bestAcc=accOf(S.bestPerm);S.stag=0;improved=true;}
+    else S.stag++;
+    S.hist.push(S.bestFit);
+    renderRecon(S.bestPerm);renderChart();
+    if(improved)logLine("newbest",`gen ${S.gen} · best cost ${Math.round(S.bestFit).toLocaleString()} · acc ${(S.bestAcc*100).toFixed(1)}%  · ★ new best`);
+    else if(S.gen%10===0)logLine("gen",`gen ${S.gen} · best ${Math.round(S.bestFit).toLocaleString()} · acc ${(S.bestAcc*100).toFixed(1)}% · stagnant ${S.stag}`);
+    S.progress=Math.min(0.99,S.stag/S.stagCap);S.phase="evolving";setStats();
+    if(S.stag>=S.stagCap||S.gen>=S.genCap){finish();return false;}
+    return true;
+}
+function finish(){S.phase="done";S.running=false;S.progress=1;renderRecon(S.bestPerm);setStats();
+    els.run.textContent="▶ Run";els.step.disabled=true;
+    const pct=(S.bestAcc*100).toFixed(1),good=S.bestAcc>=0.7;
+    els.banner.className="banner show "+(good?"ok":"warn");
+    els.banner.textContent=`Converged at generation ${S.gen} — best ${pct}% correct, edge cost ${Math.round(S.bestFit).toLocaleString()}, `+
+        `${S.evals.toLocaleString()} evaluations. `+(good?"The GA reassembled it.":"Generic GA operators plateau on this instance — finer grids / whitespace are genuinely hard.");
+    logLine("done",`DONE · gen ${S.gen} · ${pct}% correct · cost ${Math.round(S.bestFit).toLocaleString()} · ${S.evals.toLocaleString()} evals`);}
+
+function ready(){return SW>0&&srcData;}
+function reset(reseed){
+    if(timer){clearTimeout(timer);timer=null;}
+    const seed=reseed?((Math.random()*1e9)>>>0):(S?S.seed0:777);
+    const useDoc=els.image.value==="doc";
+    const after=()=>{
+        const [R,C]=els.grid.value.split(",").map(Number);
+        const P=buildProblem(R,C,seed);
+        S={P,seed0:seed,popSize:parseInt(els.popSel.value,10),rng:mul((seed^0xabcdef)>>>0),
+           pop:[],fit:[],bestPerm:null,bestFit:null,bestAcc:null,gen:0,evals:0,stag:0,
+           hist:[],log:[],running:false,tick:0,progress:0,phase:"ready",t0:performance.now(),
+           genCap:4000,stagCap:R*C<=24?180:120};
+        initPop();
+        renderPile();renderRecon(S.bestPerm);renderChart();els.log.innerHTML="";
+        logLine("gen",`init · ${S.popSize} random arrangements · grid ${R}×${C} (${R*C} tiles) · gen0 best ${Math.round(S.bestFit).toLocaleString()} acc ${(S.bestAcc*100).toFixed(1)}%`);
+        els.banner.className="banner";els.run.textContent="▶ Run";els.run.disabled=false;els.step.disabled=false;
+        S.phase="ready";setStats();
+    };
+    if(useDoc){ if(!PAGE){els.honest.textContent="Document data missing.";return;} loadDoc(after); } else { makeDense(seed); after(); }
+}
+function loop(){if(!S.running)return;if(!stepGen())return;S.tick++;
+    const base=420-parseInt(els.speed.value,10)*3.9;timer=setTimeout(loop,Math.max(0,base));}
+function run(){if(S.phase==="done")reset(false);
+    if(S.running){S.running=false;els.run.textContent="▶ Resume";if(timer)clearTimeout(timer);return;}
+    S.running=true;els.run.textContent="❚❚ Pause";loop();}
+
+els.run.addEventListener("click",run);
+els.step.addEventListener("click",()=>{if(!S.running&&S.phase!=="done")stepGen();});
+els.reshuffle.addEventListener("click",()=>reset(true));
+["image","grid","pop"].forEach(id=>$( id==="pop"?"pop":id ).addEventListener("change",()=>reset(false)));
+
+// downloads
+function save(name,blob){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1500);}
+const tag=()=>`${S.P.R}x${S.P.C}-seed${S.seed0}`;
+els.dlTxt.addEventListener("click",()=>{const h=[`DF-AI genetic cross-cut reconstruction`,els.docId.textContent,
+    `grid ${S.P.R}×${S.P.C} = ${S.P.N} tiles · population ${S.popSize} · seed ${S.seed0}`,
+    `best: ${(S.bestAcc*100).toFixed(1)}% correct · edge cost ${Math.round(S.bestFit)} · gen ${S.gen} · ${S.evals} evals`,
+    `search space N! ≈ ${fmtFact(S.P.log10fact)}`,"-".repeat(56)];
+    save(`ga-log-${tag()}.txt`,new Blob([h.concat(S.log.map((r,n)=>`[${String(n+1).padStart(3,"0")}] +${r.ms}ms  ${r.text}`)).join("\n")+"\n"],{type:"text/plain"}));});
+els.dlJson.addEventListener("click",()=>{const d={source:els.docId.textContent,rows:S.P.R,cols:S.P.C,tiles:S.P.N,population:S.popSize,seed:S.seed0,
+    bestAccuracy:S.bestAcc,bestEdgeCost:Math.round(S.bestFit),generations:S.gen,evaluations:S.evals,
+    searchSpaceLog10Factorial:Math.round(S.P.log10fact),bestOrder:S.bestPerm,costHistory:S.hist.map(v=>Math.round(v)),steps:S.log};
+    save(`ga-data-${tag()}.json`,new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));});
+els.dlPng.addEventListener("click",()=>{$("recon").toBlob(b=>{if(b)save(`ga-image-${tag()}.png`,b);},"image/png");});
+
+reset(false);
+})();
+</script>
+</body>
+</html>

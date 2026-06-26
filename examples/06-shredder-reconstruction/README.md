@@ -22,6 +22,11 @@ baseline**. Everything below is computed at run time; no metric is fabricated.
 > **🧩 Harder (cross-cut):** [`demos/harder_shredder_reconstruction_demo.html`](../../demos/harder_shredder_reconstruction_demo.html)
 > shreds the page **both ways** into an R×C grid and shows how greedy *scales* — comparisons
 > grow ~N², accuracy collapses on fine grids, and the search space is N!.
+>
+> **🧬 Genetic algorithm:** [`demos/genetic_shredder_reconstruction_demo.html`](../../demos/genetic_shredder_reconstruction_demo.html)
+> evolves a population of candidate arrangements (selection / crossover / mutation + local
+> refinement) to reassemble the cross-cut image — where greedy gets stuck. Pick the algorithm
+> via the switch at the top of either demo.
 
 **Forensic scenario.** A shredder destroyed a document. Investigators recover the
 pile of paper strips. Can we **reconstruct the page** so its text becomes
