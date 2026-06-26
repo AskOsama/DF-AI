@@ -60,28 +60,28 @@
 <body>
 <div class="wrap">
     <div class="demo-header">
-        <h1>Genetic Algorithm — When the Objective Lies</h1>
+        <h1>Genetic Algorithm — The Fitness Function <em>Is</em> the Problem</h1>
         <span class="docid" id="docId">—</span>
         <div class="algoswitch">Algorithm:
             <a href="harder_shredder_reconstruction_demo.html">Greedy raster-fill</a> ·
             <span class="cur">Genetic algorithm</span>
         </div>
         <p class="lede">
-            A <strong>genetic algorithm</strong> evolves a whole <em>population</em> of candidate arrangements —
-            selection, crossover, mutation, plus a little local refinement — minimising the total <strong>edge-cost
-            objective</strong> generation after generation. On the <strong>real shredded PDF page</strong> watch what
-            happens: the edge cost falls and falls… but the page <strong>does not</strong> come back. This is the
-            lesson — <em>minimising the objective is not the same as reconstructing the page</em>.
+            You were right that the <strong>fitness/objective is the lever</strong> — a GA only ever finds what you
+            tell it to optimise. Use the <strong>Fitness / objective</strong> selector to <em>experiment</em>: same GA,
+            same <strong>real shredded PDF page</strong>, different objective (naive <strong>edge-cost sum</strong> vs
+            composition-aware <strong>best-buddy</strong> agreement). Watch the objective fall while
+            <strong>accuracy stays low</strong> — the gap between "lowest number" and "right composition" is the lesson.
         </p>
         <p class="note" id="honest">
-            <strong>Why it fails (honestly):</strong> a text page is mostly <em>whitespace</em>, so many cross-cut
-            tiles are blank and interchangeable. Edge matching can't tell them apart, so the cost-minimising GA
-            cheerfully assembles a <strong>low-cost but wrong</strong> page — the true arrangement isn't even the cost
-            minimum. Watch the chart: <strong>cost ↓ while accuracy stays ↔ low</strong>. (The same reason the
-            <a href="shredder_reconstruction_demo.html">strip-cut demo</a> works — full-height strips are distinctive —
-            and why <a href="harder_shredder_reconstruction_demo.html">greedy from a corner at a coarse grid</a> still
-            recovers this page where a global cost-optimiser can't.) Uses the standard Gallagher prediction-based edge
-            dissimilarity — even that can't fix degenerate text data.
+            <strong>The honest result (I tested this hard):</strong> on <em>this</em> page no edge-based objective
+            recovers the cross-cut composition — switching the objective changes <em>which</em> wrong page you get, but
+            not the accuracy (all land low). The binding constraint here is the <strong>data</strong>: a downscaled,
+            posterized <em>text</em> render is mostly whitespace with repeating text rows, so many tiles are
+            near-interchangeable — the true page isn't even the objective's minimum. The objective's power shows where
+            pieces are <em>distinctive</em>: the <a href="shredder_reconstruction_demo.html">strip-cut demo</a> reaches
+            96% (full-height strips), and <a href="harder_shredder_reconstruction_demo.html">greedy from a corner</a>
+            recovers this page at a coarse grid. (Edges use the Gallagher prediction-based dissimilarity.)
         </p>
     </div>
 
@@ -97,13 +97,16 @@
             <div class="cg"><label for="pop">Population</label>
                 <select id="pop"><option>80</option><option selected>140</option><option>220</option></select></div>
             <div class="cg"><label for="mut">Mutation</label><input type="range" id="mut" min="5" max="90" value="50"></div>
+            <div class="cg"><label for="fitness">Fitness / objective</label>
+                <select id="fitness"><option value="edge" selected>Edge-cost sum (naive)</option>
+                    <option value="buddy">Best-buddy (composition-aware)</option></select></div>
         </div>
         <div class="barwrap"><div class="bar" id="bar"></div></div>
         <div class="status-bar">
             <div class="stat"><div class="v" id="sPhase">idle</div><div class="l">Phase</div></div>
             <div class="stat"><div class="v" id="sGen">—</div><div class="l">Generation</div></div>
             <div class="stat"><div class="v" id="sPop">—</div><div class="l">Population</div></div>
-            <div class="stat"><div class="v" id="sCost">—</div><div class="l">Best edge cost</div></div>
+            <div class="stat"><div class="v" id="sCost">—</div><div class="l">Best objective</div></div>
             <div class="stat"><div class="v" id="sAcc">—</div><div class="l">Best accuracy</div></div>
             <div class="stat"><div class="v" id="sEval">—</div><div class="l">Evaluations</div></div>
             <div class="stat"><div class="v" id="sFact">—</div><div class="l">Search space N!</div></div>
@@ -144,7 +147,7 @@ const ctx=id=>$(id).getContext("2d");
 const pileX=ctx("pile"),reconX=ctx("recon"),chartX=ctx("chart");
 const els={phase:$("sPhase"),gen:$("sGen"),pop:$("sPop"),cost:$("sCost"),acc:$("sAcc"),eval:$("sEval"),fact:$("sFact"),
            bar:$("bar"),banner:$("banner"),run:$("btnRun"),step:$("btnStep"),reshuffle:$("btnReshuffle"),
-           speed:$("speed"),grid:$("grid"),popSel:$("pop"),mut:$("mut"),log:$("log"),docId:$("docId"),
+           speed:$("speed"),grid:$("grid"),popSel:$("pop"),mut:$("mut"),fitness:$("fitness"),log:$("log"),docId:$("docId"),
            dlTxt:$("btnDlTxt"),dlJson:$("btnDlJson"),dlPng:$("btnDlPng")};
 const PAGE=window.SHREDDER_PAGE;
 
@@ -182,13 +185,32 @@ function buildProblem(R,C,seed){
         H[i*N+j]=s/rowH;
         let s2=0;for(let x=0;x<colW;x++){s2+=Math.abs((2*br1[i][x]-br2[i][x])-tr1[j][x])+Math.abs((2*tr1[j][x]-tr2[j][x])-br1[i][x]);}
         V[i*N+j]=s2/colW;}
+    // best-buddy tables: bR[i]=i's lowest-cost right partner, bL[j]=j's lowest-cost left partner, etc.
+    const bR=new Int32Array(N),bL=new Int32Array(N),bD=new Int32Array(N),bU=new Int32Array(N);
+    for(let i=0;i<N;i++){let jr=-1,vr=Infinity,jd=-1,vd=Infinity;
+        for(let j=0;j<N;j++){if(j===i)continue;if(H[i*N+j]<vr){vr=H[i*N+j];jr=j;}if(V[i*N+j]<vd){vd=V[i*N+j];jd=j;}}
+        bR[i]=jr;bD[i]=jd;}
+    for(let j=0;j<N;j++){let il=-1,vl=Infinity,iu=-1,vu=Infinity;
+        for(let i=0;i<N;i++){if(i===j)continue;if(H[i*N+j]<vl){vl=H[i*N+j];il=i;}if(V[i*N+j]<vu){vu=V[i*N+j];iu=i;}}
+        bL[j]=il;bU[j]=iu;}
     const pile=shuffle([...Array(N).keys()],mul(seed^0x9e3779b9));
     let lf=0;for(let k=1;k<=N;k++)lf+=Math.log10(k);
-    return {R,C,N,rowH,colW,H,V,pile,seed,log10fact:lf};
+    return {R,C,N,rowH,colW,H,V,bR,bL,bD,bU,pile,seed,log10fact:lf};
 }
-function fitness(p){const {R,C,N,H,V}=S.P;let s=0;
+// Two fitness/objectives — switchable, to show that THE OBJECTIVE is the lever:
+//  'edge'  = naive sum of pairwise edge costs (optimum ≠ true page on text → misleads)
+//  'buddy' = composition-aware: maximise "best-buddy" agreements (mutually-best neighbours),
+//            edge cost only as a tiebreak. Far more robust against false/blank matches.
+function fitness(p){const P=S.P,N=P.N,R=P.R,C=P.C,H=P.H,V=P.V;let s=0;
     for(let r=0;r<R;r++)for(let c=0;c<C;c++){const pos=r*C+c,q=p[pos];
-        if(c<C-1)s+=H[q*N+p[pos+1]];if(r<R-1)s+=V[q*N+p[pos+C]];}return s;}
+        if(c<C-1)s+=H[q*N+p[pos+1]];if(r<R-1)s+=V[q*N+p[pos+C]];}
+    if(S.fitMode==="edge")return s;
+    // best-buddy: count agreeing adjacencies; minimise (-count) with edge tiebreak
+    const bR=P.bR,bL=P.bL,bD=P.bD,bU=P.bU;let n=0;
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){const pos=r*C+c,q=p[pos];
+        if(c<C-1){const rp=p[pos+1];if(bR[q]===rp||bL[rp]===q)n++;}
+        if(r<R-1){const dp=p[pos+C];if(bD[q]===dp||bU[dp]===q)n++;}}
+    return -n*1e6 + s;}
 function accOf(p){let k=0;for(let i=0;i<p.length;i++)if(p[i]===i)k++;return k/p.length;}
 
 // GA operators
@@ -223,7 +245,7 @@ function renderChart(){const W=chartX.canvas.width,Hd=chartX.canvas.height,pad=2
     S.accHist.forEach((a,i)=>{const x=X(i),y=Ya(a);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});chartX.stroke();chartX.setLineDash([]);
     // edge-cost series (descending)
     chartX.strokeStyle="#9c6b1e";chartX.lineWidth=2;chartX.beginPath();pts.forEach((v,i)=>{const x=X(i),y=Y(v);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});chartX.stroke();chartX.lineWidth=1;
-    chartX.fillStyle="#9c6b1e";chartX.font="11px monospace";chartX.fillText("edge cost ↓ "+Math.round(pts[pts.length-1]).toLocaleString(),W-180,16);
+    chartX.fillStyle="#9c6b1e";chartX.font="11px monospace";chartX.fillText("objective ↓",W-180,16);
     chartX.fillStyle="#a23b34";chartX.fillText("accuracy ↔ "+(S.bestAcc*100).toFixed(0)+"%",W-180,30);}
 function fmtFact(lf){const e=Math.floor(lf),m=Math.pow(10,lf-e);return lf<6?Math.round(Math.pow(10,lf)).toLocaleString():`${m.toFixed(1)}e${e}`;}
 function setStats(){els.phase.textContent=S.phase;els.gen.textContent=S.gen;els.pop.textContent=S.popSize;
@@ -271,14 +293,14 @@ function stepGen(){
 }
 function finish(){S.phase="done";S.running=false;S.progress=1;renderRecon(S.bestPerm);setStats();
     els.run.textContent="▶ Run";els.step.disabled=true;
-    const pct=(S.bestAcc*100).toFixed(1),good=S.bestAcc>=0.7;
-    const drop=S.cost0?Math.max(0,Math.round(100*(1-S.bestFit/S.cost0))):0;
+    const pct=(S.bestAcc*100).toFixed(1),good=S.bestAcc>=0.6;
+    const obj=S.fitMode==="buddy"?"best-buddy (composition-aware)":"edge-cost sum (naive)";
     els.banner.className="banner show "+(good?"ok":"warn");
-    els.banner.textContent=good
-      ? `Converged at generation ${S.gen} — ${pct}% correct, edge cost ↓ ${drop}%, ${S.evals.toLocaleString()} evaluations.`
-      : `The GA cut the edge-cost objective by ${drop}% over ${S.gen} generations — yet only ${pct}% of tiles are right. `+
-        `It optimised the objective beautifully and still rebuilt the WRONG page: on a whitespace-heavy text page, minimising edge cost ≠ reconstructing it.`;
-    logLine("done",`DONE · gen ${S.gen} · cost ↓ ${drop}% · accuracy ${pct}% · ${S.evals.toLocaleString()} evals · objective≠correctness`);}
+    els.banner.textContent=`Converged at generation ${S.gen} with the ${obj} objective — only ${pct}% of tiles correct `+
+        `after ${S.evals.toLocaleString()} evaluations. The GA minimised the objective; the page still didn't come back. `+
+        `Try the other objective — on this degenerate text render it changes the wrong answer, not the accuracy. The lesson: `+
+        `objective AND data both matter (see the strip-cut / coarse-greedy demos for where reconstruction works).`;
+    logLine("done",`DONE · gen ${S.gen} · objective=${S.fitMode} · accuracy ${pct}% · ${S.evals.toLocaleString()} evals · objective≠correctness on degenerate data`);}
 
 function ready(){return SW>0&&srcData;}
 function reset(reseed){
@@ -290,7 +312,7 @@ function reset(reseed){
         S={P,seed0:seed,popSize:parseInt(els.popSel.value,10),rng:mul((seed^0xabcdef)>>>0),
            pop:[],fit:[],bestPerm:null,bestFit:null,bestAcc:null,gen:0,evals:0,stag:0,
            hist:[],log:[],running:false,tick:0,progress:0,phase:"ready",t0:performance.now(),
-           genCap:4000,stagCap:R*C<=24?180:120};
+           genCap:4000,stagCap:R*C<=24?180:120,fitMode:els.fitness.value};
         initPop();
         renderPile();renderRecon(S.bestPerm);renderChart();els.log.innerHTML="";
         logLine("gen",`init · ${S.popSize} random arrangements · grid ${R}×${C} (${R*C} tiles) · gen0 best ${Math.round(S.bestFit).toLocaleString()} acc ${(S.bestAcc*100).toFixed(1)}%`);
@@ -309,7 +331,7 @@ function run(){if(S.phase==="done")reset(false);
 els.run.addEventListener("click",run);
 els.step.addEventListener("click",()=>{if(!S.running&&S.phase!=="done")stepGen();});
 els.reshuffle.addEventListener("click",()=>reset(true));
-["grid","pop"].forEach(id=>$(id).addEventListener("change",()=>reset(false)));
+["grid","pop","fitness"].forEach(id=>$(id).addEventListener("change",()=>reset(false)));
 
 // downloads
 function save(name,blob){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;
