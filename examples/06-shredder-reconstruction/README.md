@@ -18,6 +18,10 @@ baseline**. Everything below is computed at run time; no metric is fabricated.
 > — the page shreds, then greedy + 2-opt run live with an objective-function chart, an
 > iteration counter, and an accelerating progress bar. (In-browser stand-in for the
 > OR-Tools TSP used here.)
+>
+> **🧩 Harder (cross-cut):** [`demos/harder_shredder_reconstruction_demo.html`](../../demos/harder_shredder_reconstruction_demo.html)
+> shreds the page **both ways** into an R×C grid and shows how greedy *scales* — comparisons
+> grow ~N², accuracy collapses on fine grids, and the search space is N!.
 
 **Forensic scenario.** A shredder destroyed a document. Investigators recover the
 pile of paper strips. Can we **reconstruct the page** so its text becomes

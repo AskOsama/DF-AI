@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Harder cross-cut shredder demo: a page is shredded vertically AND horizontally into a grid of tiles. Watch greedy reassembly scale — comparisons grow ~N², accuracy collapses, while the true search space is N!.">
+    <title>Cross-cut Shredder — How Greedy Scales | DF-AI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/landing.css">
+    <style>
+        :root{--ink:#14242e;--ink2:#36505b;--paper:#f6f2e9;--paper2:#fbf8f0;--vellum:#fffdf7;
+              --rule:#d6cdb8;--rule2:#a89a78;--accent:#9c6b1e;--good:#2c6a5b;--warn:#a23b34;}
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--paper);color:var(--ink);
+             font-family:Geist,Inter,system-ui,-apple-system,sans-serif;line-height:1.5}
+        .wrap{max-width:1080px;margin:0 auto;padding:1.4rem 1.1rem 3rem}
+        .demo-header h1{font-family:Fraunces,Georgia,serif;font-size:1.9rem;margin:.2rem 0 .3rem}
+        .docid{display:inline-block;font-family:"Geist Mono",ui-monospace,monospace;font-size:.82rem;
+               background:var(--vellum);border:1px solid var(--rule);border-radius:3px;padding:.25rem .55rem;color:var(--ink2)}
+        .lede{color:var(--ink2);margin:.55rem 0 0;max-width:78ch}
+        .note{margin:.8rem 0 0;font-size:.83rem;color:var(--ink2);border-left:3px solid var(--accent);
+              background:var(--paper2);padding:.5rem .7rem;border-radius:0 3px 3px 0;max-width:82ch}
+        .panel{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.9rem 1rem;margin-top:1rem}
+        .controls{display:flex;flex-wrap:wrap;gap:.7rem 1rem;align-items:flex-end}
+        .cg{display:flex;flex-direction:column;gap:.25rem}
+        .cg label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+        .cg input[type=range]{width:140px}
+        .cg select{padding:.3rem .4rem;border:1px solid var(--rule2);border-radius:3px;background:var(--paper2)}
+        .chk{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--ink2)}
+        .btn{font:inherit;font-size:.9rem;padding:.5rem .95rem;border:1px solid var(--ink);
+             border-radius:3px;background:var(--ink);color:var(--vellum);cursor:pointer}
+        .btn:hover{background:#21323d}.btn.sec{background:var(--vellum);color:var(--ink)}.btn.sec:hover{background:var(--paper)}
+        .btn:disabled{opacity:.45;cursor:not-allowed}.btn.dl{font-size:.78rem;padding:.32rem .6rem}
+        .barwrap{margin-top:.9rem;height:16px;background:var(--paper);border:1px solid var(--rule);border-radius:9px;overflow:hidden}
+        .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#c98f33);transition:width .12s linear}
+        .status-bar{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1rem}
+        .stat{flex:1 1 96px;background:var(--paper2);border:1px solid var(--rule);border-radius:4px;padding:.45rem .55rem;text-align:center}
+        .stat .v{font-family:"Geist Mono",monospace;font-size:1.02rem;font-weight:600;color:var(--ink)}
+        .stat .v.good{color:var(--good)}.stat .v.warn{color:var(--warn)}
+        .stat .l{font-size:.62rem;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);margin-top:.15rem}
+        .vizcard{background:var(--vellum);border:1px solid var(--rule);border-radius:4px;padding:.7rem .8rem;margin-top:1rem}
+        .vizcard h3{margin:.1rem 0 .55rem;font-size:.95rem;font-family:Fraunces,serif;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+        .dlrow{margin-left:auto;display:flex;gap:.4rem}
+        canvas{display:block;max-width:100%;background:#fff;border:1px solid var(--rule);border-radius:3px}
+        .stage{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+        @media(max-width:760px){.stage{grid-template-columns:1fr}}
+        .inspect{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+        @media(max-width:620px){.inspect{grid-template-columns:1fr}}
+        .icol{display:flex;flex-direction:column;gap:.3rem}
+        .icol .cap{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+        .seamwrap{display:flex;gap:.5rem;align-items:center}
+        .rd{font-size:.84rem}.rd .mono{font-family:"Geist Mono",monospace}
+        .logbox{height:180px;overflow:auto;background:#10202a;color:#dfeaec;border:1px solid var(--rule);border-radius:3px;
+                padding:.5rem .6rem;font-family:"Geist Mono",ui-monospace,monospace;font-size:.78rem;line-height:1.5}
+        .logbox .ln{display:block}.logbox .cell{color:#9fb6bd}.logbox .seed{color:#e8d999}
+        .logbox .bad{color:#e3a39c}.logbox .done{color:#fff;font-weight:600}
+        .logbox details.grp{margin:.1rem 0}.logbox summary{cursor:pointer;list-style:none}
+        .logbox summary::-webkit-details-marker{display:none}
+        .logbox summary::before{content:"▾ ";color:#7f9aa2}.logbox details:not([open])>summary::before{content:"▸ "}
+        .logbox .kids{padding-left:1rem;border-left:1px solid rgba(255,255,255,.14);margin:.1rem 0 .2rem .2rem}
+        .legend{font-size:.74rem;color:var(--ink2);margin-top:.4rem}
+        .banner{margin-top:1rem;padding:.7rem .9rem;border-radius:4px;font-weight:600;display:none}
+        .banner.show{display:block}.banner.ok{background:rgba(44,106,91,.12);border:1px solid var(--good);color:var(--good)}
+        .banner.warn{background:rgba(162,59,52,.1);border:1px solid var(--warn);color:var(--warn)}
+        .back-link{display:inline-block;margin-top:1.6rem;color:var(--accent);text-decoration:none;font-weight:600}
+        .back-link:hover{text-decoration:underline}
+        code{font-family:"Geist Mono",monospace;font-size:.85em}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="demo-header">
+        <h1>Cross-cut Shredder — How Greedy Scales</h1>
+        <span class="docid" id="docId">loading…</span>
+        <p class="lede">
+            Now the page is shredded <strong>both ways</strong> — vertical <em>and</em> horizontal cuts — into a grid of
+            tiles. Each tile must match its neighbours on <strong>two</strong> edges (left + top). Greedy fills the grid
+            from a known top-left corner, picking the lowest-cost tile for each cell. Crank up the grid and watch what
+            happens: comparisons grow like <span class="mono">N²</span>, accuracy <strong>collapses</strong>, and the true
+            search space (<span class="mono">N!</span>) explodes far beyond anything brute force could ever check.
+        </p>
+        <p class="note" id="honest">
+            Greedy raster-fill from a <strong>given</strong> top-left tile (an in-browser stand-in for proper cross-cut
+            solvers). Real public-domain page (govdocs1 Federal Register). The lesson is scalability: greedy is
+            <span class="mono">O(N²)</span> comparisons (tractable) but its <em>quality</em> does not scale —
+            on a fine grid it falls apart. Use <strong>Instant solve</strong> to compare sizes fast.
+            See also the simpler <a href="shredder_reconstruction_demo.html">strip-cut demo</a>.
+        </p>
+    </div>
+
+    <div class="panel">
+        <div class="controls">
+            <button class="btn" id="btnRun">▶ Run (animate)</button>
+            <button class="btn sec" id="btnSolve">⚡ Instant solve</button>
+            <button class="btn sec" id="btnStep">Step</button>
+            <button class="btn sec" id="btnReshuffle">↻ Reshuffle</button>
+            <div class="cg">
+                <label for="speed">Speed (slow → fast)</label>
+                <input type="range" id="speed" min="0" max="100" value="66">
+            </div>
+            <div class="cg">
+                <label for="grid">Grid (rows × cols → tiles)</label>
+                <select id="grid">
+                    <option value="3,4">3 × 4 — 12 tiles</option>
+                    <option value="4,6">4 × 6 — 24 tiles</option>
+                    <option value="6,8" selected>6 × 8 — 48 tiles</option>
+                    <option value="8,12">8 × 12 — 96 tiles</option>
+                    <option value="8,16">8 × 16 — 128 tiles</option>
+                    <option value="10,16">10 × 16 — 160 tiles</option>
+                    <option value="12,20">12 × 20 — 240 tiles</option>
+                </select>
+            </div>
+            <label class="chk"><input type="checkbox" id="detail"> show each candidate (small grids)</label>
+        </div>
+        <div class="barwrap"><div class="bar" id="bar"></div></div>
+        <div class="status-bar">
+            <div class="stat"><div class="v" id="sPhase">idle</div><div class="l">Phase</div></div>
+            <div class="stat"><div class="v" id="sTiles">—</div><div class="l">Tiles placed</div></div>
+            <div class="stat"><div class="v" id="sComp">—</div><div class="l">Comparisons</div></div>
+            <div class="stat"><div class="v" id="sCompTot">—</div><div class="l">≈ total (N²/2)</div></div>
+            <div class="stat"><div class="v" id="sMs">—</div><div class="l">Greedy compute</div></div>
+            <div class="stat"><div class="v" id="sObj">—</div><div class="l">Edge cost (Σ)</div></div>
+            <div class="stat"><div class="v" id="sAcc">—</div><div class="l">Tiles correct</div></div>
+            <div class="stat"><div class="v" id="sFact">—</div><div class="l">Search space N!</div></div>
+        </div>
+        <div class="banner" id="banner"></div>
+    </div>
+
+    <div class="vizcard">
+        <h3 id="inspectTitle">Two-edge match — left neighbour &amp; top neighbour</h3>
+        <div class="inspect">
+            <div class="icol">
+                <span class="cap">◀ left seam: left-neighbour right edge | candidate left edge</span>
+                <div class="seamwrap"><canvas id="seamL" width="150" height="150"></canvas>
+                    <div class="rd">left cost <span class="mono" id="rL">—</span></div></div>
+            </div>
+            <div class="icol">
+                <span class="cap">▲ top seam: top-neighbour bottom edge / candidate top edge</span>
+                <div class="seamwrap"><canvas id="seamT" width="220" height="120"></canvas>
+                    <div class="rd">top cost <span class="mono" id="rT">—</span></div></div>
+            </div>
+        </div>
+        <div class="rd" id="rInfo" style="margin-top:.5rem">Press <strong>Run</strong> or <strong>Instant solve</strong>.</div>
+    </div>
+
+    <div class="stage">
+        <div class="vizcard" style="margin-top:0">
+            <h3>Shredded pile (tiles, shuffled)</h3>
+            <canvas id="pile" width="307" height="480"></canvas>
+        </div>
+        <div class="vizcard" style="margin-top:0">
+            <h3>Reconstruction grid (live)</h3>
+            <canvas id="recon" width="307" height="480"></canvas>
+        </div>
+    </div>
+
+    <div class="vizcard">
+        <h3>Cumulative edge cost as tiles are placed</h3>
+        <canvas id="chart" width="1040" height="180"></canvas>
+        <div class="legend">Each placed tile adds its left+top seam mismatch. A clean reconstruction stays low and smooth; a fine grid spikes as greedy is forced into bad matches.</div>
+    </div>
+
+    <div class="vizcard logcard">
+        <h3>Search log
+            <span class="dlrow">
+                <button class="btn sec dl" id="btnDlTxt">⬇ Log (.txt)</button>
+                <button class="btn sec dl" id="btnDlJson">⬇ Data (.json)</button>
+                <button class="btn sec dl" id="btnDlPng">⬇ Page (.png)</button>
+            </span>
+        </h3>
+        <div class="logbox" id="log"></div>
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to the course</a>
+</div>
+
+<script src="shredder_page_data.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const PAGE=window.SHREDDER_PAGE;
+$("docId").textContent="Source: "+(PAGE?PAGE.docId:"(missing page data)");
+const ctx=id=>$(id).getContext("2d");
+const pileX=ctx("pile"),reconX=ctx("recon"),chartX=ctx("chart"),seamLX=ctx("seamL"),seamTX=ctx("seamT");
+const els={phase:$("sPhase"),tiles:$("sTiles"),comp:$("sComp"),compTot:$("sCompTot"),ms:$("sMs"),
+           obj:$("sObj"),acc:$("sAcc"),fact:$("sFact"),bar:$("bar"),banner:$("banner"),
+           run:$("btnRun"),solve:$("btnSolve"),step:$("btnStep"),reshuffle:$("btnReshuffle"),
+           speed:$("speed"),grid:$("grid"),detail:$("detail"),title:$("inspectTitle"),
+           rL:$("rL"),rT:$("rT"),rInfo:$("rInfo"),log:$("log"),
+           dlTxt:$("btnDlTxt"),dlJson:$("btnDlJson"),dlPng:$("btnDlPng")};
+
+let SW=0,SH=0,srcData=null;
+const srcCanvas=document.createElement("canvas"),srcCtx=srcCanvas.getContext("2d");
+let S=null,timer=null;
+
+const mulberry=s=>{let a=s>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};};
+function shuffle(a,r){for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const px=(x,y)=>srcData[y*SW+x];
+
+function buildProblem(R,C,seed){
+    const rowH=Math.floor(SH/R),colW=Math.floor(SW/C),N=R*C;
+    // edge vectors per tile id=r*C+c
+    const right=[],left=[],top=[],bot=[];
+    for(let id=0;id<N;id++){
+        const r=Math.floor(id/C),c=id%C,x0=c*colW,y0=r*rowH;
+        const rc=new Float32Array(rowH),lc=new Float32Array(rowH);
+        for(let y=0;y<rowH;y++){lc[y]=px(x0,y0+y);rc[y]=px(x0+colW-1,y0+y);}
+        const tr=new Float32Array(colW),br=new Float32Array(colW);
+        for(let x=0;x<colW;x++){tr[x]=px(x0+x,y0);br[x]=px(x0+x,y0+rowH-1);}
+        right.push(rc);left.push(lc);top.push(tr);bot.push(br);
+    }
+    // cost matrices (flattened). H[i*N+j]=mean(right_i-left_j)^2 ; V[i*N+j]=mean(bot_i-top_j)^2
+    const H=new Float32Array(N*N),V=new Float32Array(N*N);
+    for(let i=0;i<N;i++){const ri=right[i],bi=bot[i];
+        for(let j=0;j<N;j++){
+            let s=0;const lj=left[j];for(let y=0;y<rowH;y++){const d=ri[y]-lj[y];s+=d*d;}H[i*N+j]=s/rowH;
+            let s2=0;const tj=top[j];for(let x=0;x<colW;x++){const d=bi[x]-tj[x];s2+=d*d;}V[i*N+j]=s2/colW;
+        }}
+    const pile=shuffle([...Array(N).keys()],mulberry(seed));
+    let lf=0;for(let k=1;k<=N;k++)lf+=Math.log10(k);   // log10(N!)
+    return {R,C,N,rowH,colW,H,V,pile,seed,log10fact:lf};
+}
+
+function solveGreedy(P){           // raster fill from true top-left seed; returns full solution + per-cell steps
+    const {R,C,N,H,V}=P;const used=new Uint8Array(N);const grid=Array.from({length:R},()=>new Array(C).fill(-1));
+    grid[0][0]=0;used[0]=1;let comps=0,obj=0;const steps=[];const t0=performance.now();
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){
+        if(r===0&&c===0)continue;
+        const left=c>0?grid[r][c-1]:-1,top=r>0?grid[r-1][c]:-1;
+        let best=-1,bc=Infinity,scanned=0;
+        for(let f=0;f<N;f++){if(used[f])continue;comps++;scanned++;
+            const cost=(left>=0?H[left*N+f]:0)+(top>=0?V[top*N+f]:0);
+            if(cost<bc){bc=cost;best=f;}}
+        grid[r][c]=best;used[best]=1;obj+=bc;
+        steps.push({r,c,placed:best,left,top,scanned,cost:bc,
+                    lcost:left>=0?H[left*N+best]:0,tcost:top>=0?V[top*N+best]:0});
+    }
+    const ms=performance.now()-t0;
+    let correct=0;for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(grid[r][c]===r*C+c)correct++;
+    return {grid,steps,comps,ms,obj,accuracy:correct/N};
+}
+
+// ---------- rendering ----------
+function reconDims(){const Hd=480,w=Math.round(Hd*SW/SH);return{Hd,W:w,cw:w/P().C,ch:Hd/P().R};}
+function fragRect(id){const r=Math.floor(id/P().C),c=id%P().C;return[c*P().colW,r*P().rowH,P().colW,P().rowH];}
+function drawFrag(c2,id,dx,dy,dw,dh){const[sx,sy,sw,sh]=fragRect(id);c2.drawImage(srcCanvas,sx,sy,sw,sh,dx,dy,dw,dh);}
+function P(){return S.P;}
+function renderPile(hi){
+    const {Hd,W,cw,ch}=reconDims();if(pileX.canvas.width!==W){pileX.canvas.width=W;pileX.canvas.height=Hd;}
+    pileX.fillStyle="#fff";pileX.fillRect(0,0,W,Hd);
+    const N=P().N;for(let k=0;k<N;k++){const r=Math.floor(k/P().C),c=k%P().C;
+        drawFrag(pileX,P().pile[k],c*cw,r*ch,cw-1,ch-1);
+        pileX.strokeStyle="rgba(0,0,0,.12)";pileX.strokeRect(c*cw+.5,r*ch+.5,cw-1,ch-1);}
+    if(hi!=null){const k=P().pile.indexOf(hi);if(k>=0){const r=Math.floor(k/P().C),c=k%P().C;
+        pileX.lineWidth=2.5;pileX.strokeStyle="#9c6b1e";pileX.strokeRect(c*cw+1.5,r*ch+1.5,cw-3,ch-3);pileX.lineWidth=1;}}
+}
+function renderRecon(grid,fill){
+    const {Hd,W,cw,ch}=reconDims();if(reconX.canvas.width!==W){reconX.canvas.width=W;reconX.canvas.height=Hd;}
+    reconX.fillStyle="#fff";reconX.fillRect(0,0,W,Hd);
+    for(let r=0;r<P().R;r++)for(let c=0;c<P().C;c++){const id=grid[r][c];
+        if(id>=0){drawFrag(reconX,id,c*cw,r*ch,cw,ch);
+            reconX.strokeStyle=(id===r*P().C+c)?"rgba(44,106,91,.5)":"rgba(162,59,52,.55)";
+            reconX.strokeRect(c*cw+.5,r*ch+.5,cw-1,ch-1);}}
+    if(fill){reconX.setLineDash([4,3]);reconX.strokeStyle="#9c6b1e";
+        reconX.strokeRect(fill.c*cw+1,fill.r*ch+1,cw-2,ch-2);reconX.setLineDash([]);}
+}
+function renderSeamL(leftId,candId){      // vertical seam: right cols of left | left cols of cand
+    const W=seamLX.canvas.width,Hd=seamLX.canvas.height,K=Math.min(8,P().colW),half=Math.floor((W-3)/2);
+    seamLX.fillStyle="#fff";seamLX.fillRect(0,0,W,Hd);
+    if(leftId==null){seamLX.fillStyle="#a0adb2";seamLX.font="12px monospace";seamLX.fillText("(left edge of grid)",10,Hd/2);return;}
+    const [lx,ly,lw,lh]=fragRect(leftId);seamLX.drawImage(srcCanvas,lx+lw-K,ly,K,lh,0,0,half,Hd);
+    if(candId!=null){const [cx,cy,,chh]=fragRect(candId);seamLX.drawImage(srcCanvas,cx,cy,K,chh,half+3,0,half,Hd);}
+    seamLX.fillStyle="#9c6b1e";seamLX.fillRect(half,0,3,Hd);
+}
+function renderSeamT(topId,candId){       // horizontal seam: bottom rows of top / top rows of cand (stacked)
+    const W=seamTX.canvas.width,Hd=seamTX.canvas.height,K=Math.min(8,P().rowH),half=Math.floor((Hd-3)/2);
+    seamTX.fillStyle="#fff";seamTX.fillRect(0,0,W,Hd);
+    if(topId==null){seamTX.fillStyle="#a0adb2";seamTX.font="12px monospace";seamTX.fillText("(top edge of grid)",10,Hd/2);return;}
+    const [tx,ty,tw,th]=fragRect(topId);seamTX.drawImage(srcCanvas,tx,ty+th-K,tw,K,0,0,W,half);
+    if(candId!=null){const [cx,cy,cw]=fragRect(candId);seamTX.drawImage(srcCanvas,cx,cy,cw,K,0,half+3,W,half);}
+    seamTX.fillStyle="#9c6b1e";seamTX.fillRect(0,half,W,3);
+}
+function renderChart(){
+    const W=chartX.canvas.width,Hd=chartX.canvas.height,pad=24;chartX.clearRect(0,0,W,Hd);
+    const pts=S.costHist;if(!pts.length){chartX.fillStyle="#a0adb2";chartX.font="12px monospace";
+        chartX.fillText("cumulative edge cost appears as tiles are placed…",pad,Hd/2);return;}
+    const mx=Math.max(...pts)||1;const X=i=>pad+(W-2*pad)*(pts.length<=1?0:i/(pts.length-1)),Y=v=>Hd-pad-(Hd-2*pad)*(v/mx);
+    chartX.strokeStyle="#9c6b1e";chartX.lineWidth=2;chartX.beginPath();
+    pts.forEach((v,i)=>{const x=X(i),y=Y(v);i?chartX.lineTo(x,y):chartX.moveTo(x,y);});chartX.stroke();chartX.lineWidth=1;
+    chartX.fillStyle="#36505b";chartX.font="11px monospace";chartX.fillText("Σ "+Math.round(pts[pts.length-1]).toLocaleString(),W-110,16);
+}
+function fmtFact(lf){const e=Math.floor(lf);const m=Math.pow(10,lf-e);return lf<6?Math.round(Math.pow(10,lf)).toLocaleString():`${m.toFixed(1)}e${e}`;}
+function setStats(){
+    els.phase.textContent=S.phase;
+    els.tiles.textContent=S.placedCount==null?"—":S.placedCount+"/"+P().N;
+    els.comp.textContent=S.compSoFar==null?"—":S.compSoFar.toLocaleString();
+    els.compTot.textContent=S.sol?S.sol.comps.toLocaleString():(P()?Math.floor(P().N*P().N/2).toLocaleString():"—");
+    els.ms.textContent=S.sol?Math.round(S.sol.ms)+" ms":"—";
+    els.obj.textContent=S.objSoFar==null?"—":Math.round(S.objSoFar).toLocaleString();
+    const a=S.accSoFar;els.acc.textContent=a==null?"—":(a*100).toFixed(1)+"%";
+    els.acc.className="v"+(a==null?"":(a>=0.95?" good":(a<0.5?" warn":"")));
+    els.fact.textContent=P()?fmtFact(P().log10fact):"—";
+    els.bar.style.width=((S.progress||0)*100).toFixed(1)+"%";
+}
+
+// ---------- nested log ----------
+function pushRec(action,text,depth,rec){S.log.push(Object.assign({ms:Math.round(performance.now()-S.t0),action,depth,text},rec||{}));}
+function logLine(action,text,rec){pushRec(action,text,0,rec);const el=document.createElement("div");el.className="ln "+action;
+    el.textContent=`[${String(S.log.length).padStart(3,"0")}] ${text}`;els.log.appendChild(el);S.curGroup=null;trim();}
+function startGroup(action,summary,rec){pushRec(action,summary,0,Object.assign({group:1},rec||{}));
+    const d=document.createElement("details");d.className="grp "+action;d.open=true;
+    const s=document.createElement("summary");s.className="ln "+action;s.textContent=`[${String(S.log.length).padStart(3,"0")}] ${summary}`;
+    const k=document.createElement("div");k.className="kids";d.appendChild(s);d.appendChild(k);els.log.appendChild(d);S.curGroup=d;trim();}
+function logChild(action,text,rec){pushRec(action,text,1,rec);const el=document.createElement("div");el.className="ln "+action;el.textContent=text;
+    ((S.curGroup&&S.curGroup.querySelector(".kids"))||els.log).appendChild(el);els.log.scrollTop=els.log.scrollHeight;}
+function endGroup(t){if(t!=null&&S.curGroup){const s=S.curGroup.querySelector("summary");if(s)s.textContent+="  "+t;}els.log.scrollTop=els.log.scrollHeight;}
+function trim(){while(els.log.childElementCount>200)els.log.removeChild(els.log.firstChild);els.log.scrollTop=els.log.scrollHeight;}
+
+// ---------- lifecycle ----------
+function reset(reseed){
+    if(timer){clearTimeout(timer);timer=null;}
+    const [R,C]=els.grid.value.split(",").map(Number);
+    const seed=reseed?((Math.random()*1e9)>>>0):(S?S.P.seed:20260626);
+    const Pb=buildProblem(R,C,seed);
+    S={P:Pb,phase:"ready",sol:null,k:0,grid:null,placedCount:0,compSoFar:0,objSoFar:0,accSoFar:null,
+       progress:0,running:false,tick:0,costHist:[],log:[],curGroup:null,t0:performance.now(),
+       detail:els.detail.checked&&Pb.N<=48,scan:null};
+    // initial grid: only the seed placed
+    S.grid=Array.from({length:R},()=>new Array(C).fill(-1));S.grid[0][0]=0;S.placedCount=1;
+    els.detail.disabled=Pb.N>48;
+    renderPile(null);renderRecon(S.grid,{r:0,c:1<C?1:0});renderSeamL(null,null);renderSeamT(null,null);renderChart();
+    els.log.innerHTML="";els.rInfo.innerHTML="Press <strong>Run</strong> or <strong>Instant solve</strong>.";
+    els.rL.textContent="—";els.rT.textContent="—";els.banner.className="banner";
+    els.title.textContent="Two-edge match — left neighbour & top neighbour";
+    els.run.textContent="▶ Run (animate)";els.run.disabled=false;els.step.disabled=false;els.solve.disabled=false;
+    setStats();
+}
+function ensureSolved(){ if(!S.sol){ S.sol=solveGreedy(P());
+    logLine("seed",`seed · (0,0) ← #0 (given top-left corner)  ·  N=${P().N}, grid ${P().R}×${P().C}`,{}); } }
+
+function placeStep(){          // animate one tile
+    ensureSolved();
+    if(S.k>=S.sol.steps.length){finish();return false;}
+    const st=S.sol.steps[S.k];
+    S.grid[st.r][st.c]=st.placed;S.placedCount++;S.compSoFar+=st.scanned;S.objSoFar+=st.cost;
+    // accuracy so far over placed tiles
+    let correct=0,placed=0;for(let r=0;r<P().R;r++)for(let c=0;c<P().C;c++){const id=S.grid[r][c];if(id>=0){placed++;if(id===r*P().C+c)correct++;}}
+    S.accSoFar=correct/placed;S.costHist.push(S.objSoFar);
+    // inspector: the two seams of the placed tile vs its neighbours
+    renderSeamL(st.left>=0?st.left:null,st.placed);renderSeamT(st.top>=0?st.top:null,st.placed);
+    els.rL.textContent=st.left>=0?Math.round(st.lcost).toLocaleString():"n/a (edge)";
+    els.rT.textContent=st.top>=0?Math.round(st.tcost).toLocaleString():"n/a (edge)";
+    const ok=st.placed===st.r*P().C+st.c;
+    els.rInfo.innerHTML=`cell <span class="mono">(${st.r},${st.c})</span> ← tile <span class="mono">#${st.placed}</span> · `+
+        `scanned <strong>${st.scanned}</strong> candidates · left+top cost <span class="mono">${Math.round(st.cost).toLocaleString()}</span> `+
+        (ok?'· <span style="color:var(--good)">correct</span>':'· <span style="color:var(--warn)">wrong tile</span>');
+    logChild(ok?"cell":"bad",`cell (${st.r},${st.c}) ← #${st.placed}  · scanned ${st.scanned} · cost ${Math.round(st.cost).toLocaleString()}${ok?"":"  ✗"}`,
+        {r:st.r,c:st.c,placed:st.placed,scanned:st.scanned,cost:Math.round(st.cost),correct:ok});
+    renderRecon(S.grid,(S.k+1<S.sol.steps.length)?{r:S.sol.steps[S.k+1].r,c:S.sol.steps[S.k+1].c}:null);
+    renderPile(st.placed);renderChart();
+    S.k++;S.progress=S.k/S.sol.steps.length;S.phase="greedy fill";setStats();
+    return true;
+}
+function finish(){
+    S.phase="done";S.running=false;S.progress=1;S.accSoFar=S.sol.accuracy;S.objSoFar=S.sol.obj;
+    renderRecon(S.grid,null);setStats();
+    els.run.textContent="▶ Run (animate)";els.step.disabled=true;
+    const pct=(S.sol.accuracy*100).toFixed(1),good=S.sol.accuracy>=0.7;
+    els.banner.className="banner show "+(good?"ok":"warn");
+    els.banner.textContent=`Done — ${pct}% of ${P().N} tiles placed correctly · ${S.sol.comps.toLocaleString()} comparisons · `+
+        `greedy ${Math.round(S.sol.ms)} ms · search space N! ≈ ${fmtFact(P().log10fact)}. `+
+        (good?"Greedy coped here — now raise the grid size and watch it fall apart.":"Greedy collapsed on this fine grid — that's the scalability lesson.");
+    logLine("done",`DONE · ${pct}% correct · ${S.sol.comps.toLocaleString()} comparisons · ${Math.round(S.sol.ms)}ms · N!≈${fmtFact(P().log10fact)}`,
+        {accuracy:S.sol.accuracy,comparisons:S.sol.comps,ms:Math.round(S.sol.ms),objective:Math.round(S.sol.obj)});
+}
+function oneStep(){
+    if(S.phase==="done")return false;
+    ensureSolved();                                   // logs the seed line (top-level) + solves once
+    if(!S.curGroup) startGroup("cell",`greedy raster fill — ${P().N} tiles, two-edge match`);
+    return placeStep();
+}
+function loop(){
+    if(!S.running)return;
+    if(!placeStep()){return;}
+    S.tick++;const base=520-parseInt(els.speed.value,10)*4.6;
+    timer=setTimeout(loop,Math.max(8,base*Math.pow(0.992,S.tick)));
+}
+function run(){
+    if(S.phase==="done")reset(false);
+    ensureSolved();
+    if(S.running){S.running=false;els.run.textContent="▶ Resume";if(timer)clearTimeout(timer);return;}
+    if(!S.curGroup)startGroup("cell",`greedy raster fill — ${P().N} tiles, two-edge match`);
+    S.running=true;els.run.textContent="❚❚ Pause";S.tick=0;loop();
+}
+function instant(){
+    reset(false);ensureSolved();
+    // fill state to final without animation
+    S.grid=S.sol.grid.map(row=>row.slice());S.placedCount=P().N;S.compSoFar=S.sol.comps;
+    S.objSoFar=S.sol.obj;S.costHist=[];let run=0;for(const st of S.sol.steps){run+=st.cost;S.costHist.push(run);}
+    S.k=S.sol.steps.length;
+    logLine("cell",`instant solve · ${P().N} tiles · ${S.sol.comps.toLocaleString()} comparisons · ${Math.round(S.sol.ms)}ms`,{});
+    renderRecon(S.grid,null);renderPile(null);renderChart();finish();
+}
+
+els.run.addEventListener("click",run);
+els.solve.addEventListener("click",instant);
+els.step.addEventListener("click",()=>{if(!S.running)oneStep();});
+els.reshuffle.addEventListener("click",()=>reset(true));
+els.grid.addEventListener("change",()=>reset(false));
+els.detail.addEventListener("change",()=>reset(false));
+
+// downloads
+function save(name,blob){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1500);}
+const tag=()=>`${P().R}x${P().C}-seed${P().seed}`;
+els.dlTxt.addEventListener("click",()=>{
+    const h=[`DF-AI cross-cut shredder — greedy scalability log`,`document : ${PAGE.docId}`,
+        `grid     : ${P().R}×${P().C} = ${P().N} tiles   seed ${P().seed}`,
+        `greedy   : ${S.sol?S.sol.comps.toLocaleString()+" comparisons, "+Math.round(S.sol.ms)+" ms, "+(S.sol.accuracy*100).toFixed(1)+"% correct":"(not run yet)"}`,
+        `search   : N! ≈ ${fmtFact(P().log10fact)}`,"-".repeat(58)];
+    const b=S.log.map((r,n)=>`${r.depth?"   ":""}[${String(n+1).padStart(3,"0")}] +${r.ms}ms  ${r.text}`);
+    save(`xcut-log-${tag()}.txt`,new Blob([h.concat(b).join("\n")+"\n"],{type:"text/plain"}));});
+els.dlJson.addEventListener("click",()=>{
+    const d={docId:PAGE.docId,rows:P().R,cols:P().C,tiles:P().N,seed:P().seed,
+        objectiveDefinition:"sum of left+top seam mean-squared edge mismatch over the placed grid",
+        comparisons:S.sol?S.sol.comps:null,greedyMs:S.sol?Math.round(S.sol.ms):null,
+        accuracy:S.sol?S.sol.accuracy:null,objective:S.sol?Math.round(S.sol.obj):null,
+        searchSpaceLog10Factorial:Math.round(P().log10fact),
+        grid:S.sol?S.sol.grid:null,steps:S.log};
+    save(`xcut-data-${tag()}.json`,new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));});
+els.dlPng.addEventListener("click",()=>{$("recon").toBlob(b=>{if(b)save(`xcut-page-${tag()}.png`,b);},"image/png");});
+
+function boot(){
+    if(!PAGE){els.honest.textContent="Demo data (shredder_page_data.js) failed to load.";return;}
+    const img=new Image();
+    img.onload=function(){SW=img.naturalWidth;SH=img.naturalHeight;srcCanvas.width=SW;srcCanvas.height=SH;srcCtx.drawImage(img,0,0);
+        const d=srcCtx.getImageData(0,0,SW,SH).data;srcData=new Uint8Array(SW*SH);
+        for(let p=0,q=0;p<d.length;p+=4,q++)srcData[q]=d[p];reset(false);};
+    img.src=PAGE.dataUrl;
+}
+boot();
+})();
+</script>
+</body>
+</html>
