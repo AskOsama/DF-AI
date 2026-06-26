@@ -82,6 +82,7 @@
         .logbox .scan{color:#9fb6bd}
         .logbox .commit{color:#8fd6b0}
         .logbox .twoopt{color:#e3a39c}
+        .logbox .newbest{color:#ffe08a;font-weight:600}
         .logbox .done{color:#fff;font-weight:600}
         .logbox details.grp{margin:.12rem 0}
         .logbox summary{cursor:pointer;list-style:none;outline:none}
@@ -417,7 +418,9 @@ function greedyTick(){
                 {pos:S.placeAt+1,candidates:S.gCands.length,tail:S.cur});
         }
         const c=S.gCands[S.gIdx],cost=C[S.cur][c];S.gCosts[S.gIdx]=cost;
-        if(cost<S.gBestCost){S.gBestCost=cost;S.gBestCand=c;}
+        const first=(S.gIdx===0);                 // running minimum: first try is only trivially "best"
+        const improved=cost<S.gBestCost;          // did THIS candidate beat the running best?
+        if(improved){S.gBestCost=cost;S.gBestCand=c;}
         renderEdge(curX,S.cur,"R");renderEdge(candX,c,"L");renderSeam(S.cur,c);
         renderPile(c,S.gBestCand);renderBars();
         els.rTry.innerHTML=`Trying candidate <span class="mono">#${c}</span> at position <strong>${S.placeAt+1}</strong> `+
@@ -425,9 +428,11 @@ function greedyTick(){
         els.rCost.textContent=Math.round(cost).toLocaleString();
         const tested=S.gCosts.filter(v=>v!=null),mx=Math.max(...tested),mn=Math.min(...tested);
         els.rCostFill.style.width=(100*(1-(cost-mn)/((mx-mn)||1))).toFixed(0)+"%"; // fuller = better
-        els.rBest.textContent=`#${S.gBestCand} · ${Math.round(S.gBestCost).toLocaleString()}`;
-        logChild("scan",`try #${c} → cost ${Math.round(cost).toLocaleString()}   (best #${S.gBestCand})`,
-            {pos:S.placeAt+1,candidate:c,cost:Math.round(cost),best:S.gBestCand});
+        els.rBest.textContent=`${(first||improved)?"★ ":""}#${S.gBestCand} · ${Math.round(S.gBestCost).toLocaleString()}`;
+        const tag=first?"  · initial best":(improved?"  · ★ new best":"");
+        logChild("scan"+(improved?" newbest":""),
+            `try #${c} → cost ${Math.round(cost).toLocaleString()}   (best #${S.gBestCand})${tag}`,
+            {pos:S.placeAt+1,candidate:c,cost:Math.round(cost),best:S.gBestCand,newBest:improved,first});
         S.iter++;S.gIdx++;
         if(S.gIdx>=S.gCands.length)S.subphase="commit";
         setStats();return true;
